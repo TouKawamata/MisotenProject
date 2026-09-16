@@ -187,7 +187,13 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
     public Vector3 GetLookAheadPosition(Vector3 worldPosition, float lookAheadDistance)
     {
-        return EvaluateLookAhead(FindNearestDistance(worldPosition), lookAheadDistance);
+        // 中心線上の先読み点をそのまま返すと、worldPositionが中心からズレているときに
+        // カメラが常に中心方向へ引っ張られる向きになってしまう。
+        // worldPositionの「中心からのズレ」を先読み点にも同じだけ足すことで、
+        // 中心線と平行にオフセットした先読み点（＝実際の進行方向に近い狙い先）にする。
+        float distance = FindNearestDistance(worldPosition);
+        Vector3 offsetFromCenter = worldPosition - EvaluatePositionByDistance(distance);
+        return EvaluateLookAhead(distance, lookAheadDistance) + offsetFromCenter;
     }
 
     // ----------------------------------------------------
