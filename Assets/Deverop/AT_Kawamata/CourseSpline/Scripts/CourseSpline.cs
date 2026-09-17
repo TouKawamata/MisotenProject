@@ -18,6 +18,16 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
     [Tooltip("Editorの「Add Point」ボタンで延長する際の既定の間隔")]
     [SerializeField] private float defaultAddPointSpacing = 20f;
 
+    [Header("コース幅（検証用。境界のClamp等の実処理はまだ行わない）")]
+    [SerializeField] private float courseWidth = 20f;
+    [SerializeField] private bool drawCourseWidthGizmos = true;
+
+    [Header("トンネル半径（パターンE検証用）")]
+    [SerializeField] private float tunnelRadius = 15f;
+    [SerializeField] private bool drawTunnelGizmos = false;
+    [SerializeField] private int tunnelGizmoSegments = 16;
+    [SerializeField] private float tunnelGizmoInterval = 20f;
+
     private readonly List<CourseSplineSample> _samples = new List<CourseSplineSample>();
     private readonly List<Transform> _pointsBuffer = new List<Transform>();
     private int _lastDirtyHash;
@@ -25,6 +35,11 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
     public float DefaultAddPointSpacing => defaultAddPointSpacing;
 
     public bool IsLoop => isLoop;
+
+    // Player側の将来のClamp/押し戻し実装が同じ値を参照できるようにするための公開プロパティ。
+    public float CourseWidth => courseWidth;
+
+    public float TunnelRadius => tunnelRadius;
 
     private Transform PointsRoot => pointsContainer != null ? pointsContainer : transform;
 
@@ -453,6 +468,11 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
         Gizmos.color = Color.yellow;
         Vector3 previousPosition = default;
+        Vector3 previousLeft = default;
+        Vector3 previousRight = default;
+        float accumulatedGizmoDistance = 0f;
+        float nextTunnelSectionDistance = 0f;
+        Vector3[] previousTunnelSection = null;
 
         for (int step = 0; step <= resolution; step++)
         {
@@ -461,20 +481,75 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
             if (step > 0)
             {
+                Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(previousPosition, position);
+                accumulatedGizmoDistance += Vector3.Distance(previousPosition, position);
+            }
+
+            Vector3 right = ComputeRight(forward);
+            Vector3 up = Vector3.Cross(forward, right).normalized;
+
+            if (drawCourseWidthGizmos && courseWidth > 0f)
+            {
+                Vector3 leftEdge = position - right * (courseWidth * 0.5f);
+                Vector3 rightEdge = position + right * (courseWidth * 0.5f);
+
+                if (step > 0)
+                {
+                    Gizmos.color = new Color(1f, 0.5f, 0f);
+                    Gizmos.DrawLine(previousLeft, leftEdge);
+                    Gizmos.DrawLine(previousRight, rightEdge);
+                }
+
+                previousLeft = leftEdge;
+                previousRight = rightEdge;
+            }
+
+            if (drawTunnelGizmos && tunnelRadius > 0f && accumulatedGizmoDistance >= nextTunnelSectionDistance)
+            {
+                Vector3[] section = BuildTunnelSection(position, right, up);
+                DrawTunnelSection(section, previousTunnelSection);
+                previousTunnelSection = section;
+                nextTunnelSectionDistance += tunnelGizmoInterval;
             }
 
             previousPosition = position;
 
             if (step % 5 == 0)
             {
-                Vector3 right = ComputeRight(forward);
-                Vector3 up = Vector3.Cross(forward, right).normalized;
-
                 Gizmos.color = Color.cyan;
                 Gizmos.DrawLine(position, position + up * 1.5f);
                 Gizmos.DrawSphere(position + up * 1.5f, 0.1f);
-                Gizmos.color = Color.yellow;
+            }
+        }
+    }
+
+    private Vector3[] BuildTunnelSection(Vector3 center, Vector3 right, Vector3 up)
+    {
+        int segments = Mathf.Max(3, tunnelGizmoSegments);
+        Vector3[] section = new Vector3[segments];
+
+        for (int i = 0; i < segments; i++)
+        {
+            float angle = (float)i / segments * Mathf.PI * 2f;
+            section[i] = center + (right * Mathf.Cos(angle) + up * Mathf.Sin(angle)) * tunnelRadius;
+        }
+
+        return section;
+    }
+
+    private static void DrawTunnelSection(Vector3[] section, Vector3[] previousSection)
+    {
+        Gizmos.color = Color.magenta;
+
+        for (int i = 0; i < section.Length; i++)
+        {
+            int next = (i + 1) % section.Length;
+            Gizmos.DrawLine(section[i], section[next]);
+
+            if (previousSection != null)
+            {
+                Gizmos.DrawLine(previousSection[i], section[i]);
             }
         }
     }

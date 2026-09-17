@@ -301,7 +301,7 @@ Transform:
   m_GameObject: {fileID: 182716980}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 60, y: 25, z: 300}
+  m_LocalPosition: {x: 60, y: 74.6, z: 300}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1042,13 +1042,18 @@ MonoBehaviour:
   courseSpline: {fileID: 1839428154}
   inputProvider: {fileID: 0}
   boost: {fileID: 0}
-  headingTurnRate: 1.5
-  velocityTurnRate: 2
+  followMode: 4
+  headingTurnRate: 3
+  velocityTurnRate: 4
   centerCorrectionGain: 0.5
   maxCorrectionAccel: 20
   rollMaxAngle: 10
   rollSmoothTime: 0.25
   lookAheadDistance: 40
+  roadLateralSpeed: 15
+  tunnelLateralSpeed: 15
+  tunnelVerticalSpeed: 15
+  manualTurnRate: 90
 --- !u!114 &854782157
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1516,6 +1521,12 @@ MonoBehaviour:
   isLoop: 1
   samplesPerSegment: 20
   defaultAddPointSpacing: 20
+  courseWidth: 20
+  drawCourseWidthGizmos: 1
+  tunnelRadius: 15
+  drawTunnelGizmos: 1
+  tunnelGizmoSegments: 16
+  tunnelGizmoInterval: 20
 --- !u!4 &1839428155
 Transform:
   m_ObjectHideFlags: 0

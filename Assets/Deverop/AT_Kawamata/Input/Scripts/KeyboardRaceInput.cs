@@ -29,7 +29,34 @@ public class KeyboardRaceInput : IRaceInput
         }
     }
 
+    public float Vertical
+    {
+        get
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return 0f;
+            }
+
+            float value = 0f;
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
+            {
+                value -= 1f;
+            }
+
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
+            {
+                value += 1f;
+            }
+
+            return value;
+        }
+    }
+
     public bool BoostPressed => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+
+    public bool ShieldPressed => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
 
     public bool MainActionPressed => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 }
