@@ -18,11 +18,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
     [Tooltip("Editorの「Add Point」ボタンで延長する際の既定の間隔")]
     [SerializeField] private float defaultAddPointSpacing = 20f;
 
-    [Header("コース幅（検証用。境界のClamp等の実処理はまだ行わない）")]
-    [SerializeField] private float courseWidth = 20f;
-    [SerializeField] private bool drawCourseWidthGizmos = true;
-
-    [Header("トンネル半径（パターンE検証用）")]
+    [Header("トンネル半径（コースの飛行可能範囲。円形境界）")]
     [SerializeField] private float tunnelRadius = 15f;
     [SerializeField] private bool drawTunnelGizmos = false;
     [SerializeField] private int tunnelGizmoSegments = 16;
@@ -36,9 +32,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
     public bool IsLoop => isLoop;
 
-    // Player側の将来のClamp/押し戻し実装が同じ値を参照できるようにするための公開プロパティ。
-    public float CourseWidth => courseWidth;
-
+    // Player側のClamp実装が同じ値を参照できるようにするための公開プロパティ。
     public float TunnelRadius => tunnelRadius;
 
     private Transform PointsRoot => pointsContainer != null ? pointsContainer : transform;
@@ -80,7 +74,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
     public Vector3 EvaluatePosition(float normalizedT)
     {
-        EvaluateAtNormalizedT(GetPointTransforms(), normalizedT, out Vector3 position, out _);
+        EvaluateAtNormalizedT(GetPointTransforms(), normalizedT, out Vector3 position, out _, out _, out _);
         return position;
     }
 
@@ -243,15 +237,12 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         for (int step = 0; step <= totalSteps; step++)
         {
             float normalizedT = (float)step / totalSteps;
-            EvaluateAtNormalizedT(points, normalizedT, out Vector3 position, out Vector3 forward);
+            EvaluateAtNormalizedT(points, normalizedT, out Vector3 position, out Vector3 forward, out Vector3 right, out Vector3 up);
 
             if (step > 0)
             {
                 accumulatedDistance += Vector3.Distance(previousPosition, position);
             }
-
-            Vector3 right = ComputeRight(forward);
-            Vector3 up = Vector3.Cross(forward, right).normalized;
 
             _samples.Add(new CourseSplineSample(accumulatedDistance, normalizedT, position, forward, up, right));
 
@@ -261,25 +252,33 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         TotalLength = accumulatedDistance;
     }
 
-    private static Vector3 ComputeRight(Vector3 forward)
+    // referenceUp（制御点のRotationから得た傾き基準）を使ってRightを求める。
+    // referenceUpがForwardとほぼ平行になる縮退ケースでは、ワールドUp→ワールドForwardの順にフォールバックする。
+    private static Vector3 ComputeRight(Vector3 forward, Vector3 referenceUp)
     {
-        Vector3 right = Vector3.Cross(Vector3.up, forward);
+        Vector3 right = Vector3.Cross(referenceUp, forward);
         if (right.sqrMagnitude < 0.0001f)
         {
-            // Forwardがワールド上方向とほぼ平行（垂直に近いコース）な場合のフォールバック。
+            right = Vector3.Cross(Vector3.up, forward);
+        }
+
+        if (right.sqrMagnitude < 0.0001f)
+        {
             right = Vector3.Cross(Vector3.forward, forward);
         }
 
         return right.normalized;
     }
 
-    private void EvaluateAtNormalizedT(List<Transform> points, float normalizedT, out Vector3 position, out Vector3 forward)
+    private void EvaluateAtNormalizedT(List<Transform> points, float normalizedT, out Vector3 position, out Vector3 forward, out Vector3 right, out Vector3 up)
     {
         int count = points.Count;
         if (count < 2)
         {
             position = transform.position;
             forward = transform.forward;
+            right = transform.right;
+            up = transform.up;
             return;
         }
 
@@ -303,20 +302,34 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
         Vector3 tangent = CourseSplineEvaluator.EvaluateTangent(p0, p1, p2, p3, localT);
         forward = tangent.sqrMagnitude > 0.0001f ? tangent.normalized : Vector3.forward;
+
+        // 制御点自身のRotation（.up）を区間内でSlerpし、傾き（バンク）の基準として使う。
+        // 制御点にRotationが設定されていない場合はVector3.upのままになるため、従来の見た目と後方互換になる。
+        Vector3 point1Up = GetPoint(points, i).up;
+        Vector3 point2Up = GetPoint(points, i + 1).up;
+        Vector3 referenceUp = Vector3.Slerp(point1Up, point2Up, localT);
+
+        right = ComputeRight(forward, referenceUp);
+        up = Vector3.Cross(forward, right).normalized;
     }
 
     private Vector3 GetPointPosition(List<Transform> points, int index)
+    {
+        return GetPoint(points, index).position;
+    }
+
+    private Transform GetPoint(List<Transform> points, int index)
     {
         int count = points.Count;
 
         if (isLoop)
         {
             int wrapped = ((index % count) + count) % count;
-            return points[wrapped].position;
+            return points[wrapped];
         }
 
         int clamped = Mathf.Clamp(index, 0, count - 1);
-        return points[clamped].position;
+        return points[clamped];
     }
 
     private List<Transform> GetPointTransforms()
@@ -349,6 +362,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         for (int i = 0; i < points.Count; i++)
         {
             hash = unchecked(hash * 31 + points[i].position.GetHashCode());
+            hash = unchecked(hash * 31 + points[i].up.GetHashCode());
         }
 
         hash = unchecked(hash * 31 + isLoop.GetHashCode());
@@ -468,8 +482,6 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
         Gizmos.color = Color.yellow;
         Vector3 previousPosition = default;
-        Vector3 previousLeft = default;
-        Vector3 previousRight = default;
         float accumulatedGizmoDistance = 0f;
         float nextTunnelSectionDistance = 0f;
         Vector3[] previousTunnelSection = null;
@@ -477,32 +489,13 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         for (int step = 0; step <= resolution; step++)
         {
             float normalizedT = (float)step / resolution;
-            EvaluateAtNormalizedT(points, normalizedT, out Vector3 position, out Vector3 forward);
+            EvaluateAtNormalizedT(points, normalizedT, out Vector3 position, out Vector3 forward, out Vector3 right, out Vector3 up);
 
             if (step > 0)
             {
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(previousPosition, position);
                 accumulatedGizmoDistance += Vector3.Distance(previousPosition, position);
-            }
-
-            Vector3 right = ComputeRight(forward);
-            Vector3 up = Vector3.Cross(forward, right).normalized;
-
-            if (drawCourseWidthGizmos && courseWidth > 0f)
-            {
-                Vector3 leftEdge = position - right * (courseWidth * 0.5f);
-                Vector3 rightEdge = position + right * (courseWidth * 0.5f);
-
-                if (step > 0)
-                {
-                    Gizmos.color = new Color(1f, 0.5f, 0f);
-                    Gizmos.DrawLine(previousLeft, leftEdge);
-                    Gizmos.DrawLine(previousRight, rightEdge);
-                }
-
-                previousLeft = leftEdge;
-                previousRight = rightEdge;
             }
 
             if (drawTunnelGizmos && tunnelRadius > 0f && accumulatedGizmoDistance >= nextTunnelSectionDistance)
