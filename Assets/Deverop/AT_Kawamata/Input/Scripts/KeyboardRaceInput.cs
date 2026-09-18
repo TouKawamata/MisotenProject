@@ -31,5 +31,7 @@ public class KeyboardRaceInput : IRaceInput
 
     public bool BoostPressed => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
 
-    public bool MainActionPressed => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+    public bool ShieldPressed => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
+
+    public bool ShortcutPressed => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 }

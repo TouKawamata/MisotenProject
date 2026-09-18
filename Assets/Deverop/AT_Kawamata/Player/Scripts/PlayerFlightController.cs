@@ -1,7 +1,9 @@
 using UnityEngine;
 
-// プレイヤーの飛行制御。Splineへは固定せず、Velocityベースで自由に飛行する。
-// CourseSplineへは ICourseGuide 経由でのみ問い合わせる（具象型に依存しない）。
+// プレイヤーの飛行制御。自由飛行（Velocityベース）で移動しつつ、姿勢（ロール）はSplineの傾き
+// （バンク）に自然に追従する。CourseSplineへは基本的に ICourseGuide 経由で問い合わせる。
+// Splineを中心軸とした円筒（CourseSpline.TunnelRadius）の外には出られず、境界にぶつかっても
+// 摩擦0で滑るだけ（前進方向の速度は失わず、外側へ押し出す成分だけを消す）。
 [RequireComponent(typeof(BoostController))]
 [RequireComponent(typeof(RaceInputProvider))]
 public class PlayerFlightController : MonoBehaviour
@@ -10,13 +12,17 @@ public class PlayerFlightController : MonoBehaviour
     [SerializeField] private RaceInputProvider inputProvider;
     [SerializeField] private BoostController boost;
 
-    [Header("見出し・速度の追従（慣性の強さ）")]
+    [Header("速度の追従（慣性の強さ）")]
     [SerializeField] private float headingTurnRate = 1.5f;
     [SerializeField] private float velocityTurnRate = 2.0f;
 
-    [Header("コース中央への補正")]
+    [Header("コース中央への補正（左右）")]
     [SerializeField] private float centerCorrectionGain = 0.5f;
     [SerializeField] private float maxCorrectionAccel = 20f;
+
+    [Header("コース中央への補正（上下）")]
+    [SerializeField] private float verticalCorrectionGain = 0.5f;
+    [SerializeField] private float maxVerticalCorrectionAccel = 20f;
 
     [Header("ロール（バンク）")]
     [SerializeField] private float rollMaxAngle = 25f;
@@ -78,6 +84,18 @@ public class PlayerFlightController : MonoBehaviour
             boost.TryActivate();
         }
 
+        // シールドは今回デバッグログ出力のみ。状態管理は一切持たない。
+        if (input.ShieldPressed)
+        {
+            Debug.Log("シールド発動した");
+        }
+
+        // ショートカットも今回デバッグログ出力のみ。トラッキング操作での実装は別途行う。
+        if (input.ShortcutPressed)
+        {
+            Debug.Log("ショートカットした");
+        }
+
         // 3. 現在のチューニング値（Boost状態に応じてBoostControllerが持つ）
         float maxSpeed = boost.CurrentMaxSpeed;
         float forwardAcceleration = boost.CurrentForwardAcceleration;
@@ -87,6 +105,7 @@ public class PlayerFlightController : MonoBehaviour
         Vector3 position = transform.position;
         Vector3 splineForward = _guide.GetForward(position);
         Vector3 splineRight = _guide.GetRight(position);
+        Vector3 splineUp = _guide.GetUp(position);
         Vector3 centerPosition = _guide.GetCenterPosition(position);
 
         // 5. 見出し方向の遅延追従（第1段階）。垂直成分も含むためPitchも兼ねる。
@@ -96,11 +115,15 @@ public class PlayerFlightController : MonoBehaviour
             _playerForward = splineForward;
         }
 
-        // 6. 加速度計算
+        // 6. 加速度計算（コース中央への補正は左右・上下で別々の強さを持てるように分けて計算する）
         Vector3 forwardAccel = _playerForward * forwardAcceleration;
         Vector3 lateralAccel = splineRight * (horizontal * steeringPower);
         Vector3 centerOffset = centerPosition - position;
-        Vector3 correctionAccel = Vector3.ClampMagnitude(centerOffset * centerCorrectionGain, maxCorrectionAccel);
+        float lateralCenterOffset = Vector3.Dot(centerOffset, splineRight);
+        float verticalCenterOffset = Vector3.Dot(centerOffset, splineUp);
+        Vector3 lateralCorrectionAccel = splineRight * Mathf.Clamp(lateralCenterOffset * centerCorrectionGain, -maxCorrectionAccel, maxCorrectionAccel);
+        Vector3 verticalCorrectionAccel = splineUp * Mathf.Clamp(verticalCenterOffset * verticalCorrectionGain, -maxVerticalCorrectionAccel, maxVerticalCorrectionAccel);
+        Vector3 correctionAccel = lateralCorrectionAccel + verticalCorrectionAccel;
 
         // 7. 速度積分
         _velocity += (forwardAccel + lateralAccel + correctionAccel) * dt;
@@ -114,17 +137,52 @@ public class PlayerFlightController : MonoBehaviour
             _velocity = velocityDirection.normalized * speed;
         }
 
-        // 9. 位置積分
-        // (将来の慣性オフセット・バネ系を追加する場合はこの直後にオフセットを加算する)
-        transform.position = position + _velocity * dt;
+        // 9. 位置積分（円筒境界の外には出られず、境界では摩擦0で滑る）
+        Vector3 desiredPosition = position + _velocity * dt;
+        transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, ref _velocity);
 
-        // 10. 回転（Yaw/PitchはplayerForwardから、Rollは横入力から別途計算して合成）
-        Quaternion headingRotation = Quaternion.LookRotation(_playerForward, Vector3.up);
-        float targetRoll = -horizontal * rollMaxAngle;
+        // 10. 回転：ForwardはPlayerForwardから、Rollは「Splineのバンクへの追従」＋「操作によるロール」の合算
+        Vector3 bankUp = _guide.GetUp(transform.position);
+        float bankFromCourse = Vector3.SignedAngle(Vector3.up, bankUp, _playerForward);
+        float steeringRoll = -horizontal * rollMaxAngle;
+        float targetRoll = Mathf.Clamp(bankFromCourse + steeringRoll, -rollMaxAngle, rollMaxAngle);
         _currentRoll = Mathf.SmoothDamp(_currentRoll, targetRoll, ref _rollVelocity, rollSmoothTime);
-        transform.rotation = headingRotation * Quaternion.AngleAxis(_currentRoll, Vector3.forward);
+        transform.rotation = Quaternion.LookRotation(_playerForward, Vector3.up) * Quaternion.AngleAxis(_currentRoll, Vector3.forward);
 
         // 11. カメラへ公開する先読み位置
         LookAheadWorldPosition = _guide.GetLookAheadPosition(transform.position, lookAheadDistance);
+    }
+
+    // Splineを中心軸とした円筒（TunnelRadius）の外に出られないようにする（frictionless slide:
+    // 境界の外側へ押し出す速度成分だけを消す。前進方向などの接線成分は失わない）。
+    private Vector3 ClampVelocityAndPositionToTunnelRadius(Vector3 desiredPosition, Vector3 center, Vector3 right, Vector3 up, ref Vector3 velocity)
+    {
+        if (courseSpline == null || courseSpline.TunnelRadius <= 0f)
+        {
+            return desiredPosition;
+        }
+
+        float radius = courseSpline.TunnelRadius;
+        Vector3 offset = desiredPosition - center;
+        float lateral = Vector3.Dot(offset, right);
+        float vertical = Vector3.Dot(offset, up);
+        float distance = Mathf.Sqrt(lateral * lateral + vertical * vertical);
+
+        if (distance <= radius || distance < 0.0001f)
+        {
+            return desiredPosition;
+        }
+
+        float scale = radius / distance;
+        Vector3 correctedPosition = desiredPosition + right * (lateral * scale - lateral) + up * (vertical * scale - vertical);
+
+        Vector3 radialDir = (right * lateral + up * vertical) / distance;
+        float velocityAlongRadial = Vector3.Dot(velocity, radialDir);
+        if (velocityAlongRadial > 0f)
+        {
+            velocity -= radialDir * velocityAlongRadial;
+        }
+
+        return correctedPosition;
     }
 }

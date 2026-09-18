@@ -8,6 +8,10 @@ public interface IRaceInput
     // このフレームで押されたか
     bool BoostPressed { get; }
 
-    // このフレームで押されたか（今回未使用だがインターフェースとして保持）
-    bool MainActionPressed { get; }
+    // このフレームで押されたか（デバッグログ出力のみ、状態管理は持たない）
+    bool ShieldPressed { get; }
+
+    // このフレームで押されたか（ショートカット用。今回はデバッグログ出力のみ。
+    // トラッキング操作での実装は別途行う予定のため、暫定的にキーボードへ割り当てている）
+    bool ShortcutPressed { get; }
 }
