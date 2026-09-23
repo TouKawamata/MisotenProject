@@ -1,93 +1,104 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // ブーストの状態（Idle→Boosting→Cooldown→Idle）と、現在有効な速度／加速度／旋回性能の
-// チューニング値を管理する。PlayerFlightControllerはここから現在値を読むだけで、
-// ブースト状態そのものは重複して持たない。
+// チューニング値を管理する。PlayerManagerがここから現在値を読んでPlayerFlightControllerへ渡すため、
+// ブースト状態そのものは重複して持たない。Initialize/TickはPlayerManagerから呼び出される。
 public class BoostController : MonoBehaviour
 {
-    private enum State
+    private enum EState
     {
         Idle,
         Boosting,
         Cooldown
     }
 
-    [SerializeField] private float normalMaxSpeed = 40f;
-    [SerializeField] private float normalForwardAcceleration = 20f;
-    [SerializeField] private float normalSteeringPower = 18f;
+    [FormerlySerializedAs("normalMaxSpeed")]
+    [SerializeField] private float _normalMaxSpeed = 40f;
+    [FormerlySerializedAs("normalForwardAcceleration")]
+    [SerializeField] private float _normalForwardAcceleration = 20f;
+    [FormerlySerializedAs("normalSteeringPower")]
+    [SerializeField] private float _normalSteeringPower = 18f;
 
-    [SerializeField] private float boostMaxSpeed = 70f;
-    [SerializeField] private float boostForwardAcceleration = 45f;
-    [SerializeField] private float boostSteeringPower = 10f;
+    [FormerlySerializedAs("boostMaxSpeed")]
+    [SerializeField] private float _boostMaxSpeed = 70f;
+    [FormerlySerializedAs("boostForwardAcceleration")]
+    [SerializeField] private float _boostForwardAcceleration = 45f;
+    [FormerlySerializedAs("boostSteeringPower")]
+    [SerializeField] private float _boostSteeringPower = 10f;
 
-    [SerializeField] private float boostDuration = 3f;
-    [SerializeField] private float cooldownDuration = 5f;
+    [FormerlySerializedAs("boostDuration")]
+    [SerializeField] private float _boostDuration = 3f;
+    [FormerlySerializedAs("cooldownDuration")]
+    [SerializeField] private float _cooldownDuration = 5f;
 
-    private State _state = State.Idle;
+    private EState _state = EState.Idle;
     private float _stateTimer;
 
     public float CurrentMaxSpeed { get; private set; }
     public float CurrentForwardAcceleration { get; private set; }
     public float CurrentSteeringPower { get; private set; }
 
-    public bool IsBoosting => _state == State.Boosting;
-    public bool IsOnCooldown => _state == State.Cooldown;
+    public bool IsBoosting => _state == EState.Boosting;
+    public bool IsOnCooldown => _state == EState.Cooldown;
 
-    private void Awake()
+    public void Initialize()
     {
+        _state = EState.Idle;
+        _stateTimer = 0f;
         ApplyNormalTuning();
     }
 
     // Idle状態のときだけ発動に成功する。
     public bool TryActivate()
     {
-        if (_state != State.Idle)
+        if (_state != EState.Idle)
         {
             return false;
         }
 
-        _state = State.Boosting;
-        _stateTimer = boostDuration;
+        _state = EState.Boosting;
+        _stateTimer = _boostDuration;
         ApplyBoostTuning();
         return true;
     }
 
-    private void Update()
+    public void Tick(float deltaTime)
     {
-        if (_state == State.Idle)
+        if (_state == EState.Idle)
         {
             return;
         }
 
-        _stateTimer -= Time.deltaTime;
+        _stateTimer -= deltaTime;
         if (_stateTimer > 0f)
         {
             return;
         }
 
-        if (_state == State.Boosting)
+        if (_state == EState.Boosting)
         {
-            _state = State.Cooldown;
-            _stateTimer = cooldownDuration;
+            _state = EState.Cooldown;
+            _stateTimer = _cooldownDuration;
             ApplyNormalTuning();
         }
-        else if (_state == State.Cooldown)
+        else if (_state == EState.Cooldown)
         {
-            _state = State.Idle;
+            _state = EState.Idle;
         }
     }
 
     private void ApplyNormalTuning()
     {
-        CurrentMaxSpeed = normalMaxSpeed;
-        CurrentForwardAcceleration = normalForwardAcceleration;
-        CurrentSteeringPower = normalSteeringPower;
+        CurrentMaxSpeed = _normalMaxSpeed;
+        CurrentForwardAcceleration = _normalForwardAcceleration;
+        CurrentSteeringPower = _normalSteeringPower;
     }
 
     private void ApplyBoostTuning()
     {
-        CurrentMaxSpeed = boostMaxSpeed;
-        CurrentForwardAcceleration = boostForwardAcceleration;
-        CurrentSteeringPower = boostSteeringPower;
+        CurrentMaxSpeed = _boostMaxSpeed;
+        CurrentForwardAcceleration = _boostForwardAcceleration;
+        CurrentSteeringPower = _boostSteeringPower;
     }
 }
