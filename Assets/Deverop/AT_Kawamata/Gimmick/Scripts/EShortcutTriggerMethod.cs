@@ -1,5 +1,5 @@
 // ShortcutZoneの発動エリア内で、何をショートカットの入力として扱うか
-public enum ShortcutTriggerMethod
+public enum EShortcutTriggerMethod
 {
     // Eキー（IRaceInput.ShortcutPressed）
     KeyPress,

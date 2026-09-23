@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class ShortcutZoneTrigger : MonoBehaviour
 {
-    [SerializeField] private ShortcutZoneRole role;
+    [SerializeField] private EShortcutZoneRole role;
     [SerializeField] private ShortcutZone zone;
 
     private void Awake()

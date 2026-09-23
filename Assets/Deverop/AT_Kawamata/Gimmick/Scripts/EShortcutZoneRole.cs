@@ -1,5 +1,5 @@
 // ShortcutZoneTriggerが担う役割。
-public enum ShortcutZoneRole
+public enum EShortcutZoneRole
 {
     // 警告用の外側エリア。UI表示（「上昇しろ」等）のフックにのみ使う。
     Warning,

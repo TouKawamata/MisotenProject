@@ -125,7 +125,7 @@ public class PlayerFlightController : MonoBehaviour, IShortcutZoneReceiver
         if (_currentShortcutZone != null)
         {
             bool zoneTriggered;
-            if (_currentShortcutZone.TriggerMethod == ShortcutTriggerMethod.HorizontalThreshold)
+            if (_currentShortcutZone.TriggerMethod == EShortcutTriggerMethod.HorizontalThreshold)
             {
                 bool isAboveThreshold = Mathf.Abs(horizontal) >= _currentShortcutZone.HorizontalThreshold;
                 zoneTriggered = isAboveThreshold && !_wasHorizontalAboveThreshold;
