@@ -6,7 +6,7 @@ using UnityEngine;
 // 摩擦0で滑るだけ（前進方向の速度は失わず、外側へ押し出す成分だけを消す）。
 [RequireComponent(typeof(BoostController))]
 [RequireComponent(typeof(RaceInputProvider))]
-public class PlayerFlightController : MonoBehaviour
+public class PlayerFlightController : MonoBehaviour, IShortcutZoneReceiver
 {
     [SerializeField] private CourseSpline courseSpline;
     [SerializeField] private RaceInputProvider inputProvider;
@@ -31,17 +31,38 @@ public class PlayerFlightController : MonoBehaviour
     [Header("カメラ用先読み")]
     [SerializeField] private float lookAheadDistance = 40f;
 
+    [Header("ショートカット判定（Splineへの吸着）")]
+    [Tooltip("ShortcutZoneの発動エリア内でショートカット入力があると、上下補正がこの強さに切り替わりSplineの高さへ強く吸着する")]
+    [SerializeField] private float heightSnapCorrectionGain = 20f;
+    [SerializeField] private float maxHeightSnapCorrectionAccel = 200f;
+
+    [Header("デバッグ")]
+    [SerializeField] private bool showDebugLogs = true;
+
     private ICourseGuide _guide;
     private Vector3 _playerForward;
     private Vector3 _velocity;
     private float _currentRoll;
     private float _rollVelocity;
+    private ShortcutZone _currentShortcutZone;
+    private bool _heightSnapActive;
+    private bool _wasHorizontalAboveThreshold;
 
     public Vector3 Velocity => _velocity;
 
     public float CurrentRoll => _currentRoll;
 
     public Vector3 LookAheadWorldPosition { get; private set; }
+
+    // ShortcutZone（発動エリア）からの通知。エリアを離れたら吸着も強制的に解除する。
+    public void SetInShortcutZone(ShortcutZone zone)
+    {
+        _currentShortcutZone = zone;
+        if (zone == null)
+        {
+            _heightSnapActive = false;
+        }
+    }
 
     private void Awake()
     {
@@ -87,13 +108,38 @@ public class PlayerFlightController : MonoBehaviour
         // シールドは今回デバッグログ出力のみ。状態管理は一切持たない。
         if (input.ShieldPressed)
         {
-            Debug.Log("シールド発動した");
+            if (showDebugLogs)
+            {
+                Debug.Log("シールド発動した");
+            }
         }
 
-        // ショートカットも今回デバッグログ出力のみ。トラッキング操作での実装は別途行う。
-        if (input.ShortcutPressed)
+        // ショートカットキー入力自体は常にログを出す（デバッグ用。トラッキング入力側の動作確認にも使う）。
+        if (input.ShortcutPressed && showDebugLogs)
         {
             Debug.Log("ショートカットした");
+        }
+
+        // 実際の吸着発動は「発動エリア内であること」＋「そのエリアが指定するトリガー方式で入力があったこと」が条件。
+        // どちらを使うか（Eキー／Horizontal閾値）はエリアごとにShortcutZone側で設定する。
+        if (_currentShortcutZone != null)
+        {
+            bool zoneTriggered;
+            if (_currentShortcutZone.TriggerMethod == ShortcutTriggerMethod.HorizontalThreshold)
+            {
+                bool isAboveThreshold = Mathf.Abs(horizontal) >= _currentShortcutZone.HorizontalThreshold;
+                zoneTriggered = isAboveThreshold && !_wasHorizontalAboveThreshold;
+                _wasHorizontalAboveThreshold = isAboveThreshold;
+            }
+            else
+            {
+                zoneTriggered = input.ShortcutPressed;
+            }
+
+            if (zoneTriggered)
+            {
+                _heightSnapActive = true;
+            }
         }
 
         // 3. 現在のチューニング値（Boost状態に応じてBoostControllerが持つ）
@@ -121,8 +167,10 @@ public class PlayerFlightController : MonoBehaviour
         Vector3 centerOffset = centerPosition - position;
         float lateralCenterOffset = Vector3.Dot(centerOffset, splineRight);
         float verticalCenterOffset = Vector3.Dot(centerOffset, splineUp);
+        float effectiveVerticalGain = _heightSnapActive ? heightSnapCorrectionGain : verticalCorrectionGain;
+        float effectiveMaxVerticalAccel = _heightSnapActive ? maxHeightSnapCorrectionAccel : maxVerticalCorrectionAccel;
         Vector3 lateralCorrectionAccel = splineRight * Mathf.Clamp(lateralCenterOffset * centerCorrectionGain, -maxCorrectionAccel, maxCorrectionAccel);
-        Vector3 verticalCorrectionAccel = splineUp * Mathf.Clamp(verticalCenterOffset * verticalCorrectionGain, -maxVerticalCorrectionAccel, maxVerticalCorrectionAccel);
+        Vector3 verticalCorrectionAccel = splineUp * Mathf.Clamp(verticalCenterOffset * effectiveVerticalGain, -effectiveMaxVerticalAccel, effectiveMaxVerticalAccel);
         Vector3 correctionAccel = lateralCorrectionAccel + verticalCorrectionAccel;
 
         // 7. 速度積分
