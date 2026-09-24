@@ -23,6 +23,13 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
     private bool _wasHorizontalAboveThreshold;
     private bool _isInitialized;
 
+    public bool IsInShortcutZone => _currentShortcutZone != null;
+
+    public bool IsShortcutProfileActive => _isShortcutProfileActive;
+
+    // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
+    public FlightTuningProfile CurrentProfile { get; private set; }
+
     public void Initialize()
     {
         if (_defaultProfile == null || _shortcutProfile == null)
@@ -74,8 +81,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
 
         UpdateShortcutTrigger(input, horizontal);
 
-        FlightTuningProfile profile = _isShortcutProfileActive ? _shortcutProfile : _defaultProfile;
-        _flightController.Tick(horizontal, _boost.CurrentMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, profile, dt);
+        CurrentProfile = _isShortcutProfileActive ? _shortcutProfile : _defaultProfile;
+        _flightController.Tick(horizontal, _boost.CurrentMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, dt);
     }
 
     // ShortcutZone（発動エリア）からの通知。エリアを離れたら吸着も強制的に解除する。

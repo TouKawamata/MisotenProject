@@ -42,6 +42,12 @@ public class BoostController : MonoBehaviour
     public bool IsBoosting => _state == EState.Boosting;
     public bool IsOnCooldown => _state == EState.Cooldown;
 
+    // ブースト中でなければ0。
+    public float BoostRemainingTime => _state == EState.Boosting ? _stateTimer : 0f;
+
+    // クールダウン中でなければ0。
+    public float CooldownRemainingTime => _state == EState.Cooldown ? _stateTimer : 0f;
+
     public void Initialize()
     {
         _state = EState.Idle;

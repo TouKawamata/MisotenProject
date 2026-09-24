@@ -23,6 +23,9 @@ public class PlayerFlightController : MonoBehaviour
 
     public Vector3 LookAheadWorldPosition { get; private set; }
 
+    // 直近のTickで、トンネル境界の外に出ようとして位置を戻したか。
+    public bool IsClampedToTunnel { get; private set; }
+
     public void Initialize(FlightTuningProfile initialProfile)
     {
         _guide = _courseSpline;
@@ -93,6 +96,7 @@ public class PlayerFlightController : MonoBehaviour
     // 境界の外側へ押し出す速度成分だけを消す。前進方向などの接線成分は失わない）。
     private Vector3 ClampVelocityAndPositionToTunnelRadius(Vector3 desiredPosition, Vector3 center, Vector3 right, Vector3 up, ref Vector3 velocity)
     {
+        IsClampedToTunnel = false;
         if (_courseSpline == null || _courseSpline.TunnelRadius <= 0f)
         {
             return desiredPosition;
@@ -119,6 +123,7 @@ public class PlayerFlightController : MonoBehaviour
             velocity -= radialDir * velocityAlongRadial;
         }
 
+        IsClampedToTunnel = true;
         return correctedPosition;
     }
 }
