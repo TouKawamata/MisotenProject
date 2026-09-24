@@ -337,39 +337,57 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         ReceiveBoostHit(transform.right);
     }
 
-    private void OnTriggerEnter(
-        Collider other
-    )
+    private void OnTriggerEnter(Collider other)
     {
+        // Inspectorで指定したPlayer以外は無視
+        if (!IsPlayer(other))
+            return;
+
         _isTouching = true;
 
         if (!_enableLog)
             return;
 
-        float relativeSpeed =
-            GetRelativeSpeed(other);
+        float relativeSpeed = GetRelativeSpeed(other);
 
         Debug.Log(
-            $"{name}: {other.name} と接触開始 " +
-            $"RelativeSpeed = " +
-            $"{relativeSpeed:F2} m/s",
+            $"{name}: Playerと接触開始 " +
+            $"RelativeSpeed = {relativeSpeed:F2} m/s",
             this
         );
     }
 
-    private void OnTriggerExit(
-        Collider other
-    )
+    private void OnTriggerExit(Collider other)
     {
+        // Inspectorで指定したPlayer以外は無視
+        if (!IsPlayer(other))
+            return;
+
         _isTouching = false;
 
         if (!_enableLog)
             return;
 
         Debug.Log(
-            $"{name}: {other.name} と接触終了",
+            $"{name}: Playerと接触終了",
             this
         );
+    }
+
+    private bool IsPlayer(Collider other)
+    {
+        if (_player == null)
+            return false;
+
+        // Player本体にColliderがある場合
+        if (other.transform == _player)
+            return true;
+
+        // Playerの子オブジェクトにColliderがある場合
+        if (other.transform.IsChildOf(_player))
+            return true;
+
+        return false;
     }
 
     private float GetRelativeSpeed(
