@@ -1,10 +1,10 @@
 using UnityEngine;
-using VContainer.Unity;
 
 // Playerに関する機能の窓口。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
 // 現在有効なFlightTuningProfile（通常／ショートカット吸着）を選んでPlayerFlightControllerへ渡す。
-// Initialize/TickはGameLifetimeScope（VContainer）から呼び出される。
-public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializable, ITickable
+// レースの参加者（IRacer）として、Initialize/PlaceAt/TickはRaceManagerから呼び出される。
+// ゴール後は入力を無視し、RaceSettingsの設定に沿って減速・停止させる（Tickは呼ばれ続ける）。
+public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -22,6 +22,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
     private bool _isShortcutProfileActive;
     private bool _wasHorizontalAboveThreshold;
     private bool _isInitialized;
+    private bool _hasCapturedFinishSpeed;
+    private float _speedAtFinish;
 
     public bool IsInShortcutZone => _currentShortcutZone != null;
 
@@ -29,6 +31,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
 
     // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
     public FlightTuningProfile CurrentProfile { get; private set; }
+
+    public Transform Transform => transform;
 
     public void Initialize()
     {
@@ -44,15 +48,49 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
         _isInitialized = true;
     }
 
-    public void Tick()
+    // 配置してから、ブースト・ショートカット・飛行の内部状態をリセットする（飛行の向きはtransformから取るため、この順番）。
+    public void PlaceAt(Vector3 position, Quaternion rotation)
     {
         if (!_isInitialized)
         {
             return;
         }
 
-        float dt = Time.deltaTime;
-        _boost.Tick(dt);
+        transform.SetPositionAndRotation(position, rotation);
+        _boost.Initialize();
+        // 発動エリアに居るかどうか（_currentShortcutZone）はShortcutZone側のトリガー通知に任せ、吸着状態だけ解除する。
+        _isShortcutProfileActive = false;
+        _wasHorizontalAboveThreshold = false;
+        _hasCapturedFinishSpeed = false;
+        CurrentProfile = _defaultProfile;
+        _flightController.ResetState(CurrentProfile);
+    }
+
+    public void Tick(float deltaTime, IReadOnlyRacerData data)
+    {
+        if (!_isInitialized)
+        {
+            return;
+        }
+
+        _boost.Tick(deltaTime);
+
+        // ゴール後は入力を無視し、通常のProfileでまっすぐ飛ばしながら停止させる。
+        // 速度の上限を「ゴールした瞬間の速度 × SpeedMultiplier」にすることで、RaceSettingsのカーブ通りに減速する
+        // （途中でブーストが切れても落ち方が変わらないよう、ブーストの最高速度ではなくゴール時の速度を基準にする）。
+        if (data.IsFinished)
+        {
+            if (!_hasCapturedFinishSpeed)
+            {
+                _speedAtFinish = _flightController.Velocity.magnitude;
+                _hasCapturedFinishSpeed = true;
+            }
+
+            CurrentProfile = _defaultProfile;
+            float maxSpeed = _speedAtFinish * data.SpeedMultiplier;
+            _flightController.Tick(0f, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
+            return;
+        }
 
         IRaceInput input = _inputProvider.Current;
         if (input == null)
@@ -82,7 +120,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IInitializabl
         UpdateShortcutTrigger(input, horizontal);
 
         CurrentProfile = _isShortcutProfileActive ? _shortcutProfile : _defaultProfile;
-        _flightController.Tick(horizontal, _boost.CurrentMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, dt);
+        _flightController.Tick(horizontal, _boost.CurrentMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
     }
 
     // ShortcutZone（発動エリア）からの通知。エリアを離れたら吸着も強制的に解除する。

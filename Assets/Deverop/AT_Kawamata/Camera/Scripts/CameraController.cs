@@ -22,6 +22,19 @@ public class CameraController : MonoBehaviour
     private void Awake()
     {
         _smoothedForward = player != null ? player.transform.forward : transform.forward;
+
+        if (player != null)
+        {
+            player.StateReset += SnapToTarget;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (player != null)
+        {
+            player.StateReset -= SnapToTarget;
+        }
     }
 
     private void LateUpdate()
@@ -31,6 +44,22 @@ public class CameraController : MonoBehaviour
             return;
         }
 
+        float smoothT = 1f - Mathf.Exp(-rotationSmoothing * Time.deltaTime);
+        _smoothedForward = Vector3.Slerp(_smoothedForward, ComputeTargetForward(), smoothT).normalized;
+
+        float cameraRoll = player.CurrentRoll * rollDampFactor;
+        transform.rotation = Quaternion.LookRotation(_smoothedForward, Vector3.up) * Quaternion.AngleAxis(cameraRoll, Vector3.forward);
+    }
+
+    // Playerが置き直されたとき、遅延なしで目標の向きに合わせる（スタート前にカメラが回り込むのを防ぐ）。
+    private void SnapToTarget()
+    {
+        _smoothedForward = ComputeTargetForward();
+    }
+
+    // Playerの向きとLookAhead方向をブレンドした、カメラが向くべき方向。
+    private Vector3 ComputeTargetForward()
+    {
         Vector3 toLookAhead = player.LookAheadWorldPosition - transform.position;
         Vector3 lookDirection = toLookAhead.sqrMagnitude > 0.0001f ? toLookAhead.normalized : player.transform.forward;
 
@@ -40,10 +69,6 @@ public class CameraController : MonoBehaviour
             blendedForward = player.transform.forward;
         }
 
-        float smoothT = 1f - Mathf.Exp(-rotationSmoothing * Time.deltaTime);
-        _smoothedForward = Vector3.Slerp(_smoothedForward, blendedForward.normalized, smoothT).normalized;
-
-        float cameraRoll = player.CurrentRoll * rollDampFactor;
-        transform.rotation = Quaternion.LookRotation(_smoothedForward, Vector3.up) * Quaternion.AngleAxis(cameraRoll, Vector3.forward);
+        return blendedForward.normalized;
     }
 }
