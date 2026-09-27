@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -26,6 +27,9 @@ public class PlayerFlightController : MonoBehaviour
     // 直近のTickで、トンネル境界の外に出ようとして位置を戻したか。
     public bool IsClampedToTunnel { get; private set; }
 
+    // ResetState（スタートグリッドへの配置・リトライ）で状態をリセットしたとき。カメラの向きの即時合わせに使う。
+    public event Action StateReset;
+
     public void Initialize(FlightTuningProfile initialProfile)
     {
         _guide = _courseSpline;
@@ -42,6 +46,7 @@ public class PlayerFlightController : MonoBehaviour
         _rollVelocity = 0f;
         IsClampedToTunnel = false;
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
+        StateReset?.Invoke();
     }
 
     public void Tick(float horizontal, float maxSpeed, float forwardAcceleration, float steeringPower, FlightTuningProfile profile, float deltaTime)
