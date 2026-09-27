@@ -3,7 +3,7 @@ using UnityEngine;
 // Playerに関する機能の窓口。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
 // 現在有効なFlightTuningProfile（通常／ショートカット吸着）を選んでPlayerFlightControllerへ渡す。
 // レースの参加者（IRacer）として、Initialize/PlaceAt/TickはRaceManagerから呼び出される。
-// ゴール後は入力を無視して直進させる（Tickは呼ばれ続ける）。
+// ゴール後は入力を無視し、RaceSettingsの設定に沿って減速・停止させる（Tickは呼ばれ続ける）。
 public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer
 {
     [SerializeField] private PlayerFlightController _flightController;
@@ -22,6 +22,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer
     private bool _isShortcutProfileActive;
     private bool _wasHorizontalAboveThreshold;
     private bool _isInitialized;
+    private bool _hasCapturedFinishSpeed;
+    private float _speedAtFinish;
 
     public bool IsInShortcutZone => _currentShortcutZone != null;
 
@@ -59,6 +61,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer
         // 発動エリアに居るかどうか（_currentShortcutZone）はShortcutZone側のトリガー通知に任せ、吸着状態だけ解除する。
         _isShortcutProfileActive = false;
         _wasHorizontalAboveThreshold = false;
+        _hasCapturedFinishSpeed = false;
         CurrentProfile = _defaultProfile;
         _flightController.ResetState(CurrentProfile);
     }
@@ -72,11 +75,20 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer
 
         _boost.Tick(deltaTime);
 
-        // ゴール後は入力を無視し、通常のProfileでまっすぐ飛ばす。
+        // ゴール後は入力を無視し、通常のProfileでまっすぐ飛ばしながら停止させる。
+        // 速度の上限を「ゴールした瞬間の速度 × SpeedMultiplier」にすることで、RaceSettingsのカーブ通りに減速する
+        // （途中でブーストが切れても落ち方が変わらないよう、ブーストの最高速度ではなくゴール時の速度を基準にする）。
         if (data.IsFinished)
         {
+            if (!_hasCapturedFinishSpeed)
+            {
+                _speedAtFinish = _flightController.Velocity.magnitude;
+                _hasCapturedFinishSpeed = true;
+            }
+
             CurrentProfile = _defaultProfile;
-            _flightController.Tick(0f, _boost.CurrentMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
+            float maxSpeed = _speedAtFinish * data.SpeedMultiplier;
+            _flightController.Tick(0f, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
             return;
         }
 

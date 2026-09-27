@@ -18,4 +18,11 @@ public interface IReadOnlyRacerData
 
     // GOからの経過時間（秒）。IsFinishedがfalseの間は0。
     float FinishTime { get; }
+
+    // ゴールしてからの経過時間（秒）。IsFinishedがfalseの間は0。
+    float TimeSinceFinish { get; }
+
+    // ゴール後の停止に使う速度の倍率。ゴール前は1。ゴール後はRaceSettingsのカーブに沿って0（停止）まで下がる。
+    // Racerはゴール時の速度にこれを掛けた値を速度の上限にする。
+    float SpeedMultiplier { get; }
 }

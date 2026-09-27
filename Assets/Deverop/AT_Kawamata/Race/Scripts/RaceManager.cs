@@ -101,6 +101,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         {
             case ERaceState.Racing:
                 ElapsedTime += dt;
+                UpdateGoalStop(dt);
                 TickRacers(dt);
                 _progressTracker.UpdateProgress(_entries);
                 CheckFinish();
@@ -109,7 +110,8 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 break;
 
             case ERaceState.Finished:
-                // ゴール後の走行区間。順位・タイムは確定済みなので動かすだけ。
+                // ゴール後の停止までの区間。順位・タイムは確定済みなので動かすだけ。
+                UpdateGoalStop(dt);
                 TickRacers(dt);
                 break;
         }
@@ -181,6 +183,22 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         // カウントダウン中のDebug HUD・UI用に、配置直後の進行度と順位を出しておく。
         _progressTracker.UpdateProgress(_entries);
         _progressTracker.UpdateRanking(_entries);
+    }
+
+    // ゴール済みのRacerに、停止までの速度の倍率を渡す（実際の減速はRacer側が行う）。
+    private void UpdateGoalStop(float dt)
+    {
+        foreach (RacerEntry entry in _entries)
+        {
+            RacerData data = entry.Data;
+            if (!data.IsFinished)
+            {
+                continue;
+            }
+
+            data.TimeSinceFinish += dt;
+            data.SpeedMultiplier = _settings.EvaluateGoalStopSpeedMultiplier(data.TimeSinceFinish);
+        }
     }
 
     private void TickRacers(float dt)

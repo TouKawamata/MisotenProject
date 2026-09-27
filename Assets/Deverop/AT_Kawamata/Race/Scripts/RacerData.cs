@@ -6,6 +6,7 @@ public class RacerData : IReadOnlyRacerData
     {
         RacerId = racerId;
         IsPlayer = isPlayer;
+        SpeedMultiplier = 1f;
     }
 
     public int RacerId { get; }
@@ -22,6 +23,10 @@ public class RacerData : IReadOnlyRacerData
 
     public float FinishTime { get; set; }
 
+    public float TimeSinceFinish { get; set; }
+
+    public float SpeedMultiplier { get; set; }
+
     public void ResetProgress()
     {
         CurrentRank = 0;
@@ -29,5 +34,7 @@ public class RacerData : IReadOnlyRacerData
         CourseProgress = 0f;
         IsFinished = false;
         FinishTime = 0f;
+        TimeSinceFinish = 0f;
+        SpeedMultiplier = 1f;
     }
 }
