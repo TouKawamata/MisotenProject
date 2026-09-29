@@ -1,59 +1,60 @@
 using UnityEngine;
 
-public class DummyRacer : MonoBehaviour, IBoostHitReceiver
+public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
 {
     private enum StartPositionMode
     {
-        [InspectorName("��΋���")]
+        [InspectorName("絶対距離")]
         AbsoluteDistance,
 
-        [InspectorName("Player����̑��΋���")]
+        [InspectorName("Playerからの相対距離")]
         RelativeToPlayer
     }
 
-    [Header("�R�[�X�ݒ�")]
-    [InspectorName("�R�[�X�X�v���C��")]
+    [Header("コース設定")]
+    [InspectorName("コーススプライン")]
     [SerializeField] private CourseSpline _courseSpline;
 
-    [Header("�ړ��ݒ�")]
-    [InspectorName("���x")]
+    [Header("移動設定")]
+    [InspectorName("速度")]
     [SerializeField] private float _speed = 50f;
 
-    [Header("�J�n�ʒu�ݒ�")]
-    [InspectorName("�J�n�ʒu���[�h")]
+    [Header("開始位置設定")]
+    [InspectorName("開始位置モード")]
     [SerializeField]
     private StartPositionMode _startPositionMode
         = StartPositionMode.AbsoluteDistance;
 
-    [InspectorName("�J�n����")]
+    [InspectorName("開始距離")]
     [SerializeField] private float _startDistance = 0f;
 
     [InspectorName("Player")]
     [SerializeField] private Transform _player;
 
-    [Header("�ʒu�I�t�Z�b�g")]
-    [InspectorName("���E�I�t�Z�b�g")]
+    [Header("位置オフセット")]
+    [InspectorName("左右オフセット")]
     [SerializeField] private float _lateralOffset = 0f;
 
-    [InspectorName("�㉺�I�t�Z�b�g")]
+    [InspectorName("上下オフセット")]
     [SerializeField] private float _verticalOffset = 0f;
 
-    [InspectorName("Player�Ɠ������E�ʒu�𑖂�")]
+    [InspectorName("Playerと同じ左右位置を走る")]
+    [Tooltip("ON：Playerと同じ左右位置を走る。OFF：左右オフセットの位置のまま走る（RaceManagerに登録されている場合は、配置されたグリッドの左右位置）")]
     [SerializeField]
     private bool _followPlayerLateralPosition = true;
 
-    [Header("�u�[�X�g�ڐG�ݒ�")]
-    [InspectorName("�u�[�X�g�ڐG���̌�����")]
+    [Header("ブースト接触設定")]
+    [InspectorName("ブースト接触時の減速量")]
     [SerializeField] private float _boostSlowAmount = 20f;
 
-    [InspectorName("��������")]
+    [InspectorName("減速時間")]
     [SerializeField] private float _boostSlowDuration = 1f;
 
-    [InspectorName("�u�[�X�g�ڐG���̉������")]
+    [InspectorName("ブースト接触時の横ずれ量")]
     [SerializeField] private float _boostSideMove = 1f;
 
-    [Header("�f�o�b�O�ݒ�")]
-    [InspectorName("���O���o�͂���")]
+    [Header("デバッグ設定")]
+    [InspectorName("ログを出力する")]
     [SerializeField] private bool _enableLog = true;
 
     private float _distance;
@@ -69,18 +70,29 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
 
     private bool _isTouching;
 
+    // RaceManagerから動かされているか（PlaceAtが呼ばれたらtrue）。trueの間はStart/Updateで動かない。
+    private bool _isDrivenByRace;
+    private bool _hasCapturedFinishSpeed;
+    private float _speedAtFinish;
+
+    public Transform Transform => transform;
+
     private void Start()
     {
         if (_courseSpline == null)
         {
             Debug.LogError(
-                $"{name}: CourseSpline���ݒ肳��Ă��܂���B",
+                $"{name}: CourseSplineが設定されていません。",
                 this
             );
 
             enabled = false;
             return;
         }
+
+        // RaceManagerがすでにスタートグリッドへ配置しているので、開始位置で上書きしない
+        if (_isDrivenByRace)
+            return;
 
         _resolvedStartDistance = GetStartDistance();
         _distance = _resolvedStartDistance;
@@ -97,29 +109,116 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
 
     private void Update()
     {
+        // RaceManagerに登録されている場合は、RaceManagerからTickで動かす
+        if (_isDrivenByRace)
+            return;
+
         if (_courseSpline == null)
             return;
 
-        UpdateVelocity();
+        Move(Time.deltaTime, GetCurrentSpeed(Time.deltaTime));
+    }
 
+    // RaceManagerからスタートグリッドへ配置されるときに呼ばれる。以降はTickで動かされる。
+    // 向きはコースに沿った向きになるため、rotationは使わない。
+    public void PlaceAt(Vector3 position, Quaternion rotation)
+    {
+        if (_courseSpline == null)
+        {
+            Debug.LogError(
+                $"{name}: CourseSplineが設定されていないため、スタートグリッドに配置できません。",
+                this
+            );
+
+            return;
+        }
+
+        _isDrivenByRace = true;
+        _hasCapturedFinishSpeed = false;
+        _slowTimer = 0f;
+
+        _distance = _courseSpline.FindNearestDistance(position);
+        _resolvedStartDistance = _distance;
+
+        // 配置された位置のコース中心からのズレを、左右・上下のオフセットとして持つ
+        Vector3 offset =
+            position
+            - _courseSpline.EvaluatePositionByDistance(_distance);
+
+        _lateralOffset =
+            Vector3.Dot(
+                offset,
+                _courseSpline.EvaluateRightByDistance(_distance)
+            );
+
+        _verticalOffset =
+            Vector3.Dot(
+                offset,
+                _courseSpline.EvaluateUpByDistance(_distance)
+            );
+
+        ApplyTransform(_distance);
+
+        _previousPosition = transform.position;
+
+        if (_player != null)
+        {
+            _previousPlayerPosition = _player.position;
+        }
+    }
+
+    public void Tick(float deltaTime, IReadOnlyRacerData data)
+    {
+        if (_courseSpline == null)
+            return;
+
+        float currentSpeed = GetCurrentSpeed(deltaTime);
+
+        // ゴール後は、ゴールした瞬間の速度にSpeedMultiplierを掛けて減速・停止する
+        if (data.IsFinished)
+        {
+            if (!_hasCapturedFinishSpeed)
+            {
+                _speedAtFinish = currentSpeed;
+                _hasCapturedFinishSpeed = true;
+            }
+
+            currentSpeed = _speedAtFinish * data.SpeedMultiplier;
+        }
+
+        Move(deltaTime, currentSpeed);
+    }
+
+    // ブースト接触による減速を反映した、現在の速度
+    private float GetCurrentSpeed(float deltaTime)
+    {
         float currentSpeed = _speed;
 
         if (_slowTimer > 0f)
         {
-            _slowTimer -= Time.deltaTime;
+            _slowTimer -= deltaTime;
 
             currentSpeed -= _boostSlowAmount;
             currentSpeed = Mathf.Max(0f, currentSpeed);
         }
 
-        _distance += currentSpeed * Time.deltaTime;
+        return currentSpeed;
+    }
 
-        // �񃋁[�v�R�[�X�Ȃ�I�_�ŊJ�n�n�_�ɖ߂�
+    private void Move(float deltaTime, float currentSpeed)
+    {
+        UpdateVelocity(deltaTime);
+
+        _distance += currentSpeed * deltaTime;
+
+        // 非ループコースなら終点で開始地点に戻る（RaceManagerから動かされている場合は終点で止まる）
         if (!_courseSpline.IsLoop)
         {
             if (_distance >= _courseSpline.TotalLength)
             {
-                _distance = _resolvedStartDistance;
+                _distance = _isDrivenByRace
+                    ? _courseSpline.TotalLength
+                    : _resolvedStartDistance;
             }
         }
         else
@@ -139,14 +238,14 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         ApplyTransform(_distance);
     }
 
-    private void UpdateVelocity()
+    private void UpdateVelocity(float deltaTime)
     {
-        if (Time.deltaTime <= 0f)
+        if (deltaTime <= 0f)
             return;
 
         _estimatedVelocity =
             (transform.position - _previousPosition)
-            / Time.deltaTime;
+            / deltaTime;
 
         _previousPosition = transform.position;
 
@@ -154,7 +253,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         {
             _playerEstimatedVelocity =
                 (_player.position - _previousPlayerPosition)
-                / Time.deltaTime;
+                / deltaTime;
 
             _previousPlayerPosition = _player.position;
         }
@@ -237,7 +336,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
             if (_player == null)
             {
                 Debug.LogWarning(
-                    $"{name}: Player���ݒ肳��Ă��܂���B",
+                    $"{name}: Playerが設定されていません。",
                     this
                 );
 
@@ -301,14 +400,14 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         if (_enableLog)
         {
             Debug.Log(
-                $"{name}: BoostHit���󂯂܂����B" +
+                $"{name}: BoostHitを受けました。" +
                 $" Direction = {hitDirection}",
                 this
             );
         }
     }
 
-    [ContextMenu("�J�n�ʒu�ɖ߂�")]
+    [ContextMenu("開始位置に戻す")]
     private void ResetToStartPosition()
     {
         if (_courseSpline == null)
@@ -325,13 +424,13 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         if (_enableLog)
         {
             Debug.Log(
-                $"{name}: �J�n�ʒu�ɖ߂��܂����B",
+                $"{name}: 開始位置に戻しました。",
                 this
             );
         }
     }
 
-    [ContextMenu("�e�X�g/BoostHit���蓮���s")]
+    [ContextMenu("テスト/BoostHitを手動実行")]
     private void TestBoostHit()
     {
         ReceiveBoostHit(transform.right);
@@ -339,7 +438,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
 
     private void OnTriggerEnter(Collider other)
     {
-        // Inspector�Ŏw�肵��Player�ȊO�͖���
+        // Inspectorで指定したPlayer以外は無視
         if (!IsPlayer(other))
             return;
 
@@ -351,7 +450,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         float relativeSpeed = GetRelativeSpeed(other);
 
         Debug.Log(
-            $"{name}: Player�ƐڐG�J�n " +
+            $"{name}: Playerと接触開始 " +
             $"RelativeSpeed = {relativeSpeed:F2} m/s",
             this
         );
@@ -359,7 +458,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
 
     private void OnTriggerExit(Collider other)
     {
-        // Inspector�Ŏw�肵��Player�ȊO�͖���
+        // Inspectorで指定したPlayer以外は無視
         if (!IsPlayer(other))
             return;
 
@@ -369,7 +468,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
             return;
 
         Debug.Log(
-            $"{name}: Player�ƐڐG�I��",
+            $"{name}: Playerと接触終了",
             this
         );
     }
@@ -379,11 +478,11 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver
         if (_player == null)
             return false;
 
-        // Player�{�̂�Collider������ꍇ
+        // Player本体にColliderがある場合
         if (other.transform == _player)
             return true;
 
-        // Player�̎q�I�u�W�F�N�g��Collider������ꍇ
+        // Playerの子オブジェクトにColliderがある場合
         if (other.transform.IsChildOf(_player))
             return true;
 
