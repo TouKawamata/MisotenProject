@@ -12,10 +12,15 @@ using VContainer.Unity;
 public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable, IDisposable
 {
     private const int PlayerRacerId = 0;
+    private const string PlayerDisplayName = "Player";
 
     [SerializeField] private PlayerManager _playerManager;
     [SerializeField] private CourseSpline _courseSpline;
     [SerializeField] private RaceSettings _settings;
+
+    [Header("CPU")]
+    [Tooltip("Player以外の参加者（IRacerを実装したコンポーネントを持つGameObject）。Playerのグリッド番号を飛ばして、空いているグリッドに上から順に並べる")]
+    [SerializeField] private GameObject[] _cpuRacers;
 
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs = true;
@@ -29,6 +34,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     private RacerEntry _playerEntry;
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isInitialized;
+    private int _lastPlayerRank;
 
     // カウントが変わったとき（3, 2, 1, …）。0はGO。
     public event Action<int> CountdownChanged;
@@ -66,8 +72,9 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
         _entries.Clear();
         _racerDataList.Clear();
-        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true), _settings.PlayerGridIndex);
+        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName), _settings.PlayerGridIndex);
         AddEntry(_playerEntry);
+        AddCpuEntries();
 
         _startGrid = new StartGrid(_courseSpline, _settings);
         _progressTracker = new RaceProgressTracker(_courseSpline);
@@ -105,7 +112,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 TickRacers(dt);
                 _progressTracker.UpdateProgress(_entries);
                 CheckFinish();
-                _progressTracker.UpdateRanking(_entries);
+                LogPlayerRankChange();
                 CheckRaceEnd();
                 break;
 
@@ -133,6 +140,41 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     {
         _entries.Add(entry);
         _racerDataList.Add(entry.Data);
+    }
+
+    // CPUはPlayerのグリッド番号を飛ばして、0番から順に空いているグリッドへ割り当てる。RacerIdは1から振る。
+    private void AddCpuEntries()
+    {
+        if (_cpuRacers == null)
+        {
+            return;
+        }
+
+        int gridIndex = 0;
+        int racerId = PlayerRacerId + 1;
+        foreach (GameObject cpuObject in _cpuRacers)
+        {
+            if (cpuObject == null)
+            {
+                Debug.LogWarning("RaceManager: CPUの欄に未設定の要素があるため、飛ばします", this);
+                continue;
+            }
+
+            if (!cpuObject.TryGetComponent(out IRacer racer))
+            {
+                Debug.LogError($"RaceManager: {cpuObject.name} にIRacerを実装したコンポーネントが無いため、参加させません", cpuObject);
+                continue;
+            }
+
+            if (gridIndex == _settings.PlayerGridIndex)
+            {
+                gridIndex++;
+            }
+
+            AddEntry(new RacerEntry(racer, new RacerData(racerId, false, cpuObject.name), gridIndex));
+            gridIndex++;
+            racerId++;
+        }
     }
 
     private async UniTaskVoid StartSequenceAsync(CancellationToken token)
@@ -178,11 +220,13 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
             _startGrid.GetPose(entry.GridIndex, out Vector3 position, out Quaternion rotation);
             entry.Racer.PlaceAt(position, rotation);
             entry.Data.ResetProgress();
+            Log($"配置 {entry.Data.DisplayName} グリッド{entry.GridIndex}");
         }
 
         // カウントダウン中のDebug HUD・UI用に、配置直後の進行度と順位を出しておく。
         _progressTracker.UpdateProgress(_entries);
         _progressTracker.UpdateRanking(_entries);
+        _lastPlayerRank = _playerEntry.Data.CurrentRank;
     }
 
     // ゴール済みのRacerに、停止までの速度の倍率を渡す（実際の減速はRacer側が行う）。
@@ -209,16 +253,31 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         }
     }
 
+    // ゴール判定 → 順位更新 → ゴールの通知の順にし、RacerFinishedを受け取る側で確定した順位を読めるようにする。
     private void CheckFinish()
     {
         _newlyFinished.Clear();
         _progressTracker.CheckFinish(_entries, ElapsedTime, _newlyFinished);
+        _progressTracker.UpdateRanking(_entries);
 
         foreach (RacerData data in _newlyFinished)
         {
             RacerFinished?.Invoke(data);
-            Log($"ゴール Racer{data.RacerId} タイム {data.FinishTime:F2}秒");
+            Log($"ゴール {data.DisplayName} {data.CurrentRank}位 タイム {data.FinishTime:F2}秒");
         }
+    }
+
+    // DummyRacerなどとの順位の入れ替わりを確認するためのログ。
+    private void LogPlayerRankChange()
+    {
+        int rank = _playerEntry.Data.CurrentRank;
+        if (rank == _lastPlayerRank)
+        {
+            return;
+        }
+
+        _lastPlayerRank = rank;
+        Log($"Playerの順位 {rank}位 / {_entries.Count}人");
     }
 
     private void CheckRaceEnd()

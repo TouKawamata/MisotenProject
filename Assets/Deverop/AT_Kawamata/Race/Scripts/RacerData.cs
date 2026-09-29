@@ -2,16 +2,19 @@
 // 外へはIReadOnlyRacerDataとして渡す。
 public class RacerData : IReadOnlyRacerData
 {
-    public RacerData(int racerId, bool isPlayer)
+    public RacerData(int racerId, bool isPlayer, string displayName)
     {
         RacerId = racerId;
         IsPlayer = isPlayer;
+        DisplayName = displayName;
         SpeedMultiplier = 1f;
     }
 
     public int RacerId { get; }
 
     public bool IsPlayer { get; }
+
+    public string DisplayName { get; }
 
     public int CurrentRank { get; set; }
 

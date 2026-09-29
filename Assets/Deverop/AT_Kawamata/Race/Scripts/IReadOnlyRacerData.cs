@@ -5,6 +5,9 @@ public interface IReadOnlyRacerData
 
     bool IsPlayer { get; }
 
+    // ログ・Debug HUDなどでの表示用の名前（PlayerはPlayer、CPUはGameObject名）。
+    string DisplayName { get; }
+
     // 1始まり。
     int CurrentRank { get; }
 
