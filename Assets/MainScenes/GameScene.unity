@@ -1025,6 +1025,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14db904e0aab928438e033e2b94578d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
+--- !u!4 &858414684 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6206948270024191021, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 111206412}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &858414685 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6976442047495844702, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 111206412}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73de88d3061ba8b4284a14bbeb575985, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RaceInputProvider
+--- !u!114 &858414686 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6537497690453878865, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 111206412}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostController
+--- !u!114 &858414687 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4748799226068538865, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 111206412}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 593d5ec4ffa4d6c40ab6abc129877be0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFlightController
 --- !u!1001 &1051736942
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1175,6 +1213,66 @@ Transform:
   - {fileID: 745590786}
   m_Father: {fileID: 1839428155}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1277603073
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1277603074}
+  - component: {fileID: 1277603075}
+  m_Layer: 0
+  m_Name: DebugHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1277603074
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1277603073}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.42857, y: 0, z: -11.42857}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1277603075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1277603073}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f5f925a07bc5842927085f0d601ed4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugHud
+  playerFlight: {fileID: 858414687}
+  boostController: {fileID: 858414686}
+  raceInputProvider: {fileID: 858414685}
+  playerManager: {fileID: 858414683}
+  courseSpline: {fileID: 1839428154}
+  player: {fileID: 858414684}
+  visible: 1
+  position: {x: 12, y: 12}
+  fontSize: 16
+  backgroundAlpha: 0.75
+  graphSeconds: 4
+  graphSamplesPerSecond: 30
+  graphSize: {x: 360, y: 100}
+  horizontalGuide: 0.7
+  courseSampleIntervalFrames: 5
+  pressedHoldSeconds: 0.5
 --- !u!1 &1364872006
 GameObject:
   m_ObjectHideFlags: 0
@@ -1811,3 +1909,4 @@ SceneRoots:
   - {fileID: 9294101}
   - {fileID: 848945467}
   - {fileID: 461412568}
+  - {fileID: 1277603074}
