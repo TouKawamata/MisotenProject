@@ -1,110 +1,196 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
-// ブーストの状態（Idle→Boosting→Cooldown→Idle）と、現在有効な速度／加速度／旋回性能の
-// チューニング値を管理する。PlayerManagerがここから現在値を読んでPlayerFlightControllerへ渡すため、
-// ブースト状態そのものは重複して持たない。Initialize/TickはPlayerManagerから呼び出される。
+// ブーストのゲージと状態（Ready→Boosting→RecoveryDelay／Overheat→Ready）、現在有効な速度／加速度／旋回性能を管理する。
+// 押した瞬間にTryActivateで開始し、押し続けている間（TickのisHeld）だけゲージを消費する。
+// 消費速度は発動した瞬間の順位の割合でBoostRankTableから引き、そのブーストが終わるまで変えない。
+// PlayerManagerがここから現在値を読んでPlayerFlightControllerへ渡すため、ブースト状態そのものは重複して持たない。
+// ブースト終了時は、最高速度だけをBoostEndEaseDuration秒かけて通常の値まで下げる（速度がガクッと落ちないように）。
+// Initialize/TryActivate/Tick/ForceStopはPlayerManagerから呼び出される。
 public class BoostController : MonoBehaviour
 {
     private enum EState
     {
-        Idle,
+        // ゲージが回復している（満タンなら何もしない）
+        Ready,
         Boosting,
-        Cooldown
+        // ブースト終了から回復を始めるまでの待ち時間。ゲージが残っていれば再発動できる
+        RecoveryDelay,
+        // ゲージを使い切ったときの待ち時間。発動できない
+        Overheat
     }
 
-    [FormerlySerializedAs("normalMaxSpeed")]
-    [SerializeField] private float _normalMaxSpeed = 40f;
-    [FormerlySerializedAs("normalForwardAcceleration")]
-    [SerializeField] private float _normalForwardAcceleration = 20f;
-    [FormerlySerializedAs("normalSteeringPower")]
-    [SerializeField] private float _normalSteeringPower = 18f;
+    [SerializeField] private BoostProfile _profile;
+    [SerializeField] private BoostRankTable _rankTable;
 
-    [FormerlySerializedAs("boostMaxSpeed")]
-    [SerializeField] private float _boostMaxSpeed = 70f;
-    [FormerlySerializedAs("boostForwardAcceleration")]
-    [SerializeField] private float _boostForwardAcceleration = 45f;
-    [FormerlySerializedAs("boostSteeringPower")]
-    [SerializeField] private float _boostSteeringPower = 10f;
-
-    [FormerlySerializedAs("boostDuration")]
-    [SerializeField] private float _boostDuration = 3f;
-    [FormerlySerializedAs("cooldownDuration")]
-    [SerializeField] private float _cooldownDuration = 5f;
-
-    private EState _state = EState.Idle;
+    private EState _state = EState.Ready;
     private float _stateTimer;
+
+    // ブースト終了時に最高速度を下げている途中の残り秒数・全体の秒数と、下げ始めの値。
+    private float _endEaseTimer;
+    private float _endEaseDuration;
+    private float _endEaseFromMaxSpeed;
 
     public float CurrentMaxSpeed { get; private set; }
     public float CurrentForwardAcceleration { get; private set; }
     public float CurrentSteeringPower { get; private set; }
 
+    public float Gauge { get; private set; }
+
+    public float MaxGauge => _profile != null ? _profile.MaxGauge : 0f;
+
+    // 0～1。
+    public float GaugeNormalized => MaxGauge > 0f ? Gauge / MaxGauge : 0f;
+
+    // 直近に発動したときの順位の割合で確定した、1秒あたりの消費量。
+    public float ConsumptionPerSecond { get; private set; }
+
     public bool IsBoosting => _state == EState.Boosting;
-    public bool IsOnCooldown => _state == EState.Cooldown;
 
-    // ブースト中でなければ0。
-    public float BoostRemainingTime => _state == EState.Boosting ? _stateTimer : 0f;
+    // 回復を待っている間（終了直後の待ち時間、またはオーバーヒート）。
+    public bool IsOnCooldown => _state == EState.RecoveryDelay || _state == EState.Overheat;
 
-    // クールダウン中でなければ0。
-    public float CooldownRemainingTime => _state == EState.Cooldown ? _stateTimer : 0f;
+    public bool IsOverheated => _state == EState.Overheat;
 
-    public void Initialize()
+    public bool CanActivate =>
+        _profile != null && (_state == EState.Ready || _state == EState.RecoveryDelay) && Gauge >= _profile.MinGaugeToActivate;
+
+    // 今のゲージで、あと何秒ブーストできるか。ブースト中でなければ0。
+    public float BoostRemainingTime => _state == EState.Boosting && ConsumptionPerSecond > 0f ? Gauge / ConsumptionPerSecond : 0f;
+
+    // 回復を始めるまでの残り秒数。待っていなければ0。
+    public float CooldownRemainingTime => IsOnCooldown ? _stateTimer : 0f;
+
+    public bool Initialize()
     {
-        _state = EState.Idle;
+        if (_profile == null || _rankTable == null)
+        {
+            Debug.LogError("BoostController: Boost Profile / Rank Table が未設定です", this);
+            return false;
+        }
+
+        _state = EState.Ready;
         _stateTimer = 0f;
+        Gauge = _profile.MaxGauge;
+        ConsumptionPerSecond = 0f;
         ApplyNormalTuning();
+        return true;
     }
 
-    // Idle状態のときだけ発動に成功する。
-    public bool TryActivate()
+    // rankRatio：発動した瞬間の順位の割合（0＝トップ、1＝最下位）。消費速度をここで確定する。
+    public bool TryActivate(float rankRatio)
     {
-        if (_state != EState.Idle)
+        if (!CanActivate)
         {
             return false;
         }
 
+        ConsumptionPerSecond = _rankTable.EvaluateConsumptionPerSecond(rankRatio);
         _state = EState.Boosting;
-        _stateTimer = _boostDuration;
+        _stateTimer = 0f;
         ApplyBoostTuning();
         return true;
     }
 
-    public void Tick(float deltaTime)
+    // isHeld：ブーストの入力を押し続けているか。離したらブーストを終了する。
+    public void Tick(float deltaTime, bool isHeld)
     {
-        if (_state == EState.Idle)
+        if (_profile == null)
         {
             return;
         }
 
-        _stateTimer -= deltaTime;
-        if (_stateTimer > 0f)
-        {
-            return;
-        }
+        UpdateEndEase(deltaTime);
 
+        switch (_state)
+        {
+            case EState.Boosting:
+                if (!isHeld)
+                {
+                    EndBoost(EState.RecoveryDelay, _profile.RecoveryDelay);
+                    break;
+                }
+
+                Gauge -= ConsumptionPerSecond * deltaTime;
+                if (Gauge <= 0f)
+                {
+                    Gauge = 0f;
+                    EndBoost(EState.Overheat, _profile.OverheatDelay);
+                }
+
+                break;
+
+            case EState.RecoveryDelay:
+            case EState.Overheat:
+                _stateTimer -= deltaTime;
+                if (_stateTimer <= 0f)
+                {
+                    _state = EState.Ready;
+                    _stateTimer = 0f;
+                }
+
+                break;
+
+            case EState.Ready:
+                Gauge = Mathf.Min(_profile.MaxGauge, Gauge + _profile.RecoveryPerSecond * deltaTime);
+                break;
+        }
+    }
+
+    // 入力に関係なくブーストを終了する（ゴール時・スタン時）。使い切った扱いにはせず、通常の待ち時間に入る。
+    public void ForceStop()
+    {
         if (_state == EState.Boosting)
         {
-            _state = EState.Cooldown;
-            _stateTimer = _cooldownDuration;
-            ApplyNormalTuning();
-        }
-        else if (_state == EState.Cooldown)
-        {
-            _state = EState.Idle;
+            EndBoost(EState.RecoveryDelay, _profile.RecoveryDelay);
         }
     }
 
+    // 加速度・旋回性能はすぐ通常の値に戻し、最高速度だけを下げ始める。
+    private void EndBoost(EState nextState, float delay)
+    {
+        _state = nextState;
+        _stateTimer = delay;
+
+        float boostMaxSpeed = CurrentMaxSpeed;
+        ApplyNormalTuning();
+
+        if (_profile.BoostEndEaseDuration > 0f)
+        {
+            _endEaseFromMaxSpeed = boostMaxSpeed;
+            _endEaseDuration = _profile.BoostEndEaseDuration;
+            _endEaseTimer = _endEaseDuration;
+            CurrentMaxSpeed = boostMaxSpeed;
+        }
+    }
+
+    // ゆっくり動き出して、ゆっくり止まる（SmoothStep）形で、通常の最高速度まで下げる。
+    private void UpdateEndEase(float deltaTime)
+    {
+        if (_endEaseTimer <= 0f)
+        {
+            return;
+        }
+
+        _endEaseTimer = Mathf.Max(0f, _endEaseTimer - deltaTime);
+        float t = 1f - _endEaseTimer / _endEaseDuration;
+        CurrentMaxSpeed = Mathf.Lerp(_endEaseFromMaxSpeed, _profile.NormalMaxSpeed, Mathf.SmoothStep(0f, 1f, t));
+    }
+
+    // 通常の値へ戻す（ブースト終了時の最高速度の下げ途中も打ち切る）。
     private void ApplyNormalTuning()
     {
-        CurrentMaxSpeed = _normalMaxSpeed;
-        CurrentForwardAcceleration = _normalForwardAcceleration;
-        CurrentSteeringPower = _normalSteeringPower;
+        _endEaseTimer = 0f;
+        CurrentMaxSpeed = _profile.NormalMaxSpeed;
+        CurrentForwardAcceleration = _profile.NormalForwardAcceleration;
+        CurrentSteeringPower = _profile.NormalSteeringPower;
     }
 
+    // ブースト時の値にする（終了時の最高速度の下げ途中に再発動した場合も、ここで打ち切る）。
     private void ApplyBoostTuning()
     {
-        CurrentMaxSpeed = _boostMaxSpeed;
-        CurrentForwardAcceleration = _boostForwardAcceleration;
-        CurrentSteeringPower = _boostSteeringPower;
+        _endEaseTimer = 0f;
+        CurrentMaxSpeed = _profile.BoostMaxSpeed;
+        CurrentForwardAcceleration = _profile.BoostForwardAcceleration;
+        CurrentSteeringPower = _profile.BoostSteeringPower;
     }
 }

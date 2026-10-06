@@ -17,8 +17,12 @@ public class PlayerFlightController : MonoBehaviour
     private Vector3 _velocity;
     private float _currentRoll;
     private float _rollVelocity;
+    private readonly LateralPush _lateralPush = new LateralPush();
 
     public Vector3 Velocity => _velocity;
+
+    // ブースト接触などで横へ押し出している途中か。
+    public bool IsBeingPushed => _lateralPush.IsActive;
 
     public float CurrentRoll => _currentRoll;
 
@@ -44,6 +48,7 @@ public class PlayerFlightController : MonoBehaviour
         _velocity = Vector3.zero;
         _currentRoll = 0f;
         _rollVelocity = 0f;
+        _lateralPush.Stop();
         IsClampedToTunnel = false;
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
         StateReset?.Invoke();
@@ -92,8 +97,9 @@ public class PlayerFlightController : MonoBehaviour
             _velocity = velocityDirection.normalized * speed;
         }
 
-        // 6. 位置積分（円筒境界の外には出られず、境界では摩擦0で滑る）
-        Vector3 desiredPosition = position + _velocity * deltaTime;
+        // 6. 位置積分（円筒境界の外には出られず、境界では摩擦0で滑る）。
+        //    横ずれ（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
+        Vector3 desiredPosition = position + _velocity * deltaTime + splineRight * _lateralPush.Advance(deltaTime);
         transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, ref _velocity);
 
         // 7. 回転：ForwardはPlayerForwardから、Rollは「Splineのバンクへの追従」＋「操作によるロール」の合算
@@ -106,6 +112,46 @@ public class PlayerFlightController : MonoBehaviour
 
         // 8. カメラへ公開する先読み位置
         LookAheadWorldPosition = _guide.GetLookAheadPosition(transform.position, profile.LookAheadDistance);
+    }
+
+    // ブースト接触などで、コースの左右方向へdistance（m）をduration秒かけて押し出す（最初に大きく動き、だんだん止まる）。
+    // directionはコースの左右どちら向きかだけを使う。Vector3.zeroなど向きが決まらないときは、コースの中央側へ押し出す
+    // （壁際で外へ押し出されるのを防ぐ）。押し出している途中で呼ばれたら、そこから押し出し直す。
+    public void ApplyLateralPush(Vector3 direction, float distance, float duration)
+    {
+        if (_guide == null || distance <= 0f)
+        {
+            return;
+        }
+
+        Vector3 position = transform.position;
+        Vector3 right = _guide.GetRight(position);
+        float dot = Vector3.Dot(direction, right);
+        float side;
+        if (Mathf.Abs(dot) > 0.0001f)
+        {
+            side = Mathf.Sign(dot);
+        }
+        else
+        {
+            float offsetToCenter = Vector3.Dot(_guide.GetCenterPosition(position) - position, right);
+            side = offsetToCenter >= 0f ? 1f : -1f;
+        }
+
+        _lateralPush.Start(side * distance, duration);
+    }
+
+    // 他のレーサーとの通常の接触で、食い込みを押し戻す（RacerContactResolverから、PlayerManager経由で呼ばれる）。
+    // blockNormalがゼロでなければ、その逆向き（相手へ向かう向き）の速度を消す。トンネルの境界の制限は次のTickでかかる。
+    public void ApplyContactCorrection(Vector3 offset, Vector3 blockNormal)
+    {
+        transform.position += offset;
+
+        float velocityTowardOther = Vector3.Dot(_velocity, blockNormal);
+        if (velocityTowardOther < 0f)
+        {
+            _velocity -= blockNormal * velocityTowardOther;
+        }
     }
 
     // Splineを中心軸とした円筒（TunnelRadius）の外に出られないようにする（frictionless slide:

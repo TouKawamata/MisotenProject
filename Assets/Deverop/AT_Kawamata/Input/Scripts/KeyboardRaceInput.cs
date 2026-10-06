@@ -25,6 +25,16 @@ public class KeyboardRaceInput : IRaceInput
                 value += 1f;
             }
 
+            if (keyboard.sKey.isPressed)
+            {
+                value -= 0.7f;
+            }
+
+            if (keyboard.fKey.isPressed)
+            {
+                value += 0.7f;
+            }
+
             return value;
         }
     }
