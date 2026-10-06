@@ -9,6 +9,17 @@ public class RaceInputProvider : MonoBehaviour
 
     public void Initialize()
     {
-        Current = new KeyboardRaceInput();
+        // 通常はここでKeyboardRaceInputが入り、その後TrackingRaceInputBootstrapper.AwakeのSetInputSourceで差し替えられる。
+        // SetInputSourceが先に呼ばれていた場合は、その入力元を上書きしない。
+        if (Current == null)
+        {
+            Current = new KeyboardRaceInput();
+        }
+    }
+
+    // 他コンポーネント（トラッキング入力の初期化処理など）から入力元を差し替えるための窓口。
+    public void SetInputSource(IRaceInput input)
+    {
+        Current = input;
     }
 }
