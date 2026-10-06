@@ -171,6 +171,8 @@ GameObject:
   - component: {fileID: 6537497690453878865}
   - component: {fileID: 6976442047495844702}
   - component: {fileID: 4748799226068538865}
+  - component: {fileID: -7268944218637680035}
+  - component: {fileID: -6863477611215416196}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -315,9 +317,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
   _flightController: {fileID: 4748799226068538865}
   _boost: {fileID: 6537497690453878865}
+  _shield: {fileID: 0}
   _inputProvider: {fileID: 6976442047495844702}
   _defaultProfile: {fileID: 11400000, guid: de9080cdca3819d4ebb124d65d3dd9c9, type: 2}
   _shortcutProfile: {fileID: 11400000, guid: 4489856c7d464b14ca8c5f08475eb6d9, type: 2}
+  _boostHitProfile: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
   _showDebugLogs: 1
 --- !u!114 &6537497690453878865
 MonoBehaviour:
@@ -331,14 +335,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoostController
-  _normalMaxSpeed: 40
-  _normalForwardAcceleration: 20
-  _normalSteeringPower: 100
-  _boostMaxSpeed: 100
-  _boostForwardAcceleration: 70
-  _boostSteeringPower: 70
-  _boostDuration: 3
-  _cooldownDuration: 5
+  _profile: {fileID: 11400000, guid: ec17e0d5b7b2619458a24c569c10bb79, type: 2}
+  _rankTable: {fileID: 11400000, guid: 786e76e2fa29b0d46838cf4b4d81baec, type: 2}
 --- !u!114 &6976442047495844702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -364,3 +362,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFlightController
   _courseSpline: {fileID: 0}
+--- !u!114 &-7268944218637680035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c13d90c7c434943a5a2c30b8bb3aab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldController
+  _profile: {fileID: 11400000, guid: fa9be4e303c81cd43bc7b7e4cbb0ec97, type: 2}
+--- !u!114 &-6863477611215416196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31861699d4a2d6d428fed752fb8132f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostHitDetector

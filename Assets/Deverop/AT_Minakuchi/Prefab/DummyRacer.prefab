@@ -102,6 +102,7 @@ GameObject:
   - component: {fileID: 3538824198878742765}
   - component: {fileID: 2815198947639541644}
   - component: {fileID: 3223274544635544644}
+  - component: {fileID: -7546767497841643538}
   m_Layer: 0
   m_Name: DummyRacer
   m_TagString: Untagged
@@ -193,7 +194,23 @@ MonoBehaviour:
   _lateralOffset: 0
   _verticalOffset: 0
   _followPlayerLateralPosition: 1
-  _boostSlowAmount: 20
-  _boostSlowDuration: 1
-  _boostSideMove: 1
+  _boostHitProfile: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
+  _knockbackReturnTime: 1
+  _enableDebugBoost: 0
+  _debugBoostInterval: 5
+  _debugBoostDuration: 2
+  _debugBoostSpeedMultiplier: 1.5
   _enableLog: 1
+--- !u!114 &-7546767497841643538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7099471356301516709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31861699d4a2d6d428fed752fb8132f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostHitDetector
+  _halfWidth: 5

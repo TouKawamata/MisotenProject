@@ -56,15 +56,19 @@ public class RaceProgressTracker
     }
 
     // ゴール済み（FinishTimeの昇順）→ 未ゴール（CourseProgressの降順）の順に1位から振る。
+    // 順位の割合（0＝トップ、1＝最下位）も合わせて更新する。
     public void UpdateRanking(List<RacerEntry> entries)
     {
         _rankingBuffer.Clear();
         _rankingBuffer.AddRange(entries);
         _rankingBuffer.Sort(CompareRank);
 
+        int lastIndex = _rankingBuffer.Count - 1;
         for (int i = 0; i < _rankingBuffer.Count; i++)
         {
-            _rankingBuffer[i].Data.CurrentRank = i + 1;
+            RacerData data = _rankingBuffer[i].Data;
+            data.CurrentRank = i + 1;
+            data.RankRatio = lastIndex > 0 ? (float)i / lastIndex : 0f;
         }
     }
 

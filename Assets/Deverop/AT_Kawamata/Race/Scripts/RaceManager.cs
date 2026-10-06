@@ -6,7 +6,8 @@ using UnityEngine;
 using VContainer.Unity;
 
 // レース全体（スタートグリッドへの配置 → カウントダウン → 走行 → ゴール → レース終了）を統括する。
-// 状態遷移と「いつ何をするか」の指示だけを持ち、配置の計算はStartGrid、進行度・順位・ゴール判定はRaceProgressTrackerへ任せる。
+// 状態遷移と「いつ何をするか」の指示だけを持ち、配置の計算はStartGrid、進行度・順位・ゴール判定はRaceProgressTracker、
+// 通常の接触（ブーストなし）の食い込みの押し戻しはRacerContactResolverへ任せる。
 // 各RacerのTickはここから呼ぶ（カウントダウン中はTickを呼ばないことで移動不可にする）。
 // UI・演出は直接触らず、イベントを出すだけにする。Initialize/Start/Tick/DisposeはGameLifetimeScope（VContainer）から呼び出される。
 public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable, IDisposable
@@ -22,6 +23,10 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     [Tooltip("Player以外の参加者（IRacerを実装したコンポーネントを持つGameObject）。Playerのグリッド番号を飛ばして、空いているグリッドに上から順に並べる")]
     [SerializeField] private GameObject[] _cpuRacers;
 
+    [Header("通常の接触")]
+    [Tooltip("ブーストなしの接触で、レーサーどうしの食い込みを押し戻す設定。未設定なら押し戻さない（重なったまま走る）")]
+    [SerializeField] private RacerContactProfile _contactProfile;
+
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs = true;
 
@@ -31,6 +36,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
     private StartGrid _startGrid;
     private RaceProgressTracker _progressTracker;
+    private RacerContactResolver _contactResolver;
     private RacerEntry _playerEntry;
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isInitialized;
@@ -78,6 +84,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
         _startGrid = new StartGrid(_courseSpline, _settings);
         _progressTracker = new RaceProgressTracker(_courseSpline);
+        SetupContactResolver();
         _cancellationTokenSource = new CancellationTokenSource();
         State = ERaceState.Ready;
         _isInitialized = true;
@@ -110,6 +117,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 ElapsedTime += dt;
                 UpdateGoalStop(dt);
                 TickRacers(dt);
+                _contactResolver?.Resolve(dt);
                 _progressTracker.UpdateProgress(_entries);
                 CheckFinish();
                 LogPlayerRankChange();
@@ -120,6 +128,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 // ゴール後の停止までの区間。順位・タイムは確定済みなので動かすだけ。
                 UpdateGoalStop(dt);
                 TickRacers(dt);
+                _contactResolver?.Resolve(dt);
                 break;
         }
     }
@@ -174,6 +183,26 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
             AddEntry(new RacerEntry(racer, new RacerData(racerId, false, cpuObject.name), gridIndex));
             gridIndex++;
             racerId++;
+        }
+    }
+
+    // IRacerContactBodyを実装している参加者だけを、通常の接触の押し戻しの対象にする。
+    private void SetupContactResolver()
+    {
+        _contactResolver = null;
+        if (_contactProfile == null)
+        {
+            Debug.LogWarning("RaceManager: Contact Profile が未設定のため、通常の接触の押し戻しは行いません", this);
+            return;
+        }
+
+        _contactResolver = new RacerContactResolver(_courseSpline, _contactProfile);
+        foreach (RacerEntry entry in _entries)
+        {
+            if (entry.Racer is IRacerContactBody body)
+            {
+                _contactResolver.Add(body);
+            }
         }
     }
 
@@ -245,11 +274,17 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         }
     }
 
+    // Tickの後に、Racerの状態（ブースト中など）をRacerDataへ写す。
     private void TickRacers(float dt)
     {
         foreach (RacerEntry entry in _entries)
         {
             entry.Racer.Tick(dt, entry.Data);
+
+            RacerData data = entry.Data;
+            data.IsBoosting = entry.Racer.IsBoosting;
+            data.IsShielding = entry.Racer.IsShielding;
+            data.IsStunned = entry.Racer.IsStunned;
         }
     }
 

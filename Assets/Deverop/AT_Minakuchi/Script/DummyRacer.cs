@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
+public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttacker, IRacerContactBody
 {
     private enum StartPositionMode
     {
@@ -44,14 +44,28 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
     private bool _followPlayerLateralPosition = true;
 
     [Header("ブースト接触設定")]
-    [InspectorName("ブースト接触時の減速量")]
-    [SerializeField] private float _boostSlowAmount = 20f;
+    [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。Playerと同じアセットを使う")]
+    [SerializeField] private BoostHitProfile _boostHitProfile;
 
-    [InspectorName("減速時間")]
-    [SerializeField] private float _boostSlowDuration = 1f;
+    [Tooltip("押し出し切ってから、元の左右位置に戻るまでのおおよその秒数（押し出す距離・秒数はBoostHitProfileで設定）")]
+    [SerializeField] private float _knockbackReturnTime = 1f;
 
-    [InspectorName("ブースト接触時の横ずれ量")]
-    [SerializeField] private float _boostSideMove = 1f;
+    [Header("通常の接触")]
+    [Tooltip("他のレーサーとの食い込みの計算に使う体のCollider。未設定なら、このGameObjectのColliderを使う（RaceManagerに登録されている場合だけ押し戻される）")]
+    [SerializeField] private Collider _bodyCollider;
+
+    [Header("デバッグ用ブースト")]
+    [Tooltip("ON：一定間隔でブーストする（Playerがブーストを当てられる処理・シールドの確認用）。ブースト中に重なった相手へBoostHitDetectorが当てる")]
+    [SerializeField] private bool _enableDebugBoost = false;
+
+    [Tooltip("ブーストが終わってから、次のブーストまでの秒数")]
+    [SerializeField] private float _debugBoostInterval = 5f;
+
+    [Tooltip("1回のブーストの秒数")]
+    [SerializeField] private float _debugBoostDuration = 2f;
+
+    [Tooltip("ブースト中の速度の倍率")]
+    [SerializeField] private float _debugBoostSpeedMultiplier = 1.5f;
 
     [Header("デバッグ設定")]
     [InspectorName("ログを出力する")]
@@ -60,7 +74,15 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
     private float _distance;
     private float _resolvedStartDistance;
 
-    private float _slowTimer;
+    private readonly StunController _stun = new StunController();
+
+    // ブースト接触による横ずれ。左右オフセットとは別に持ち、押し出し切ったら時間で0（元の左右位置）に戻す
+    private readonly LateralPush _lateralPush = new LateralPush();
+    private float _knockbackOffset;
+    private float _knockbackVelocity;
+
+    private bool _isBoosting;
+    private float _debugBoostTimer;
 
     private Vector3 _estimatedVelocity;
     private Vector3 _previousPosition;
@@ -72,10 +94,39 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
 
     // RaceManagerから動かされているか（PlaceAtが呼ばれたらtrue）。trueの間はStart/Updateで動かない。
     private bool _isDrivenByRace;
+    private bool _isFinished;
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
     public Transform Transform => transform;
+
+    public bool IsBoosting => _isBoosting;
+
+    // DummyRacerはシールドを使わない
+    public bool IsShielding => false;
+
+    public bool IsStunned => _stun.IsStunned;
+
+    public Collider BodyCollider
+    {
+        get
+        {
+            if (_bodyCollider == null)
+            {
+                _bodyCollider = GetComponent<Collider>();
+            }
+
+            return _bodyCollider;
+        }
+    }
+
+    public Vector3 Velocity => _estimatedVelocity;
+
+    // ブースト中・横ずれ中は、通常の接触を処理しない（ブースト接触の処理を優先する）
+    public bool IgnoresContact =>
+        _courseSpline == null
+        || _isBoosting
+        || _lateralPush.IsActive;
 
     private void Start()
     {
@@ -116,7 +167,9 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
         if (_courseSpline == null)
             return;
 
-        Move(Time.deltaTime, GetCurrentSpeed(Time.deltaTime));
+        UpdateStunAndBoost(Time.deltaTime, true);
+
+        Move(Time.deltaTime, GetCurrentSpeed());
     }
 
     // RaceManagerからスタートグリッドへ配置されるときに呼ばれる。以降はTickで動かされる。
@@ -134,8 +187,9 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
         }
 
         _isDrivenByRace = true;
+        _isFinished = false;
         _hasCapturedFinishSpeed = false;
-        _slowTimer = 0f;
+        ResetStunAndBoost();
 
         _distance = _courseSpline.FindNearestDistance(position);
         _resolvedStartDistance = _distance;
@@ -172,7 +226,12 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
         if (_courseSpline == null)
             return;
 
-        float currentSpeed = GetCurrentSpeed(deltaTime);
+        _isFinished = data.IsFinished;
+
+        // ゴール後はブーストしない
+        UpdateStunAndBoost(deltaTime, !_isFinished);
+
+        float currentSpeed = GetCurrentSpeed();
 
         // ゴール後は、ゴールした瞬間の速度にSpeedMultiplierを掛けて減速・停止する
         if (data.IsFinished)
@@ -189,20 +248,66 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
         Move(deltaTime, currentSpeed);
     }
 
-    // ブースト接触による減速を反映した、現在の速度
-    private float GetCurrentSpeed(float deltaTime)
+    // デバッグ用ブーストと、ブースト接触によるスタン中の減速を反映した、現在の速度
+    private float GetCurrentSpeed()
     {
         float currentSpeed = _speed;
 
-        if (_slowTimer > 0f)
+        if (_isBoosting)
         {
-            _slowTimer -= deltaTime;
+            currentSpeed *= _debugBoostSpeedMultiplier;
+        }
 
-            currentSpeed -= _boostSlowAmount;
-            currentSpeed = Mathf.Max(0f, currentSpeed);
+        if (_stun.IsStunned && _boostHitProfile != null)
+        {
+            currentSpeed *= _boostHitProfile.StunSpeedMultiplier;
         }
 
         return currentSpeed;
+    }
+
+    private void UpdateStunAndBoost(float deltaTime, bool canBoost)
+    {
+        _stun.Tick(deltaTime);
+
+        // 無効・ゴール後・スタン中はブーストしない（次のブーストまでの間隔は最初から数え直す）
+        if (!_enableDebugBoost || !canBoost || _stun.IsStunned)
+        {
+            _isBoosting = false;
+            _debugBoostTimer = 0f;
+            return;
+        }
+
+        _debugBoostTimer += deltaTime;
+
+        if (_isBoosting)
+        {
+            if (_debugBoostTimer >= _debugBoostDuration)
+            {
+                _isBoosting = false;
+                _debugBoostTimer = 0f;
+            }
+        }
+        else if (_debugBoostTimer >= _debugBoostInterval)
+        {
+            _isBoosting = true;
+            _debugBoostTimer = 0f;
+
+            if (_enableLog)
+            {
+                Debug.Log($"{name}: デバッグ用ブースト開始", this);
+            }
+        }
+    }
+
+    private void ResetStunAndBoost()
+    {
+        _stun.Reset();
+        _isBoosting = false;
+        _debugBoostTimer = 0f;
+        _lateralPush.Stop();
+        _knockbackOffset = 0f;
+        _knockbackVelocity = 0f;
     }
 
     private void Move(float deltaTime, float currentSpeed)
@@ -235,7 +340,45 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
 
         UpdatePlayerLateralOffset();
 
+        UpdateKnockbackOffset(deltaTime);
+
         ApplyTransform(_distance);
+    }
+
+    // 横ずれは、BoostHitProfileの距離・秒数で押し出してから、元の左右位置へ戻る
+    private void UpdateKnockbackOffset(float deltaTime)
+    {
+        if (_lateralPush.IsActive)
+        {
+            _knockbackOffset += _lateralPush.Advance(deltaTime);
+            _knockbackVelocity = 0f;
+        }
+        else
+        {
+            _knockbackOffset =
+                Mathf.SmoothDamp(
+                    _knockbackOffset,
+                    0f,
+                    ref _knockbackVelocity,
+                    _knockbackReturnTime,
+                    Mathf.Infinity,
+                    deltaTime
+                );
+        }
+
+        // トンネルの外には出さない
+        float tunnelRadius = _courseSpline.TunnelRadius;
+        if (tunnelRadius > 0f)
+        {
+            float lateral =
+                Mathf.Clamp(
+                    _lateralOffset + _knockbackOffset,
+                    -tunnelRadius,
+                    tunnelRadius
+                );
+
+            _knockbackOffset = lateral - _lateralOffset;
+        }
     }
 
     private void UpdateVelocity(float deltaTime)
@@ -313,7 +456,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
 
         transform.position =
             position
-            + right * _lateralOffset
+            + right * (_lateralOffset + _knockbackOffset)
             + up * _verticalOffset;
 
         if (forward.sqrMagnitude > 0.001f)
@@ -376,11 +519,87 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
         return distance;
     }
 
+    // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
+    // それ以外 → スタン（減速）＋横ずれ（中心どうしが近いほど大きく押し出す）。DummyRacerはシールドを使わない
     public void ReceiveBoostHit(
-        Vector3 hitDirection
+        BoostHitInfo hit
     )
     {
-        _slowTimer = _boostSlowDuration;
+        if (_boostHitProfile == null)
+        {
+            Debug.LogWarning(
+                $"{name}: BoostHitProfileが設定されていないため、BoostHitを無視します。",
+                this
+            );
+
+            return;
+        }
+
+        if (_courseSpline == null || _isFinished || _stun.IsInvincible)
+            return;
+
+        if (_isBoosting)
+        {
+            if (!_stun.CanBounce)
+                return;
+
+            _stun.BeginBounceInterval(
+                _boostHitProfile.BounceInterval
+            );
+
+            StartPush(
+                hit.PushDirection,
+                _boostHitProfile.BounceDistance
+            );
+
+            if (_enableLog)
+            {
+                Debug.Log(
+                    $"{name}: ブースト同士で接触しました（はじく）。" +
+                    $" 距離 = {_boostHitProfile.BounceDistance:F1}m",
+                    this
+                );
+            }
+
+            return;
+        }
+
+        _stun.BeginStun(
+            _boostHitProfile.StunDuration,
+            _boostHitProfile.InvincibleDuration
+        );
+
+        float pushDistance =
+            _boostHitProfile.EvaluatePushDistance(
+                hit.Closeness
+            );
+
+        StartPush(
+            hit.PushDirection,
+            pushDistance
+        );
+
+        if (_enableLog)
+        {
+            Debug.Log(
+                $"{name}: BoostHitを受けました（スタン）。" +
+                $" 近さ = {hit.Closeness:F2} 横ずれ = {pushDistance:F1}m" +
+                (hit.HasPushDirection ? "" : "（向き未確定→コース中央側）"),
+                this
+            );
+        }
+    }
+
+    // 通常の接触で食い込んだとき、RaceManager（RacerContactResolver）から呼ばれる。
+    // 左右の分は横ずれのオフセットへ、前後の分はコース上の距離へ足す（横ずれと同じく、時間で元の左右位置へ戻る）。
+    // DummyRacerは速度を持たないので、blockNormalは使わない
+    public void ApplyContactCorrection(
+        Vector3 offset,
+        Vector3 blockNormal
+    )
+    {
+        if (_courseSpline == null)
+            return;
 
         Vector3 right =
             _courseSpline
@@ -388,23 +607,56 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
                     _distance
                 );
 
-        float sideDirection =
-            Vector3.Dot(
-                hitDirection.normalized,
-                right
+        Vector3 forward =
+            _courseSpline
+                .EvaluateForwardByDistance(
+                    _distance
+                );
+
+        _knockbackOffset +=
+            Vector3.Dot(offset, right);
+
+        _distance =
+            Mathf.Max(
+                0f,
+                _distance + Vector3.Dot(offset, forward)
             );
 
-        _lateralOffset +=
-            sideDirection * _boostSideMove;
+        ApplyTransform(_distance);
+    }
 
-        if (_enableLog)
+    // 押し出す向きは左右どちらかだけを使う。向きが決まらないときは、コースの中央側へ押し出す
+    private void StartPush(
+        Vector3 pushDirection,
+        float distance
+    )
+    {
+        Vector3 right =
+            _courseSpline
+                .EvaluateRightByDistance(
+                    _distance
+                );
+
+        float dot =
+            Vector3.Dot(pushDirection, right);
+
+        float side;
+        if (Mathf.Abs(dot) > 0.0001f)
         {
-            Debug.Log(
-                $"{name}: BoostHitを受けました。" +
-                $" Direction = {hitDirection}",
-                this
-            );
+            side = Mathf.Sign(dot);
         }
+        else
+        {
+            side =
+                _lateralOffset + _knockbackOffset > 0f
+                    ? -1f
+                    : 1f;
+        }
+
+        _lateralPush.Start(
+            side * distance,
+            _boostHitProfile.PushDuration
+        );
     }
 
     [ContextMenu("開始位置に戻す")]
@@ -433,7 +685,10 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer
     [ContextMenu("テスト/BoostHitを手動実行")]
     private void TestBoostHit()
     {
-        ReceiveBoostHit(transform.right);
+        // 右から、中心どうしが一致した（最大の横ずれ）扱いで当てる
+        ReceiveBoostHit(
+            new BoostHitInfo(transform.right, 1f)
+        );
     }
 
     private void OnTriggerEnter(Collider other)
