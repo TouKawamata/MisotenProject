@@ -182,7 +182,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
     // シールド中 → 防いでシールドが消える、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
-    public void ReceiveBoostHit(BoostHitInfo hit)
+    // BoostHitDetector専用の入口なので、IBoostHitReceiverとしてだけ呼べるよう明示的に実装する。
+    void IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
     {
         if (!_isInitialized || _isFinished || _stun.IsInvincible)
         {
@@ -217,7 +218,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     }
 
     // 通常の接触で食い込んだとき、RacerContactResolverから呼ばれる。
-    public void ApplyContactCorrection(Vector3 offset, Vector3 blockNormal)
+    // RacerContactResolver専用の入口なので、IRacerContactBodyとしてだけ呼べるよう明示的に実装する。
+    void IRacerContactBody.ApplyContactCorrection(Vector3 offset, Vector3 blockNormal)
     {
         _flightController.ApplyContactCorrection(offset, blockNormal);
     }
