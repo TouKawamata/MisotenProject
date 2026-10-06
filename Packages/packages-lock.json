@@ -7,6 +7,13 @@
       "dependencies": {},
       "hash": "2e993ff18f28c931602a07292df0b0804eebef99"
     },
+    "com.hecomi.uosc": {
+      "version": "https://github.com/hecomi/uOSC.git?path=Assets/uOSC",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3c80df7ee3ce7c58cb33f5820921a3b192e22c04"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,
@@ -58,6 +65,15 @@
       "source": "registry",
       "dependencies": {
         "com.unity.ext.nunit": "1.0.6"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.ide.visualstudio": {
+      "version": "2.0.28",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.test-framework": "1.1.33"
       },
       "url": "https://packages.unity.com"
     },

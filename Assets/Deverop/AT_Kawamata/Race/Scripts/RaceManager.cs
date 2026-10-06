@@ -14,7 +14,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     private const int PlayerRacerId = 0;
     private const string PlayerDisplayName = "Player";
 
-    [SerializeField] private PlayerManager _playerManager;
+	[SerializeField] private PlayerManager _playerManager;
     [SerializeField] private CourseSpline _courseSpline;
     [SerializeField] private RaceSettings _settings;
 
