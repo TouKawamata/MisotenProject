@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Playerに関する機能の窓口。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
@@ -38,6 +39,22 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     private bool _isFinished;
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
+
+    // 直近に通知したブースト・シールドの状態。変化したときだけイベントを出すために持つ。
+    private bool _wasBoosting;
+    private bool _wasShielding;
+
+    // 以下は演出（BoostPresentation / ShieldPresentation）向けの通知。PlayerManagerは演出を直接触らない。
+    public event Action BoostStarted;
+
+    public event Action BoostEnded;
+
+    public event Action ShieldStarted;
+
+    public event Action ShieldEnded;
+
+    // シールドでブースト接触を防いだ瞬間（この後、シールドが消えるのでShieldEndedも出る）。
+    public event Action ShieldBlocked;
 
     public bool IsInShortcutZone => _currentShortcutZone != null;
 
@@ -110,9 +127,11 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         _hasCapturedFinishSpeed = false;
         CurrentProfile = _defaultProfile;
         _flightController.ResetState(CurrentProfile);
+        NotifyStateChanges();
     }
 
     // カウントダウン中はRaceManagerがTickを呼ばないため、ブースト・シールドは使えない。
+    // 最後にブースト・シールドの状態の変化を見て、演出用のイベントを出す（どの経路で始まった・終わったかに関係なく必ず出す）。
     public void Tick(float deltaTime, IReadOnlyRacerData data)
     {
         if (!_isInitialized)
@@ -120,6 +139,12 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             return;
         }
 
+        TickCore(deltaTime, data);
+        NotifyStateChanges();
+    }
+
+    private void TickCore(float deltaTime, IReadOnlyRacerData data)
+    {
         _stun.Tick(deltaTime);
         _isFinished = data.IsFinished;
 
@@ -206,6 +231,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         if (_shield.TryBlock())
         {
             _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
+            ShieldBlocked?.Invoke();
             Log("シールドでブースト接触を防いだ");
             return;
         }
@@ -246,6 +272,38 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         if (input.ShieldPressed && !_boost.IsBoosting && _shield.TryActivate())
         {
             Log("シールド発動");
+        }
+    }
+
+    // 離した・使い切った・スタン・ゴール・置き直しなど、どの経路で変わっても、前回の通知から変わっていればイベントを出す。
+    private void NotifyStateChanges()
+    {
+        bool isBoosting = IsBoosting;
+        if (isBoosting != _wasBoosting)
+        {
+            _wasBoosting = isBoosting;
+            if (isBoosting)
+            {
+                BoostStarted?.Invoke();
+            }
+            else
+            {
+                BoostEnded?.Invoke();
+            }
+        }
+
+        bool isShielding = IsShielding;
+        if (isShielding != _wasShielding)
+        {
+            _wasShielding = isShielding;
+            if (isShielding)
+            {
+                ShieldStarted?.Invoke();
+            }
+            else
+            {
+                ShieldEnded?.Invoke();
+            }
         }
     }
 

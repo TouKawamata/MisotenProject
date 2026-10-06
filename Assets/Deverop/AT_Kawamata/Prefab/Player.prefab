@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 435171648627969166}
   - component: {fileID: 918592705436321776}
   - component: {fileID: 775241823792952702}
+  - component: {fileID: 4573234749840560132}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -28,13 +29,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 658736547751301983}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0.08715578, y: 0, z: 0, w: 0.9961947}
   m_LocalPosition: {x: 0, y: 1.2, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6206948270024191021}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 10, y: 0, z: 0}
 --- !u!20 &6938946564118524447
 Camera:
   m_ObjectHideFlags: 0
@@ -68,7 +69,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 70
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -154,6 +155,29 @@ MonoBehaviour:
   lookAheadBlendWeight: 0.6
   rotationSmoothing: 4
   rollDampFactor: 0.2
+  _thirdPersonOffset: {x: 0, y: 3, z: -8}
+  _thirdPersonRotationOffset: {x: 10, y: 0, z: 0}
+  _thirdPersonPositionSmoothTime: 0.08
+--- !u!114 &4573234749840560132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 658736547751301983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 194b66eae98b8664690fad396bf5701f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostCameraEffect
+  _cameraController: {fileID: 775241823792952702}
+  _camera: {fileID: 0}
+  _switchToThirdPerson: 1
+  _boostFieldOfView: 90
+  _playDuration: 0.5
+  _playEase: 9
+  _stopDuration: 0.5
+  _stopEase: 4
 --- !u!1 &6929844204703215832
 GameObject:
   m_ObjectHideFlags: 0
@@ -168,11 +192,12 @@ GameObject:
   - component: {fileID: 2254414683187600021}
   - component: {fileID: 4349068777616737353}
   - component: {fileID: 2079369644378980432}
-  - component: {fileID: 6537497690453878865}
   - component: {fileID: 6976442047495844702}
   - component: {fileID: 4748799226068538865}
-  - component: {fileID: -7268944218637680035}
+  - component: {fileID: 6537497690453878865}
+  - component: {fileID: 4209057477350365912}
   - component: {fileID: -6863477611215416196}
+  - component: {fileID: -7268944218637680035}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -317,26 +342,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
   _flightController: {fileID: 4748799226068538865}
   _boost: {fileID: 6537497690453878865}
-  _shield: {fileID: 0}
+  _shield: {fileID: -7268944218637680035}
   _inputProvider: {fileID: 6976442047495844702}
   _defaultProfile: {fileID: 11400000, guid: de9080cdca3819d4ebb124d65d3dd9c9, type: 2}
   _shortcutProfile: {fileID: 11400000, guid: 4489856c7d464b14ca8c5f08475eb6d9, type: 2}
   _boostHitProfile: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
+  _bodyCollider: {fileID: 0}
   _showDebugLogs: 1
---- !u!114 &6537497690453878865
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6929844204703215832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BoostController
-  _profile: {fileID: 11400000, guid: ec17e0d5b7b2619458a24c569c10bb79, type: 2}
-  _rankTable: {fileID: 11400000, guid: 786e76e2fa29b0d46838cf4b4d81baec, type: 2}
 --- !u!114 &6976442047495844702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -362,6 +374,49 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFlightController
   _courseSpline: {fileID: 0}
+--- !u!114 &6537497690453878865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostController
+  _profile: {fileID: 11400000, guid: ec17e0d5b7b2619458a24c569c10bb79, type: 2}
+  _rankTable: {fileID: 11400000, guid: 786e76e2fa29b0d46838cf4b4d81baec, type: 2}
+--- !u!114 &4209057477350365912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f93df0e367b0f7b4790fd39c9f48f112, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostPresentation
+  _playerManager: {fileID: 2079369644378980432}
+  _cameraEffect: {fileID: 4573234749840560132}
+  _radialBlur: {fileID: 0}
+  _speedLines: {fileID: 0}
+--- !u!114 &-6863477611215416196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31861699d4a2d6d428fed752fb8132f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostHitDetector
+  _halfWidth: 0.5
 --- !u!114 &-7268944218637680035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,15 +430,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldController
   _profile: {fileID: 11400000, guid: fa9be4e303c81cd43bc7b7e4cbb0ec97, type: 2}
---- !u!114 &-6863477611215416196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6929844204703215832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31861699d4a2d6d428fed752fb8132f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BoostHitDetector
