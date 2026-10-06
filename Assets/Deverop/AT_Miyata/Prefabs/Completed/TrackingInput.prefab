@@ -1,0 +1,107 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2234597220043098810
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3643685120048759248}
+  - component: {fileID: 5618877647202937644}
+  - component: {fileID: 4010324063109646}
+  - component: {fileID: 5388963774256595198}
+  m_Layer: 0
+  m_Name: TrackingInput
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3643685120048759248
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2234597220043098810}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5618877647202937644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2234597220043098810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed41645692348410d84991648165334c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: uOSC.Runtime::uOSC.uOscServer
+  port: 9000
+  autoStart: 1
+  onDataReceived:
+    m_PersistentCalls:
+      m_Calls: []
+  onServerStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onServerStopped:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDataReceivedEditor:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4010324063109646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2234597220043098810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5a2b73051674a24f9d69d951909f52e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoseLandmarkReceiver
+  targetAddress: /pose/landmarks3d
+  scale: {x: 3, y: 3, z: 2}
+  mirrorX: 1
+--- !u!114 &5388963774256595198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2234597220043098810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6aac667fbdc4cc4fb2712a809f0c336, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrackingRaceInputBootstrapper
+  _raceInputProvider: {fileID: 0}
+  _poseLandmarkReceiver: {fileID: 4010324063109646}
+  _trackingSettings:
+    maxTiltAngle: 25
+    tiltDeadZoneAngle: 2
+    tiltResponseCurve: 0.6
+    horizontalSmoothingTime: 0.1
+    invertHorizontal: 0
+    boostHeightRatio: 0.5
+    boostHeightToleranceRatio: 0.35
+    boostHorizontalToleranceRatio: 0.55
+    chestHeightOffsetRatio: 0.15
+    shieldHeightToleranceRatio: 0.3
+    shieldForearmLevelToleranceRatio: 0.3
+    shieldInwardMarginRatio: 0.1
+    shortcutRaiseMarginRatio: 0.15
+    minVisibility: 0.5
+  _useKeyboardForDebug: 0
