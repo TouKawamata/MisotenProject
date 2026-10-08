@@ -160,7 +160,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
 
             if (!_hasCapturedFinishSpeed)
             {
-                _speedAtFinish = _flightController.Velocity.magnitude;
+                // 最高速度は前進の成分だけにかかるので、基準も前進の速さにする。
+                _speedAtFinish = Mathf.Max(0f, _flightController.ForwardSpeed);
                 _hasCapturedFinishSpeed = true;
             }
 

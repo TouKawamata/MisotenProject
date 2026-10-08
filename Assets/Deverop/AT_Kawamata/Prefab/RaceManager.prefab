@@ -47,4 +47,6 @@ MonoBehaviour:
   _playerManager: {fileID: 0}
   _courseSpline: {fileID: 0}
   _settings: {fileID: 11400000, guid: ed81fcc5182298a4f9976d1293103a90, type: 2}
+  _cpuRacers: []
+  _contactProfile: {fileID: 11400000, guid: 6c59d50c7d450334fb345e322a128638, type: 2}
   _showDebugLogs: 1
