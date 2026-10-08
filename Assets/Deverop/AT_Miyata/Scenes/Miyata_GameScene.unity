@@ -1948,6 +1948,10 @@ PrefabInstance:
       propertyPath: _raceInputProvider
       value: 
       objectReference: {fileID: 858414685}
+    - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
+      propertyPath: _useKeyboardForDebug
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
