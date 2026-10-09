@@ -3,261 +3,523 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 
+// BGM ã¨ SE ã‚’åˆ†ã‘ã¦ç®¡ç†ã™ã‚‹ã‚µã‚¦ãƒ³ãƒ‰ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã€‚
+// éŸ³ã¯ AudioClip ã®ãƒ•ã‚¡ã‚¤ãƒ«åã§æŒ‡å®šã™ã‚‹ï¼ˆä¾‹: PlayBGM("maou_bgm_8bit26")ï¼‰ã€‚
+// ãƒ»BGM : åŒæ™‚ã«é³´ã‚‹ã®ã¯ 1 æ›²ã ã‘ã€‚åˆ‡ã‚Šæ›¿ãˆæ™‚ã¯ã‚¯ãƒ­ã‚¹ãƒ•ã‚§ãƒ¼ãƒ‰ã™ã‚‹ã€‚
+// ãƒ»SE  : ä½•å€‹ã§ã‚‚åŒæ™‚ã«é³´ã‚‰ã›ã‚‹ï¼ˆãƒ•ã‚§ãƒ¼ãƒ‰ãªã—ï¼‰ã€‚AudioSource ã¯ä½¿ã„å›ã™ã€‚
+// æœ€çµ‚çš„ãªéŸ³é‡ã¯ã€Œå‘¼ã³å‡ºã—æ™‚ã® volume Ã— BGMï¼ˆSEï¼‰éŸ³é‡ Ã— ãƒã‚¹ã‚¿ãƒ¼éŸ³é‡ã€ã€‚
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager instance;
+    public static AudioManager Instance { get; private set; }
 
-    [Header("ƒI[ƒfƒBƒIİ’è")]
-    [SerializeField] private AudioMixer audioMixer;
+    [Header("Audio Clips")]
+    [SerializeField] private List<AudioClip> m_bgmClips = new List<AudioClip>();
+    [SerializeField] private List<AudioClip> m_seClips = new List<AudioClip>();
 
-    [Header("ƒ}ƒXƒ^[‰¹—Êİ’è (0.0 ` 1.0)")]
-    [Range(0f, 1f)][SerializeField] private float masterVolume = 1f;
-    [Range(0f, 1f)][SerializeField] private float bgmVolume = 1f;
-    [Range(0f, 1f)][SerializeField] private float seVolume = 1f;
+    [Header("Volume")]
+    [SerializeField, Range(0f, 1f)] private float m_masterVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float m_bgmVolume = 1f;
+    [SerializeField, Range(0f, 1f)] private float m_seVolume = 1f;
 
-    [Header("ƒTƒEƒ“ƒhƒŠƒXƒg")]
-    [SerializeField] private List<SoundData> bgmList = new List<SoundData>();
-    [SerializeField] private List<SoundData> seList = new List<SoundData>();
+    [Header("Audio Mixerï¼ˆä»»æ„ï¼‰")]
+    [SerializeField] private AudioMixerGroup m_bgmMixerGroup;
+    [SerializeField] private AudioMixerGroup m_seMixerGroup;
 
-    private AudioSource bgmSource;
-    private AudioSource seSource;
+    [Header("3D Audio Settings")]
+    [SerializeField, Min(0f)] private float m_maxDistance = 100f;
+    [SerializeField, Min(0f)] private float m_minDistance = 1f;
 
-    private Dictionary<string, SoundData> bgmDict = new Dictionary<string, SoundData>();
-    private Dictionary<string, SoundData> seDict = new Dictionary<string, SoundData>();
+    // BGM ã¯ã‚¯ãƒ­ã‚¹ãƒ•ã‚§ãƒ¼ãƒ‰ç”¨ã« 2 ã¤ã® AudioSource ã‚’äº¤äº’ã«ä½¿ã†
+    private const int BgmSourceCount = 2;
 
-    private Coroutine bgmFadeCoroutine;
-    private string currentBgmName = "";
+    private readonly Dictionary<string, AudioClip> m_bgmClipDictionary = new Dictionary<string, AudioClip>();
+    private readonly Dictionary<string, AudioClip> m_seClipDictionary = new Dictionary<string, AudioClip>();
+
+    private readonly AudioSource[] m_bgmSources = new AudioSource[BgmSourceCount];
+    private readonly float[] m_bgmBaseVolumes = new float[BgmSourceCount];
+    private readonly float[] m_bgmFadeVolumes = new float[BgmSourceCount];
+    private readonly Coroutine[] m_bgmFadeCoroutines = new Coroutine[BgmSourceCount];
+
+    // ç¾åœ¨ãƒ¡ã‚¤ãƒ³ã§é³´ã£ã¦ã„ã‚‹ BGM ã® AudioSource ç•ªå·ï¼ˆ-1 = åœæ­¢ä¸­ï¼‰
+    private int m_currentBgmIndex = -1;
+    private bool m_isBgmPaused;
+
+    private readonly List<SeSlot> m_seSlots = new List<SeSlot>();
+
+    public float MasterVolume => m_masterVolume;
+    public float BgmVolume => m_bgmVolume;
+    public float SeVolume => m_seVolume;
+
+    // ç¾åœ¨ã® BGM åï¼ˆåœæ­¢ä¸­ã¯ç©ºæ–‡å­—ï¼‰
+    public string CurrentBgmName =>
+        IsCurrentBgmActive()
+            ? m_bgmSources[m_currentBgmIndex].clip.name
+            : string.Empty;
+
+    // SE ç”¨ AudioSource ã®ä½¿ã„å›ã—æƒ…å ±
+    private class SeSlot
+    {
+        public AudioSource Source;
+        public float BaseVolume;
+        // å†ç”Ÿé–‹å§‹äºˆå®šæ™‚åˆ»ï¼ˆunscaledTimeï¼‰ã€‚é…å»¶å†ç”Ÿä¸­ã«ç©ºãæ‰±ã„ã«ã—ãªã„ãŸã‚ã«ä½¿ã†
+        public float StartTime;
+        public bool InUse;
+    }
 
     private void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-            Initialize();
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        transform.parent = null;
+        DontDestroyOnLoad(gameObject);
+
+        InitializeClips(m_bgmClips, m_bgmClipDictionary, "BGM");
+        InitializeClips(m_seClips, m_seClipDictionary, "SE");
+        CreateBgmSources();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
-    private void Initialize()
+    // ã‚¤ãƒ³ã‚¹ãƒšã‚¯ã‚¿ãƒ¼ã§å€¤ã‚’å¤‰æ›´ã—ãŸéš›ã®è£œæ­£ã¨ã€å†ç”Ÿä¸­ã®éŸ³é‡ã¸ã®åæ˜ 
+    private void OnValidate()
     {
-        // ©•ª©g‚ÉAudioSource‚ğ’¼Ú2‚Â’Ç‰Á‚µ‚Äg‚¤iŠmÀ‚È•û–@j
-        AudioSource[] sources = GetComponents<AudioSource>();
-        if (sources.Length >= 2)
-        {
-            bgmSource = sources[0];
-            seSource = sources[1];
-        }
-        else
-        {
-            bgmSource = gameObject.AddComponent<AudioSource>();
-            seSource = gameObject.AddComponent<AudioSource>();
-        }
+        m_minDistance = Mathf.Max(0f, m_minDistance);
+        m_maxDistance = Mathf.Max(m_minDistance, m_maxDistance);
 
-        // 2DƒTƒEƒ“ƒh‚Æ‚µ‚Äİ’è‚ğŠm’è‚³‚¹‚é
-        bgmSource.spatialBlend = 0f;
-        seSource.spatialBlend = 0f;
-
-        if (audioMixer != null)
+        if (Application.isPlaying && Instance == this)
         {
-            AudioMixerGroup[] bgmGroups = audioMixer.FindMatchingGroups("BGM");
-            if (bgmGroups.Length > 0) bgmSource.outputAudioMixerGroup = bgmGroups[0];
-
-            AudioMixerGroup[] seGroups = audioMixer.FindMatchingGroups("SE");
-            if (seGroups.Length > 0) seSource.outputAudioMixerGroup = seGroups[0];
-        }
-
-        foreach (var bgm in bgmList)
-        {
-            if (!string.IsNullOrEmpty(bgm.soundName) && !bgmDict.ContainsKey(bgm.soundName))
-                bgmDict.Add(bgm.soundName, bgm);
-        }
-
-        foreach (var se in seList)
-        {
-            if (!string.IsNullOrEmpty(se.soundName) && !seDict.ContainsKey(se.soundName))
-                seDict.Add(se.soundName, se);
+            ApplyAllVolumes();
         }
     }
 
-    #region BGM Control
+    #region BGM
 
-    public void PlayBGM(string name, float fadeDuration = 0.5f)
+    // BGM ã‚’å†ç”Ÿã™ã‚‹ã€‚åˆ¥ã® BGM ãŒé³´ã£ã¦ã„ã‚Œã°ã‚¯ãƒ­ã‚¹ãƒ•ã‚§ãƒ¼ãƒ‰ã§åˆ‡ã‚Šæ›¿ãˆã‚‹
+    public bool PlayBGM(string clipName, float fadeDuration = 1f, float volume = 1f, bool loop = true)
     {
-        Debug.Log($"[AudioManager] BGMÄ¶s: ’T‚µ‚Ä‚¢‚é–¼‘O = '{name}'");
-
-        // 1. «‘‚É–¼‘O‚ª‘¶İ‚·‚é‚©ƒ`ƒFƒbƒN
-        if (!bgmDict.ContainsKey(name))
+        if (!TryGetClip(m_bgmClipDictionary, clipName, "BGM", out AudioClip clip))
         {
-            Debug.LogError($"[ƒGƒ‰[] BGM‚Ì“o˜^–¼‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñI ’T‚µ‚½–¼‘O: '{name}'");
+            return false;
+        }
 
-            // Œ»İBgm List‚É“o˜^‚³‚ê‚Ä‚¢‚é–¼‘O‚Ìˆê——‚ğƒƒO‚Éo‚·
-            foreach (var key in bgmDict.Keys)
+        // ä¸€æ™‚åœæ­¢ä¸­ã«å‘¼ã°ã‚ŒãŸå ´åˆã¯å†é–‹ã—ã¦ã‹ã‚‰åˆ‡ã‚Šæ›¿ãˆã‚‹
+        if (m_isBgmPaused)
+        {
+            ResumeBGM();
+        }
+
+        // åŒã˜æ›²ãŒã™ã§ã«ãƒ¡ã‚¤ãƒ³ã§é³´ã£ã¦ã„ã‚‹å ´åˆã¯ä½•ã‚‚ã—ãªã„
+        if (IsCurrentBgmActive() && m_bgmSources[m_currentBgmIndex].clip == clip)
+        {
+            return true;
+        }
+
+        // åŒã˜æ›²ãŒãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆä¸­ãªã‚‰ã€ãã® AudioSource ã‚’å†åˆ©ç”¨ã—ã¦ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¤ãƒ³ã—ç›´ã™
+        int nextIndex = FindBgmSourceIndex(clip);
+
+        if (nextIndex < 0)
+        {
+            nextIndex = SelectNextBgmIndex();
+
+            AudioSource source = m_bgmSources[nextIndex];
+            StopBgmFade(nextIndex);
+            source.Stop();
+            source.clip = clip;
+            m_bgmFadeVolumes[nextIndex] = 0f;
+        }
+
+        AudioSource nextSource = m_bgmSources[nextIndex];
+        nextSource.loop = loop;
+        m_bgmBaseVolumes[nextIndex] = Mathf.Clamp01(volume);
+
+        if (!nextSource.isPlaying)
+        {
+            nextSource.Play();
+        }
+
+        // ä»Šã¾ã§ã® BGM ã¯ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã—ã¦åœæ­¢
+        if (m_currentBgmIndex >= 0)
+        {
+            StartBgmFade(m_currentBgmIndex, 0f, fadeDuration);
+        }
+
+        m_currentBgmIndex = nextIndex;
+        StartBgmFade(nextIndex, 1f, fadeDuration);
+
+        return true;
+    }
+
+    // BGM ã‚’ãƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆã—ã¦åœæ­¢ã™ã‚‹ï¼ˆfadeDuration = 0 ã§å³åœæ­¢ï¼‰
+    public void StopBGM(float fadeDuration = 1f)
+    {
+        if (m_currentBgmIndex < 0)
+        {
+            return;
+        }
+
+        StartBgmFade(m_currentBgmIndex, 0f, fadeDuration);
+        m_currentBgmIndex = -1;
+    }
+
+    public void PauseBGM()
+    {
+        m_isBgmPaused = true;
+
+        foreach (AudioSource source in m_bgmSources)
+        {
+            source.Pause();
+        }
+    }
+
+    public void ResumeBGM()
+    {
+        m_isBgmPaused = false;
+
+        foreach (AudioSource source in m_bgmSources)
+        {
+            source.UnPause();
+        }
+    }
+
+    // ãƒ¡ã‚¤ãƒ³ã® BGM ãŒå†ç”Ÿä¸­ï¼ˆä¸€æ™‚åœæ­¢ä¸­ã‚’å«ã‚€ï¼‰ã‹
+    private bool IsCurrentBgmActive()
+    {
+        if (m_currentBgmIndex < 0)
+        {
+            return false;
+        }
+
+        AudioSource source = m_bgmSources[m_currentBgmIndex];
+        return source.clip != null && (source.isPlaying || m_isBgmPaused);
+    }
+
+    private void CreateBgmSources()
+    {
+        for (int i = 0; i < BgmSourceCount; i++)
+        {
+            AudioSource source = CreateAudioSource($"AudioSource_BGM_{i}", m_bgmMixerGroup);
+            source.spatialBlend = 0f;
+            m_bgmSources[i] = source;
+        }
+    }
+
+    private int FindBgmSourceIndex(AudioClip clip)
+    {
+        for (int i = 0; i < BgmSourceCount; i++)
+        {
+            if (m_bgmSources[i].clip == clip && m_bgmSources[i].isPlaying)
             {
-                Debug.Log($" „¤ Œ»İ“o˜^‚³‚ê‚Ä‚¢‚éBGM–¼: '{key}'");
+                return i;
             }
-            return;
         }
 
-        SoundData data = bgmDict[name];
-
-        // 2. Clip‚ªƒZƒbƒg‚³‚ê‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN
-        if (data.clip == null)
-        {
-            Debug.LogError($"[ƒGƒ‰[] BGM '{name}' ‚É Audio Clip ‚ªƒZƒbƒg‚³‚ê‚Ä‚¢‚Ü‚¹‚ñI Inspector‚Ì Bgm List ‚ğŠm”F‚µ‚Ä‚­‚¾‚³‚¢B");
-            return;
-        }
-
-        // 3. Šù‚É“¯‚¶‹È‚ª–Â‚Á‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN
-        if (bgmSource.clip == data.clip && bgmSource.isPlaying)
-        {
-            Debug.Log("[AudioManager] Šù‚É“¯‚¶BGM‚ªÄ¶’†‚Å‚·B");
-            return;
-        }
-
-        currentBgmName = name;
-
-        if (bgmFadeCoroutine != null) StopCoroutine(bgmFadeCoroutine);
-        bgmFadeCoroutine = StartCoroutine(ChangeBGMCoroutine(data, fadeDuration));
-
-        Debug.Log($"šy¬Œ÷z BGM '{name}' ‚ÌÄ¶iƒtƒF[ƒhƒRƒ‹[ƒ`ƒ“j‚ğŠJn‚µ‚Ü‚µ‚½I");
-    }
-    public void StopBGM(float fadeDuration = 0.5f)
-    {
-        currentBgmName = "";
-        if (bgmFadeCoroutine != null) StopCoroutine(bgmFadeCoroutine);
-        bgmFadeCoroutine = StartCoroutine(FadeOutBGMCoroutine(fadeDuration));
+        return -1;
     }
 
-    public void PauseBGM() => bgmSource.Pause();
-    public void UnPauseBGM() => bgmSource.UnPause();
-
-    private IEnumerator ChangeBGMCoroutine(SoundData data, float fadeDuration)
+    // æ¬¡ã® BGM ã«ä½¿ã† AudioSource ã‚’é¸ã¶ã€‚é³´ã£ã¦ã„ãªã„ã‚‚ã®ã‚’å„ªå…ˆã™ã‚‹
+    private int SelectNextBgmIndex()
     {
-        // ÅI“I‚È“’B‰¹—Ê‚ğŒvZ
-        float soundDataVol = data.volume <= 0f ? 1f : data.volume;
-        float targetVol = soundDataVol * bgmVolume * masterVolume;
-
-        // 1. Šù‚É•Ê‚ÌBGM‚ªÄ¶’†‚È‚çA‚Ü‚¸ƒtƒF[ƒhƒAƒEƒg‚·‚é
-        if (bgmSource.isPlaying && fadeDuration > 0f)
+        for (int i = 0; i < BgmSourceCount; i++)
         {
-            float startVol = bgmSource.volume;
-            float timer = 0f;
-
-            while (timer < fadeDuration)
+            if (i != m_currentBgmIndex && !m_bgmSources[i].isPlaying)
             {
-                timer += Time.deltaTime;
-                bgmSource.volume = Mathf.Lerp(startVol, 0f, timer / fadeDuration);
-                yield return null;
+                return i;
             }
-            bgmSource.Stop();
         }
 
-        // 2. V‚µ‚¢BGM‚ğƒZƒbƒg
-        bgmSource.clip = data.clip;
-        bgmSource.loop = data.loop;
-        bgmSource.pitch = data.pitch <= 0f ? 1f : data.pitch;
+        return m_currentBgmIndex == 0 ? 1 : 0;
+    }
 
-        // ƒtƒF[ƒhƒCƒ“‚È‚µi‘¦Ä¶j‚Ìê‡
-        if (fadeDuration <= 0f)
+    private void StartBgmFade(int index, float targetVolume, float fadeDuration)
+    {
+        StopBgmFade(index);
+        m_bgmFadeCoroutines[index] = StartCoroutine(BgmFadeCoroutine(index, targetVolume, fadeDuration));
+    }
+
+    private void StopBgmFade(int index)
+    {
+        if (m_bgmFadeCoroutines[index] != null)
         {
-            bgmSource.volume = targetVol;
-            bgmSource.Play();
-            yield break;
+            StopCoroutine(m_bgmFadeCoroutines[index]);
+            m_bgmFadeCoroutines[index] = null;
         }
+    }
 
-        // 3. ƒtƒF[ƒhƒCƒ“Ä¶i‰¹—Ê0‚©‚çƒXƒ^[ƒg‚µ‚Ä–Ú•W’l‚Öj
-        bgmSource.volume = 0f;
-        bgmSource.Play();
+    // ç¾åœ¨ã®ãƒ•ã‚§ãƒ¼ãƒ‰å€¤ã‹ã‚‰ targetVolume ã¾ã§å¤‰åŒ–ã•ã›ã‚‹ã€‚0 ã«ãªã£ãŸã‚‰åœæ­¢ã™ã‚‹ã€‚
+    // ãƒãƒ¼ã‚ºä¸­ï¼ˆtimeScale = 0ï¼‰ã§ã‚‚é€²ã‚€ã‚ˆã†ã« unscaledDeltaTime ã‚’ä½¿ã†
+    private IEnumerator BgmFadeCoroutine(int index, float targetVolume, float fadeDuration)
+    {
+        float startVolume = m_bgmFadeVolumes[index];
+        float elapsedTime = 0f;
 
-        float fadeInTimer = 0f;
-        while (fadeInTimer < fadeDuration)
+        while (elapsedTime < fadeDuration)
         {
-            fadeInTimer += Time.deltaTime;
-            bgmSource.volume = Mathf.Lerp(0f, targetVol, fadeInTimer / fadeDuration);
+            elapsedTime += Time.unscaledDeltaTime;
+            m_bgmFadeVolumes[index] = Mathf.Lerp(startVolume, targetVolume, elapsedTime / fadeDuration);
+            ApplyBgmVolume(index);
             yield return null;
         }
 
-        // ÅŒã‚ÉŠmÀ‚É–Ú•W‰¹—Ê‚ÉŒÅ’è
-        bgmSource.volume = targetVol;
-    }
-    private IEnumerator FadeOutBGMCoroutine(float fadeDuration)
-    {
-        if (fadeDuration > 0)
+        m_bgmFadeVolumes[index] = targetVolume;
+        ApplyBgmVolume(index);
+
+        if (targetVolume <= 0f)
         {
-            float startVol = bgmSource.volume;
-            for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-            {
-                bgmSource.volume = Mathf.Lerp(startVol, 0, t / fadeDuration);
-                yield return null;
-            }
+            m_bgmSources[index].Stop();
+            m_bgmSources[index].clip = null;
         }
-        bgmSource.Stop();
-        bgmSource.clip = null;
+
+        m_bgmFadeCoroutines[index] = null;
+    }
+
+    private void ApplyBgmVolume(int index)
+    {
+        m_bgmSources[index].volume = m_bgmBaseVolumes[index] * m_bgmFadeVolumes[index] * m_bgmVolume * m_masterVolume;
     }
 
     #endregion
 
-    #region SE Control
+    #region SE
 
-    public void PlaySE(string name)
+    // 2D ã® SE ã‚’å†ç”Ÿã™ã‚‹
+    public bool PlaySE(string clipName, bool loop = false, float volume = 1f, float pitch = 1f, float delay = 0f)
     {
-        Debug.Log($"[AudioManager] PlaySEÀss: ’T‚µ‚Ä‚¢‚é–¼‘O = '{name}'");
-
-        // «‘‚É–¼‘O‚ª‘¶İ‚·‚é‚©ƒ`ƒFƒbƒN
-        if (!seDict.ContainsKey(name))
-        {
-            Debug.LogError($"[ƒGƒ‰[] “o˜^–¼‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñI ’T‚µ‚½–¼‘O: '{name}'");
-
-            // Œ»İ“o˜^‚³‚ê‚Ä‚¢‚é–¼‘O‚Ìˆê——‚ğƒƒO‚Éo‚·iƒfƒoƒbƒO—pj
-            foreach (var key in seDict.Keys)
-            {
-                Debug.Log($" „¤ Œ»İ“o˜^‚³‚ê‚Ä‚¢‚é–¼‘O: '{key}'");
-            }
-            return;
-        }
-
-        SoundData data = seDict[name];
-
-        // Clip‚ªƒZƒbƒg‚³‚ê‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN
-        if (data.clip == null)
-        {
-            Debug.LogError($"[ƒGƒ‰[] '{name}' ‚É Audio Clip ‚ªƒZƒbƒg‚³‚ê‚Ä‚¢‚Ü‚¹‚ñI Inspector‚Å‰¹ºƒtƒ@ƒCƒ‹‚ğƒhƒ‰ƒbƒO•ƒhƒƒbƒv‚µ‚Ä‚­‚¾‚³‚¢B");
-            return;
-        }
-
-        // ‰¹ºÄ¶
-        seSource.pitch = 1f;
-        seSource.volume = 1f;
-        seSource.PlayOneShot(data.clip, 1f);
-
-        Debug.Log("šy¬Œ÷z PlayOneShot‚ª³í‚ÉÀs‚³‚ê‚Ü‚µ‚½I‰¹‚ªo‚Ä‚¢‚é‚©Šm”F‚µ‚Ä‚­‚¾‚³‚¢B");
+        return PlaySEInternal(clipName, null, loop, volume, pitch, delay);
     }
 
-    public void StopAllSE() => seSource.Stop();
+    // æŒ‡å®šä½ç½®ã§ 3D ã® SE ã‚’å†ç”Ÿã™ã‚‹
+    public bool PlaySE3D(string clipName, Vector3 worldPosition, bool loop = false, float volume = 1f, float pitch = 1f, float delay = 0f)
+    {
+        return PlaySEInternal(clipName, worldPosition, loop, volume, pitch, delay);
+    }
+
+    // æŒ‡å®šã—ãŸ SE ã‚’ã™ã¹ã¦åœæ­¢ã™ã‚‹ï¼ˆãƒ«ãƒ¼ãƒ— SE ã®åœæ­¢ãªã©ã«ä½¿ã†ï¼‰
+    public void StopSE(string clipName)
+    {
+        foreach (SeSlot slot in m_seSlots)
+        {
+            if (IsSlotPlaying(slot) && slot.Source.clip != null && slot.Source.clip.name == clipName)
+            {
+                ReleaseSlot(slot);
+            }
+        }
+    }
+
+    public void StopAllSE()
+    {
+        foreach (SeSlot slot in m_seSlots)
+        {
+            if (IsSlotPlaying(slot))
+            {
+                ReleaseSlot(slot);
+            }
+        }
+    }
+
+    private bool PlaySEInternal(string clipName, Vector3? worldPosition, bool loop, float volume, float pitch, float delay)
+    {
+        if (!TryGetClip(m_seClipDictionary, clipName, "SE", out AudioClip clip))
+        {
+            return false;
+        }
+
+        // è² ã®é…å»¶ã¯å³æ™‚å†ç”Ÿæ‰±ã„ã«ã™ã‚‹
+        float playDelay = Mathf.Max(0f, delay);
+
+        SeSlot slot = AcquireSlot();
+        slot.BaseVolume = Mathf.Clamp01(volume);
+        slot.StartTime = Time.unscaledTime + playDelay;
+
+        AudioSource source = slot.Source;
+        source.clip = clip;
+        source.loop = loop;
+        source.pitch = pitch;
+
+        if (worldPosition.HasValue)
+        {
+            source.transform.position = worldPosition.Value;
+            source.spatialBlend = 1f;
+            source.minDistance = m_minDistance;
+            source.maxDistance = m_maxDistance;
+            source.rolloffMode = AudioRolloffMode.Linear;
+        }
+        else
+        {
+            source.spatialBlend = 0f;
+        }
+
+        ApplySeVolume(slot);
+
+        if (playDelay > 0f)
+        {
+            source.PlayDelayed(playDelay);
+        }
+        else
+        {
+            source.Play();
+        }
+
+        return true;
+    }
+
+    // ç©ºã„ã¦ã„ã‚‹ AudioSource ã‚’æ¢ã—ã€ç„¡ã‘ã‚Œã°æ–°ã—ãä½œã‚‹
+    private SeSlot AcquireSlot()
+    {
+        foreach (SeSlot slot in m_seSlots)
+        {
+            if (!IsSlotPlaying(slot))
+            {
+                slot.InUse = true;
+                return slot;
+            }
+        }
+
+        SeSlot newSlot = new SeSlot
+        {
+            Source = CreateAudioSource($"AudioSource_SE_{m_seSlots.Count}", m_seMixerGroup),
+            InUse = true,
+        };
+        m_seSlots.Add(newSlot);
+
+        return newSlot;
+    }
+
+    // å†ç”Ÿä¸­ã€ã¾ãŸã¯é…å»¶å†ç”Ÿã®å¾…æ©Ÿä¸­ãªã‚‰ true
+    private bool IsSlotPlaying(SeSlot slot)
+    {
+        if (!slot.InUse)
+        {
+            return false;
+        }
+
+        if (slot.Source.isPlaying || Time.unscaledTime < slot.StartTime)
+        {
+            return true;
+        }
+
+        // å†ç”ŸãŒçµ‚ã‚ã£ã¦ã„ã‚Œã°ç©ºãã«æˆ»ã™
+        slot.InUse = false;
+        slot.Source.clip = null;
+        return false;
+    }
+
+    private void ReleaseSlot(SeSlot slot)
+    {
+        slot.Source.Stop();
+        slot.Source.clip = null;
+        slot.InUse = false;
+    }
+
+    private void ApplySeVolume(SeSlot slot)
+    {
+        slot.Source.volume = slot.BaseVolume * m_seVolume * m_masterVolume;
+    }
 
     #endregion
 
-    #region Volume Settings
-
-    public void SetBGMVolume(float volume)
-    {
-        bgmVolume = Mathf.Clamp01(volume);
-        if (!string.IsNullOrEmpty(currentBgmName) && bgmDict.TryGetValue(currentBgmName, out SoundData data))
-        {
-            bgmSource.volume = data.volume * bgmVolume * masterVolume;
-        }
-    }
-
-    public void SetSEVolume(float volume) => seVolume = Mathf.Clamp01(volume);
+    #region Volume
 
     public void SetMasterVolume(float volume)
     {
-        masterVolume = Mathf.Clamp01(volume);
-        SetBGMVolume(bgmVolume);
+        m_masterVolume = Mathf.Clamp01(volume);
+        ApplyAllVolumes();
+    }
+
+    public void SetBGMVolume(float volume)
+    {
+        m_bgmVolume = Mathf.Clamp01(volume);
+        ApplyAllVolumes();
+    }
+
+    public void SetSEVolume(float volume)
+    {
+        m_seVolume = Mathf.Clamp01(volume);
+        ApplyAllVolumes();
+    }
+
+    // å†ç”Ÿä¸­ã®éŸ³ã™ã¹ã¦ã«ç¾åœ¨ã®éŸ³é‡è¨­å®šã‚’åæ˜ ã™ã‚‹
+    private void ApplyAllVolumes()
+    {
+        for (int i = 0; i < BgmSourceCount; i++)
+        {
+            if (m_bgmSources[i] != null)
+            {
+                ApplyBgmVolume(i);
+            }
+        }
+
+        foreach (SeSlot slot in m_seSlots)
+        {
+            if (slot.InUse)
+            {
+                ApplySeVolume(slot);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Common
+
+    // AudioClip ã‚’ãƒ•ã‚¡ã‚¤ãƒ«åã§å¼•ã‘ã‚‹ã‚ˆã†ã«è¾æ›¸ã¸ç™»éŒ²ã™ã‚‹
+    private void InitializeClips(List<AudioClip> clips, Dictionary<string, AudioClip> dictionary, string label)
+    {
+        dictionary.Clear();
+
+        foreach (AudioClip clip in clips)
+        {
+            if (clip == null)
+            {
+                Debug.LogWarning($"[AudioManager] {label} ã« null ã® AudioClip ãŒç™»éŒ²ã•ã‚Œã¦ã„ã¾ã™ã€‚");
+                continue;
+            }
+
+            if (!dictionary.TryAdd(clip.name, clip))
+            {
+                Debug.LogWarning($"[AudioManager] {label} ã® AudioClip '{clip.name}' ãŒé‡è¤‡ã—ã¦ã„ã¾ã™ã€‚");
+            }
+        }
+    }
+
+    private bool TryGetClip(Dictionary<string, AudioClip> dictionary, string clipName, string label, out AudioClip clip)
+    {
+        if (string.IsNullOrWhiteSpace(clipName))
+        {
+            Debug.LogError($"[AudioManager] {label} ã® clipName ãŒç©ºã§ã™ã€‚");
+            clip = null;
+            return false;
+        }
+
+        if (dictionary.TryGetValue(clipName, out clip))
+        {
+            return true;
+        }
+
+        Debug.LogError($"[AudioManager] {label} ã® AudioClip '{clipName}' ãŒç™»éŒ²ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚");
+        return false;
+    }
+
+    private AudioSource CreateAudioSource(string objectName, AudioMixerGroup mixerGroup)
+    {
+        GameObject audioObject = new GameObject(objectName);
+        audioObject.transform.SetParent(transform);
+
+        AudioSource source = audioObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.outputAudioMixerGroup = mixerGroup;
+
+        return source;
     }
 
     #endregion

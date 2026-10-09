@@ -1,122 +1,68 @@
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
+// AudioManager ã®å‹•ä½œç¢ºèªç”¨ UIï¼ˆãƒ†ã‚¹ãƒˆã‚·ãƒ¼ãƒ³å°‚ç”¨ï¼‰
 public class AudioTestUI : MonoBehaviour
 {
-    [Header("ƒeƒXƒg—pƒTƒEƒ“ƒh–¼")]
-    [SerializeField] private string bgmName1 = "TitleBGM";
-    [SerializeField] private string bgmName2 = "StageBGM";
-    [SerializeField] private string seName1 = "Click";
-    [SerializeField] private string seName2 = "Boom";
+    [Header("ãƒ†ã‚¹ãƒˆç”¨ã‚µã‚¦ãƒ³ãƒ‰åï¼ˆAudioClip ã®ãƒ•ã‚¡ã‚¤ãƒ«åï¼‰")]
+    [SerializeField] private string m_bgmName1 = "maou_bgm_cyber43";
+    [SerializeField] private string m_bgmName2 = "maou_bgm_8bit26";
+    [SerializeField] private string m_seName1 = "ã‚·ãƒ§ãƒƒãƒˆ";
+    [SerializeField] private string m_seName2 = "ã‚·ãƒ§ãƒƒãƒˆå‘½ä¸­";
+
+    [SerializeField, Min(0f)] private float m_fadeDuration = 1f;
 
     private void Update()
     {
-        bool is1Pressed = false;
-        bool is2Pressed = false;
-        bool is3Pressed = false;
-        bool is4Pressed = false;
-        bool isSpacePressed = false;
+        Keyboard keyboard = Keyboard.current;
 
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null)
+        if (keyboard == null || AudioManager.Instance == null)
         {
-            if (Keyboard.current.digit1Key.wasPressedThisFrame) is1Pressed = true;
-            if (Keyboard.current.digit2Key.wasPressedThisFrame) is2Pressed = true;
-            if (Keyboard.current.digit3Key.wasPressedThisFrame) is3Pressed = true;
-            if (Keyboard.current.digit4Key.wasPressedThisFrame) is4Pressed = true; // digit4Key‚É•ÏX
-            if (Keyboard.current.spaceKey.wasPressedThisFrame) isSpacePressed = true;
+            return;
         }
-#endif
 
-#if ENABLE_LEGACY_INPUT_MANAGER
-        if (Input.GetKeyDown(KeyCode.Alpha1)) is1Pressed = true;
-        if (Input.GetKeyDown(KeyCode.Alpha2)) is2Pressed = true;
-        if (Input.GetKeyDown(KeyCode.Alpha3)) is3Pressed = true;
-        if (Input.GetKeyDown(KeyCode.Alpha4)) is4Pressed = true; // Alpha4‚É•ÏX
-        if (Input.GetKeyDown(KeyCode.Space)) isSpacePressed = true;
-#endif
-
-        if (is1Pressed) PlayBGM(bgmName1);
-        if (is2Pressed) StopBGM();
-        if (is3Pressed) PlayBGM(bgmName2);
-
-        // SE‡@‚Í SpaceƒL[ASE‡A‚Í 4ƒL[ ‚ÉŠ„‚è“–‚Ä
-        if (isSpacePressed) PlaySE(seName1);
-        if (is4Pressed) PlaySE(seName2);
-    }
-
-    private void PlayBGM(string name)
-    {
-        if (AudioManager.instance != null)
-        {
-            Debug.Log($"[Test] BGMÄ¶: {name}");
-            AudioManager.instance.PlayBGM(name, 1.0f);
-        }
-    }
-
-    private void StopBGM()
-    {
-        if (AudioManager.instance != null)
-        {
-            Debug.Log("[Test] BGM’â~");
-            AudioManager.instance.StopBGM(1.0f);
-        }
-    }
-
-    // ˆø”‚Å–Â‚ç‚µ‚½‚¢SE–¼‚ğó‚¯æ‚ê‚é‚æ‚¤‚É•ÏX
-    private void PlaySE(string name)
-    {
-        if (AudioManager.instance != null)
-        {
-            Debug.Log($"[Test] SEÄ¶: {name}");
-            AudioManager.instance.PlaySE(name);
-        }
+        if (keyboard.digit1Key.wasPressedThisFrame) AudioManager.Instance.PlayBGM(m_bgmName1, m_fadeDuration);
+        if (keyboard.digit2Key.wasPressedThisFrame) AudioManager.Instance.StopBGM(m_fadeDuration);
+        if (keyboard.digit3Key.wasPressedThisFrame) AudioManager.Instance.PlayBGM(m_bgmName2, m_fadeDuration);
+        if (keyboard.spaceKey.wasPressedThisFrame) AudioManager.Instance.PlaySE(m_seName1);
+        if (keyboard.digit4Key.wasPressedThisFrame) AudioManager.Instance.PlaySE(m_seName2);
     }
 
     private void OnGUI()
     {
-        GUILayout.BeginArea(new Rect(20, 20, 320, 420));
-        GUILayout.Box("=== Audio Manager Multi-Test ===");
+        AudioManager audioManager = AudioManager.Instance;
 
-        GUILayout.Label($"y 1 ƒL[ z: BGM‡@Ä¶ ({bgmName1})");
-        if (GUILayout.Button($"BGM‡@Ä¶ ({bgmName1})", GUILayout.Height(30)))
+        if (audioManager == null)
         {
-            PlayBGM(bgmName1);
+            return;
         }
 
-        GUILayout.Space(5);
+        GUILayout.BeginArea(new Rect(20, 20, 320, 520));
+        GUILayout.Box("=== Audio Manager Test ===");
+        GUILayout.Label($"ç¾åœ¨ã® BGM: {audioManager.CurrentBgmName}");
 
-        GUILayout.Label($"y 3 ƒL[ z: BGM‡AÄ¶ ({bgmName2})");
-        if (GUILayout.Button($"BGM‡AÄ¶ ({bgmName2})", GUILayout.Height(30)))
-        {
-            PlayBGM(bgmName2);
-        }
+        if (GUILayout.Button($"[1] BGMâ‘  å†ç”Ÿ ({m_bgmName1})", GUILayout.Height(30))) audioManager.PlayBGM(m_bgmName1, m_fadeDuration);
+        if (GUILayout.Button($"[3] BGMâ‘¡ å†ç”Ÿ ({m_bgmName2})", GUILayout.Height(30))) audioManager.PlayBGM(m_bgmName2, m_fadeDuration);
+        if (GUILayout.Button("[2] BGM åœæ­¢", GUILayout.Height(30))) audioManager.StopBGM(m_fadeDuration);
 
-        GUILayout.Space(5);
-
-        GUILayout.Label("y 2 ƒL[ z: BGM’â~");
-        if (GUILayout.Button("BGM’â~", GUILayout.Height(30)))
-        {
-            StopBGM();
-        }
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("BGM ä¸€æ™‚åœæ­¢", GUILayout.Height(30))) audioManager.PauseBGM();
+        if (GUILayout.Button("BGM å†é–‹", GUILayout.Height(30))) audioManager.ResumeBGM();
+        GUILayout.EndHorizontal();
 
         GUILayout.Space(10);
 
-        GUILayout.Label($"y Space ƒL[ z: SE‡@Ä¶ ({seName1})");
-        if (GUILayout.Button($"SE‡@Ä¶ ({seName1})", GUILayout.Height(35)))
-        {
-            PlaySE(seName1);
-        }
+        if (GUILayout.Button($"[Space] SEâ‘  å†ç”Ÿ ({m_seName1})", GUILayout.Height(30))) audioManager.PlaySE(m_seName1);
+        if (GUILayout.Button($"[4] SEâ‘¡ å†ç”Ÿ ({m_seName2})", GUILayout.Height(30))) audioManager.PlaySE(m_seName2);
 
-        GUILayout.Space(5);
+        GUILayout.Space(10);
 
-        GUILayout.Label($"y 4 ƒL[ z: SE‡AÄ¶ ({seName2})");
-        if (GUILayout.Button($"SE‡AÄ¶ ({seName2})", GUILayout.Height(35)))
-        {
-            PlaySE(seName2);
-        }
+        GUILayout.Label($"Master: {audioManager.MasterVolume:F2}");
+        audioManager.SetMasterVolume(GUILayout.HorizontalSlider(audioManager.MasterVolume, 0f, 1f));
+        GUILayout.Label($"BGM: {audioManager.BgmVolume:F2}");
+        audioManager.SetBGMVolume(GUILayout.HorizontalSlider(audioManager.BgmVolume, 0f, 1f));
+        GUILayout.Label($"SE: {audioManager.SeVolume:F2}");
+        audioManager.SetSEVolume(GUILayout.HorizontalSlider(audioManager.SeVolume, 0f, 1f));
 
         GUILayout.EndArea();
     }
