@@ -1,0 +1,55 @@
+// レース中に変わる参加者ごとの状態。書き込みはRaceManager（RaceProgressTracker）だけが行い、
+// 外へはIReadOnlyRacerDataとして渡す。
+public class RacerData : IReadOnlyRacerData
+{
+    public RacerData(int racerId, bool isPlayer, string displayName)
+    {
+        RacerId = racerId;
+        IsPlayer = isPlayer;
+        DisplayName = displayName;
+        SpeedMultiplier = 1f;
+    }
+
+    public int RacerId { get; }
+
+    public bool IsPlayer { get; }
+
+    public string DisplayName { get; }
+
+    public int CurrentRank { get; set; }
+
+    public float RankRatio { get; set; }
+
+    public float DistanceOnCourse { get; set; }
+
+    public float CourseProgress { get; set; }
+
+    public bool IsFinished { get; set; }
+
+    public float FinishTime { get; set; }
+
+    public float TimeSinceFinish { get; set; }
+
+    public float SpeedMultiplier { get; set; }
+
+    public bool IsBoosting { get; set; }
+
+    public bool IsShielding { get; set; }
+
+    public bool IsStunned { get; set; }
+
+    public void ResetProgress()
+    {
+        CurrentRank = 0;
+        RankRatio = 0f;
+        DistanceOnCourse = 0f;
+        CourseProgress = 0f;
+        IsFinished = false;
+        FinishTime = 0f;
+        TimeSinceFinish = 0f;
+        SpeedMultiplier = 1f;
+        IsBoosting = false;
+        IsShielding = false;
+        IsStunned = false;
+    }
+}

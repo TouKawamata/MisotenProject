@@ -24,6 +24,11 @@ public class FlightTuningProfile : ScriptableObject
     [Header("カメラ用先読み")]
     [SerializeField] private float _lookAheadDistance = 40f;
 
+    [Header("壁（トンネルの境界）")]
+    [Tooltip("壁に当たったときの減速の強さ。減らす割合 ＝ この値 × 当たった角度のsin（正面から当たると1、かすめると0に近い）。0なら減速せずに滑る、1なら正面から当たると止まる")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _wallHitSpeedLossRate = 0.5f;
+
     public float HeadingTurnRate => _headingTurnRate;
 
     public float VelocityTurnRate => _velocityTurnRate;
@@ -41,4 +46,6 @@ public class FlightTuningProfile : ScriptableObject
     public float RollSmoothTime => _rollSmoothTime;
 
     public float LookAheadDistance => _lookAheadDistance;
+
+    public float WallHitSpeedLossRate => _wallHitSpeedLossRate;
 }

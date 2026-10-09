@@ -25,13 +25,27 @@ public class KeyboardRaceInput : IRaceInput
                 value += 1f;
             }
 
+            if (keyboard.sKey.isPressed)
+            {
+                value -= 0.7f;
+            }
+
+            if (keyboard.fKey.isPressed)
+            {
+                value += 0.7f;
+            }
+
             return value;
         }
     }
 
     public bool BoostPressed => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
 
+    public bool BoostHeld => Keyboard.current != null && Keyboard.current.spaceKey.isPressed;
+
     public bool ShieldPressed => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
+
+    public bool ShieldHeld => Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
 
     public bool ShortcutPressed => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 }
