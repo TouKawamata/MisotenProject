@@ -654,6 +654,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 83750084}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &84503206
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 84503208}
+  - component: {fileID: 84503207}
+  m_Layer: 0
+  m_Name: DebugHud
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &84503207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84503206}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f5f925a07bc5842927085f0d601ed4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DebugHud
+  playerFlight: {fileID: 659967152165127087}
+  boostController: {fileID: 659967152165127086}
+  raceInputProvider: {fileID: 659967152165127084}
+  playerManager: {fileID: 900000002}
+  courseSpline: {fileID: 1839428154}
+  player: {fileID: 659967152165127085}
+  visible: 1
+  position: {x: 12, y: 12}
+  fontSize: 16
+  backgroundAlpha: 0.75
+  graphSeconds: 4
+  graphSamplesPerSecond: 30
+  graphSize: {x: 360, y: 100}
+  horizontalGuide: 0.7
+  courseSampleIntervalFrames: 5
+  pressedHoldSeconds: 0.5
+--- !u!4 &84503208
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 84503206}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.42857, y: 0, z: -11.42857}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &90470137
 GameObject:
   m_ObjectHideFlags: 0
@@ -18626,7 +18686,7 @@ PrefabInstance:
       objectReference: {fileID: 659967152165127084}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _useKeyboardForDebug
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _trackingSettings.maxTiltAngle
@@ -21557,6 +21617,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73de88d3061ba8b4284a14bbeb575985, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceInputProvider
+--- !u!4 &659967152165127085 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6206948270024191021, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 659967152165127082}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &659967152165127086 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6537497690453878865, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 659967152165127082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostController
+--- !u!114 &659967152165127087 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4748799226068538865, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 659967152165127082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 593d5ec4ffa4d6c40ab6abc129877be0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFlightController
 --- !u!1001 &2667757041561019954
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21725,3 +21812,4 @@ SceneRoots:
   - {fileID: 2040447127}
   - {fileID: 416714360}
   - {fileID: 1839728604}
+  - {fileID: 84503208}
