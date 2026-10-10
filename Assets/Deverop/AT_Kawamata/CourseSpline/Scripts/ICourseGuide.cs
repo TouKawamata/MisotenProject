@@ -12,4 +12,7 @@ public interface ICourseGuide
     Vector3 GetUp(Vector3 worldPosition);
 
     Vector3 GetLookAheadPosition(Vector3 worldPosition, float lookAheadDistance);
+
+    // その場所のトンネル半径（制御点のRadius Scaleを反映した値）。
+    float GetTunnelRadius(Vector3 worldPosition);
 }

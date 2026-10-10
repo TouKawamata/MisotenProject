@@ -1,3 +1,4 @@
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,6 +18,77 @@ public class CourseSplineEditor : Editor
                 AddPoint((CourseSpline)targetObject);
             }
         }
+
+        EditorGUILayout.Space();
+        EditorGUILayout.HelpBox(
+            "制御点のTransformのRotationは使われません。傾きは制御点のBank Angleで指定します。\n" +
+            "下のボタンで、Rotationが付いている制御点の傾きをBank Angleへ移し、Rotationを0に戻します（Rotationが0の点は変更しません）。\n" +
+            "垂直に近い区間の回避策として付けたRotationは、変換した後でBank Angleを0に戻してください。",
+            MessageType.Info);
+
+        if (GUILayout.Button("RotationをBank Angleへ変換"))
+        {
+            foreach (Object targetObject in targets)
+            {
+                ConvertRotationsToBankAngles((CourseSpline)targetObject);
+            }
+        }
+    }
+
+    // 制御点のRotationの上方向を、その点での「バンクをかける前の上方向」から測った角度に直してBank Angleへ入れる。
+    private static void ConvertRotationsToBankAngles(CourseSpline spline)
+    {
+        int count = spline.PointCount;
+        Vector3[] forwards = new Vector3[count];
+        Vector3[] baseUps = new Vector3[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            if (!spline.TryGetBaseFrameAtPoint(i, out forwards[i], out baseUps[i]))
+            {
+                Debug.LogWarning($"{spline.name}: 制御点{i}の向きを取得できなかったため、変換を中止しました", spline);
+                return;
+            }
+        }
+
+        Undo.SetCurrentGroupName("Convert Rotation To Bank Angle");
+        int undoGroup = Undo.GetCurrentGroup();
+
+        StringBuilder log = new StringBuilder($"{spline.name}: RotationをBank Angleへ変換しました\n");
+        float previousBank = 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            CourseSplinePoint point = spline.GetControlPoint(i);
+            Transform pointTransform = point.transform;
+
+            if (pointTransform.localRotation == Quaternion.identity)
+            {
+                previousBank = point.BankAngle;
+                continue;
+            }
+
+            Vector3 projectedUp = Vector3.ProjectOnPlane(pointTransform.up, forwards[i]);
+            float bank = projectedUp.sqrMagnitude > 0.000001f
+                ? Vector3.SignedAngle(baseUps[i], projectedUp, forwards[i])
+                : 0f;
+
+            // 従来は点と点の間を近い方へ回していたので、前の点との差が±180°に収まるように合わせる。
+            bank = previousBank + Mathf.DeltaAngle(previousBank, bank);
+            bank = Mathf.Round(bank * 10f) / 10f;
+
+            Undo.RecordObject(point, "Convert Rotation To Bank Angle");
+            Undo.RecordObject(pointTransform, "Convert Rotation To Bank Angle");
+            point.BankAngle = bank;
+            pointTransform.localRotation = Quaternion.identity;
+            EditorUtility.SetDirty(point);
+
+            log.AppendLine($"  {point.name}: {bank:F1}°");
+            previousBank = bank;
+        }
+
+        Undo.CollapseUndoOperations(undoGroup);
+        Debug.Log(log.ToString(), spline);
     }
 
     private static void AddPoint(CourseSpline spline)

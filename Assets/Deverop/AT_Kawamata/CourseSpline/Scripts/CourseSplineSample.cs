@@ -10,7 +10,10 @@ public readonly struct CourseSplineSample
     public readonly Vector3 Up;
     public readonly Vector3 Right;
 
-    public CourseSplineSample(float distance, float normalizedT, Vector3 position, Vector3 forward, Vector3 up, Vector3 right)
+    // トンネル半径の倍率（制御点のRadius Scaleを補間した値）。実際の半径はCourseSplineのTunnel Radiusを掛けて求める。
+    public readonly float RadiusScale;
+
+    public CourseSplineSample(float distance, float normalizedT, Vector3 position, Vector3 forward, Vector3 up, Vector3 right, float radiusScale)
     {
         Distance = distance;
         NormalizedT = normalizedT;
@@ -18,5 +21,6 @@ public readonly struct CourseSplineSample
         Forward = forward;
         Up = up;
         Right = right;
+        RadiusScale = radiusScale;
     }
 }
