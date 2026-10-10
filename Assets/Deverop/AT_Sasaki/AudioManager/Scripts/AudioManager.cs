@@ -7,14 +7,41 @@ using UnityEngine.Audio;
 // 音は AudioClip のファイル名で指定する（例: PlayBGM("maou_bgm_8bit26")）。
 // ・BGM : 同時に鳴るのは 1 曲だけ。切り替え時はクロスフェードする。
 // ・SE  : 何個でも同時に鳴らせる（フェードなし）。AudioSource は使い回す。
-// 最終的な音量は「呼び出し時の volume × BGM（SE）音量 × マスター音量」。
+// 最終的な音量は「個別音量 × BGM（SE）音量 × マスター音量」。
+// 個別音量は呼び出し時の volume 引数を優先し、省略時は Inspector で音声ごとに設定した値を使う。
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
-    [Header("Audio Clips")]
-    [SerializeField] private List<AudioClip> m_bgmClips = new List<AudioClip>();
-    [SerializeField] private List<AudioClip> m_seClips = new List<AudioClip>();
+    // Inspector で登録する音声 1 件分
+    [System.Serializable]
+    private class SoundEntry
+    {
+        [SerializeField] private AudioClip m_clip;
+        [SerializeField, Range(0f, 1f)] private float m_volume = 1f;
+
+        // Inspector でリストに追加した要素は初期値が使われず m_volume が 0 になるため、
+        // 未初期化の要素を見分けて 1 にするためのフラグ
+        [SerializeField, HideInInspector] private bool m_isInitialized = true;
+
+        public AudioClip Clip => m_clip;
+        public float Volume => m_volume;
+
+        public void InitializeIfNeeded()
+        {
+            if (m_isInitialized)
+            {
+                return;
+            }
+
+            m_volume = 1f;
+            m_isInitialized = true;
+        }
+    }
+
+    [Header("Sounds（音声ファイルと個別音量）")]
+    [SerializeField] private List<SoundEntry> m_bgmSounds = new List<SoundEntry>();
+    [SerializeField] private List<SoundEntry> m_seSounds = new List<SoundEntry>();
 
     [Header("Volume")]
     [SerializeField, Range(0f, 1f)] private float m_masterVolume = 1f;
@@ -32,11 +59,12 @@ public class AudioManager : MonoBehaviour
     // BGM はクロスフェード用に 2 つの AudioSource を交互に使う
     private const int BgmSourceCount = 2;
 
-    private readonly Dictionary<string, AudioClip> m_bgmClipDictionary = new Dictionary<string, AudioClip>();
-    private readonly Dictionary<string, AudioClip> m_seClipDictionary = new Dictionary<string, AudioClip>();
+    private readonly Dictionary<string, SoundEntry> m_bgmDictionary = new Dictionary<string, SoundEntry>();
+    private readonly Dictionary<string, SoundEntry> m_seDictionary = new Dictionary<string, SoundEntry>();
 
     private readonly AudioSource[] m_bgmSources = new AudioSource[BgmSourceCount];
-    private readonly float[] m_bgmBaseVolumes = new float[BgmSourceCount];
+    // 呼び出し時に指定された個別音量（null = Inspector の値を使う）
+    private readonly float?[] m_bgmVolumeOverrides = new float?[BgmSourceCount];
     private readonly float[] m_bgmFadeVolumes = new float[BgmSourceCount];
     private readonly Coroutine[] m_bgmFadeCoroutines = new Coroutine[BgmSourceCount];
 
@@ -60,7 +88,8 @@ public class AudioManager : MonoBehaviour
     private class SeSlot
     {
         public AudioSource Source;
-        public float BaseVolume;
+        // 呼び出し時に指定された個別音量（null = Inspector の値を使う）
+        public float? VolumeOverride;
         // 再生開始予定時刻（unscaledTime）。遅延再生中に空き扱いにしないために使う
         public float StartTime;
         public bool InUse;
@@ -78,8 +107,8 @@ public class AudioManager : MonoBehaviour
         transform.parent = null;
         DontDestroyOnLoad(gameObject);
 
-        InitializeClips(m_bgmClips, m_bgmClipDictionary, "BGM");
-        InitializeClips(m_seClips, m_seClipDictionary, "SE");
+        InitializeSounds(m_bgmSounds, m_bgmDictionary, "BGM", true);
+        InitializeSounds(m_seSounds, m_seDictionary, "SE", true);
         CreateBgmSources();
     }
 
@@ -97,21 +126,37 @@ public class AudioManager : MonoBehaviour
         m_minDistance = Mathf.Max(0f, m_minDistance);
         m_maxDistance = Mathf.Max(m_minDistance, m_maxDistance);
 
+        foreach (SoundEntry entry in m_bgmSounds)
+        {
+            entry.InitializeIfNeeded();
+        }
+
+        foreach (SoundEntry entry in m_seSounds)
+        {
+            entry.InitializeIfNeeded();
+        }
+
+        // 再生中に Inspector で個別音量などを変えた場合も、鳴っている音にすぐ反映する
         if (Application.isPlaying && Instance == this)
         {
+            InitializeSounds(m_bgmSounds, m_bgmDictionary, "BGM", false);
+            InitializeSounds(m_seSounds, m_seDictionary, "SE", false);
             ApplyAllVolumes();
         }
     }
 
     #region BGM
 
-    // BGM を再生する。別の BGM が鳴っていればクロスフェードで切り替える
-    public bool PlayBGM(string clipName, float fadeDuration = 1f, float volume = 1f, bool loop = true)
+    // BGM を再生する。別の BGM が鳴っていればクロスフェードで切り替える。
+    // volume を省略すると Inspector で設定した個別音量を使う
+    public bool PlayBGM(string clipName, float fadeDuration = 1f, float? volume = null, bool loop = true)
     {
-        if (!TryGetClip(m_bgmClipDictionary, clipName, "BGM", out AudioClip clip))
+        if (!TryGetSound(m_bgmDictionary, clipName, "BGM", out SoundEntry entry))
         {
             return false;
         }
+
+        AudioClip clip = entry.Clip;
 
         // 一時停止中に呼ばれた場合は再開してから切り替える
         if (m_isBgmPaused)
@@ -141,7 +186,7 @@ public class AudioManager : MonoBehaviour
 
         AudioSource nextSource = m_bgmSources[nextIndex];
         nextSource.loop = loop;
-        m_bgmBaseVolumes[nextIndex] = Mathf.Clamp01(volume);
+        m_bgmVolumeOverrides[nextIndex] = volume;
 
         if (!nextSource.isPlaying)
         {
@@ -285,21 +330,23 @@ public class AudioManager : MonoBehaviour
 
     private void ApplyBgmVolume(int index)
     {
-        m_bgmSources[index].volume = m_bgmBaseVolumes[index] * m_bgmFadeVolumes[index] * m_bgmVolume * m_masterVolume;
+        AudioSource source = m_bgmSources[index];
+        float baseVolume = ResolveVolume(m_bgmDictionary, source.clip, m_bgmVolumeOverrides[index]);
+        source.volume = baseVolume * m_bgmFadeVolumes[index] * m_bgmVolume * m_masterVolume;
     }
 
     #endregion
 
     #region SE
 
-    // 2D の SE を再生する
-    public bool PlaySE(string clipName, bool loop = false, float volume = 1f, float pitch = 1f, float delay = 0f)
+    // 2D の SE を再生する。volume を省略すると Inspector で設定した個別音量を使う
+    public bool PlaySE(string clipName, bool loop = false, float? volume = null, float pitch = 1f, float delay = 0f)
     {
         return PlaySEInternal(clipName, null, loop, volume, pitch, delay);
     }
 
-    // 指定位置で 3D の SE を再生する
-    public bool PlaySE3D(string clipName, Vector3 worldPosition, bool loop = false, float volume = 1f, float pitch = 1f, float delay = 0f)
+    // 指定位置で 3D の SE を再生する。volume を省略すると Inspector で設定した個別音量を使う
+    public bool PlaySE3D(string clipName, Vector3 worldPosition, bool loop = false, float? volume = null, float pitch = 1f, float delay = 0f)
     {
         return PlaySEInternal(clipName, worldPosition, loop, volume, pitch, delay);
     }
@@ -327,9 +374,9 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    private bool PlaySEInternal(string clipName, Vector3? worldPosition, bool loop, float volume, float pitch, float delay)
+    private bool PlaySEInternal(string clipName, Vector3? worldPosition, bool loop, float? volume, float pitch, float delay)
     {
-        if (!TryGetClip(m_seClipDictionary, clipName, "SE", out AudioClip clip))
+        if (!TryGetSound(m_seDictionary, clipName, "SE", out SoundEntry entry))
         {
             return false;
         }
@@ -338,11 +385,11 @@ public class AudioManager : MonoBehaviour
         float playDelay = Mathf.Max(0f, delay);
 
         SeSlot slot = AcquireSlot();
-        slot.BaseVolume = Mathf.Clamp01(volume);
+        slot.VolumeOverride = volume;
         slot.StartTime = Time.unscaledTime + playDelay;
 
         AudioSource source = slot.Source;
-        source.clip = clip;
+        source.clip = entry.Clip;
         source.loop = loop;
         source.pitch = pitch;
 
@@ -423,7 +470,8 @@ public class AudioManager : MonoBehaviour
 
     private void ApplySeVolume(SeSlot slot)
     {
-        slot.Source.volume = slot.BaseVolume * m_seVolume * m_masterVolume;
+        float baseVolume = ResolveVolume(m_seDictionary, slot.Source.clip, slot.VolumeOverride);
+        slot.Source.volume = baseVolume * m_seVolume * m_masterVolume;
     }
 
     #endregion
@@ -472,42 +520,61 @@ public class AudioManager : MonoBehaviour
 
     #region Common
 
-    // AudioClip をファイル名で引けるように辞書へ登録する
-    private void InitializeClips(List<AudioClip> clips, Dictionary<string, AudioClip> dictionary, string label)
+    // 登録された音声をファイル名で引けるように辞書へ登録する
+    private void InitializeSounds(List<SoundEntry> sounds, Dictionary<string, SoundEntry> dictionary, string label, bool logWarnings)
     {
         dictionary.Clear();
 
-        foreach (AudioClip clip in clips)
+        foreach (SoundEntry entry in sounds)
         {
-            if (clip == null)
+            if (entry == null || entry.Clip == null)
             {
-                Debug.LogWarning($"[AudioManager] {label} に null の AudioClip が登録されています。");
+                if (logWarnings)
+                {
+                    Debug.LogWarning($"[AudioManager] {label} に AudioClip が未設定の要素があります。");
+                }
                 continue;
             }
 
-            if (!dictionary.TryAdd(clip.name, clip))
+            if (!dictionary.TryAdd(entry.Clip.name, entry) && logWarnings)
             {
-                Debug.LogWarning($"[AudioManager] {label} の AudioClip '{clip.name}' が重複しています。");
+                Debug.LogWarning($"[AudioManager] {label} の AudioClip '{entry.Clip.name}' が重複しています。");
             }
         }
     }
 
-    private bool TryGetClip(Dictionary<string, AudioClip> dictionary, string clipName, string label, out AudioClip clip)
+    private bool TryGetSound(Dictionary<string, SoundEntry> dictionary, string clipName, string label, out SoundEntry entry)
     {
         if (string.IsNullOrWhiteSpace(clipName))
         {
             Debug.LogError($"[AudioManager] {label} の clipName が空です。");
-            clip = null;
+            entry = null;
             return false;
         }
 
-        if (dictionary.TryGetValue(clipName, out clip))
+        if (dictionary.TryGetValue(clipName, out entry))
         {
             return true;
         }
 
         Debug.LogError($"[AudioManager] {label} の AudioClip '{clipName}' が登録されていません。");
         return false;
+    }
+
+    // 個別音量を決める。呼び出し時の指定があればそれを、無ければ Inspector の値を使う
+    private float ResolveVolume(Dictionary<string, SoundEntry> dictionary, AudioClip clip, float? volumeOverride)
+    {
+        if (volumeOverride.HasValue)
+        {
+            return Mathf.Clamp01(volumeOverride.Value);
+        }
+
+        if (clip != null && dictionary.TryGetValue(clip.name, out SoundEntry entry))
+        {
+            return entry.Volume;
+        }
+
+        return 1f;
     }
 
     private AudioSource CreateAudioSource(string objectName, AudioMixerGroup mixerGroup)

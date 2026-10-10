@@ -333,12 +333,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82cfa5d2f29bd274b9ccf5d36b3f4bb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioManager
-  m_bgmClips:
-  - {fileID: 8300000, guid: 0b2a7204c96b3d846a1eb4a11a5f1f2c, type: 3}
-  - {fileID: 8300000, guid: 53bf02116666c354d91256797519daf2, type: 3}
-  m_seClips:
-  - {fileID: 8300000, guid: ea9526941d9e33c4094fe2c4b3b026e8, type: 3}
-  - {fileID: 8300000, guid: c7ef67e8b2656ed499f90ad87551bcfe, type: 3}
+  m_bgmSounds:
+  - m_clip: {fileID: 8300000, guid: 0b2a7204c96b3d846a1eb4a11a5f1f2c, type: 3}
+    m_volume: 1
+    m_isInitialized: 1
+  - m_clip: {fileID: 8300000, guid: 53bf02116666c354d91256797519daf2, type: 3}
+    m_volume: 1
+    m_isInitialized: 1
+  m_seSounds:
+  - m_clip: {fileID: 8300000, guid: ea9526941d9e33c4094fe2c4b3b026e8, type: 3}
+    m_volume: 1
+    m_isInitialized: 1
+  - m_clip: {fileID: 8300000, guid: c7ef67e8b2656ed499f90ad87551bcfe, type: 3}
+    m_volume: 1
+    m_isInitialized: 1
   m_masterVolume: 1
   m_bgmVolume: 1
   m_seVolume: 1
