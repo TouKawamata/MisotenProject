@@ -329,8 +329,8 @@ public class DebugHud : MonoBehaviour
         }
 
         DrawValue(
-            "Roll",
-            $"{playerFlight.CurrentRoll:F1} deg");
+            "Steering",
+            $"{playerFlight.Steering:+0.00;-0.00;0.00}");
 
         DrawValue(
             "Tunnel Clamp",
@@ -339,11 +339,13 @@ public class DebugHud : MonoBehaviour
                 ? new Color(1f, 0.6f, 0f)
                 : Color.white);
 
-        if (courseSpline != null &&
-            courseSpline.TunnelRadius > Mathf.Epsilon)
-        {
-            float radius = courseSpline.TunnelRadius;
+        float radius =
+            courseSpline != null
+                ? courseSpline.GetTunnelRadiusByDistance(courseDistance)
+                : 0f;
 
+        if (radius > Mathf.Epsilon)
+        {
             DrawValue(
                 "Offset LR",
                 $"{courseOffsetRight:+0.00;-0.00;0.00} m  " +

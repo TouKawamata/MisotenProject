@@ -2,9 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-// プレイヤーの飛行制御（純粋な飛行計算のみ）。自由飛行（Velocityベース）で移動しつつ、姿勢（ロール）はSplineの傾き
-// （バンク）に自然に追従する。CourseSplineへは基本的に ICourseGuide 経由で問い合わせる。
-// Splineを中心軸とした円筒（CourseSpline.TunnelRadius）の外には出られず、境界（壁）にぶつかると
+// プレイヤーの飛行制御（純粋な飛行計算のみ）。自由飛行（Velocityベース）で移動しつつ、姿勢は機首の向きとコースの上方向
+// （バンク込み）から作る。ロールの計算はしない（機体の見た目のバンクはアニメーション側で、公開しているSteeringから付ける）。
+// CourseSplineへは基本的に ICourseGuide 経由で問い合わせる。
+// Splineを中心軸とした円筒（その場所のトンネル半径）の外には出られず、境界（壁）にぶつかると
 // 外側へ向かう成分を消したうえで、当たった角度に応じて減速する（かすめただけなら、ほぼ減速せずに滑る）。
 // 入力・Boostのチューニング値・FlightTuningProfileはPlayerManagerからTickの引数で受け取る。
 // 最高速度（maxSpeed）は前進（機首の向き）の成分だけにかけ、曲がって横に動いている間も前進の速さが落ちないようにする。
@@ -17,8 +18,6 @@ public class PlayerFlightController : MonoBehaviour
     private ICourseGuide _guide;
     private Vector3 _playerForward;
     private Vector3 _velocity;
-    private float _currentRoll;
-    private float _rollVelocity;
     private readonly LateralPush _lateralPush = new LateralPush();
 
     public Vector3 Velocity => _velocity;
@@ -29,7 +28,11 @@ public class PlayerFlightController : MonoBehaviour
     // ブースト接触などで横へ押し出している途中か。
     public bool IsBeingPushed => _lateralPush.IsActive;
 
-    public float CurrentRoll => _currentRoll;
+    // 機体の位置でのコースの上方向（バンク込み）。機体の回転の上方向に使う。カメラの向きの基準にもする。
+    public Vector3 ReferenceUp { get; private set; } = Vector3.up;
+
+    // 直近のTickの左右入力（−1＝左〜1＝右）。機体のバンクのアニメーションとカメラの傾き用。
+    public float Steering { get; private set; }
 
     public Vector3 LookAheadWorldPosition { get; private set; }
 
@@ -49,14 +52,14 @@ public class PlayerFlightController : MonoBehaviour
         ResetState(initialProfile);
     }
 
-    // 現在のtransformを基準に、向き・速度・ロールなどの内部状態をリセットする（スタートグリッドへの配置・リトライ用）。
-    // 向きはtransform.forwardから取るため、transformを設定した後に呼ぶこと。
+    // 現在のtransformを基準に、向き・速度などの内部状態をリセットする（スタートグリッドへの配置・リトライ用）。
+    // 向きはtransform.forward／upから取るため、transformを設定した後に呼ぶこと。
     public void ResetState(FlightTuningProfile profile)
     {
         _playerForward = transform.forward;
         _velocity = Vector3.zero;
-        _currentRoll = 0f;
-        _rollVelocity = 0f;
+        ReferenceUp = transform.up;
+        Steering = 0f;
         _lateralPush.Stop();
         IsClampedToTunnel = false;
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
@@ -76,6 +79,8 @@ public class PlayerFlightController : MonoBehaviour
         Vector3 splineRight = _guide.GetRight(position);
         Vector3 splineUp = _guide.GetUp(position);
         Vector3 centerPosition = _guide.GetCenterPosition(position);
+        float tunnelRadius = _guide.GetTunnelRadius(position);
+        Steering = Mathf.Clamp(horizontal, -1f, 1f);
 
         // 2. 見出し方向の遅延追従（第1段階）。垂直成分も含むためPitchも兼ねる。
         _playerForward = Vector3.Slerp(_playerForward, splineForward, 1f - Mathf.Exp(-profile.HeadingTurnRate * deltaTime));
@@ -111,15 +116,11 @@ public class PlayerFlightController : MonoBehaviour
         // 6. 位置積分（円筒境界＝壁の外には出られず、当たった角度に応じて減速する）。
         //    横ずれ（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
         Vector3 desiredPosition = position + _velocity * deltaTime + splineRight * _lateralPush.Advance(deltaTime);
-        transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, profile, ref _velocity);
+        transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, tunnelRadius, profile, ref _velocity);
 
-        // 7. 回転：ForwardはPlayerForwardから、Rollは「Splineのバンクへの追従」＋「操作によるロール」の合算
-        Vector3 bankUp = _guide.GetUp(transform.position);
-        float bankFromCourse = Vector3.SignedAngle(Vector3.up, bankUp, _playerForward);
-        float steeringRoll = -horizontal * profile.RollMaxAngle;
-        float targetRoll = Mathf.Clamp(bankFromCourse + steeringRoll, -profile.RollMaxAngle, profile.RollMaxAngle);
-        _currentRoll = Mathf.SmoothDamp(_currentRoll, targetRoll, ref _rollVelocity, profile.RollSmoothTime, Mathf.Infinity, deltaTime);
-        transform.rotation = Quaternion.LookRotation(_playerForward, Vector3.up) * Quaternion.AngleAxis(_currentRoll, Vector3.forward);
+        // 7. 回転：ForwardはPlayerForward、Upはコースの上方向（ワールドの真上は使わないので、垂直の区間・逆さの区間でも崩れない）
+        ReferenceUp = _guide.GetUp(transform.position);
+        transform.rotation = Quaternion.LookRotation(_playerForward, ReferenceUp);
 
         // 8. カメラへ公開する先読み位置
         LookAheadWorldPosition = _guide.GetLookAheadPosition(transform.position, profile.LookAheadDistance);
@@ -177,19 +178,18 @@ public class PlayerFlightController : MonoBehaviour
         }
     }
 
-    // Splineを中心軸とした円筒（TunnelRadius）の外に出られないようにする。境界（壁）の外側へ向かう速度成分を消し、
+    // Splineを中心軸とした円筒（半径radius＝その場所のトンネル半径）の外に出られないようにする。境界（壁）の外側へ向かう速度成分を消し、
     // さらに当たった角度に応じて残りの速度を減らす（正面から当たるほど大きく、かすめただけなら少し）。
     // 減らす割合 ＝ WallHitSpeedLossRate × 壁へ向かっていた速さの割合（＝当たった角度のsin）。
-    private Vector3 ClampVelocityAndPositionToTunnelRadius(Vector3 desiredPosition, Vector3 center, Vector3 right, Vector3 up, FlightTuningProfile profile, ref Vector3 velocity)
+    private Vector3 ClampVelocityAndPositionToTunnelRadius(Vector3 desiredPosition, Vector3 center, Vector3 right, Vector3 up, float radius, FlightTuningProfile profile, ref Vector3 velocity)
     {
         bool wasClampedToTunnel = IsClampedToTunnel;
         IsClampedToTunnel = false;
-        if (_courseSpline == null || _courseSpline.TunnelRadius <= 0f)
+        if (radius <= 0f)
         {
             return desiredPosition;
         }
 
-        float radius = _courseSpline.TunnelRadius;
         Vector3 offset = desiredPosition - center;
         float lateral = Vector3.Dot(offset, right);
         float vertical = Vector3.Dot(offset, up);

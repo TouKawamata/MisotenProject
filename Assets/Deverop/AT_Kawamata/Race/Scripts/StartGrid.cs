@@ -27,9 +27,10 @@ public class StartGrid
         }
 
         float lateral = (col - (columns - 1) * 0.5f) * _settings.ColumnSpacing;
-        if (_spline.TunnelRadius > 0f && Mathf.Abs(lateral) > _spline.TunnelRadius)
+        float tunnelRadius = _spline.GetTunnelRadiusByDistance(distance);
+        if (tunnelRadius > 0f && Mathf.Abs(lateral) > tunnelRadius)
         {
-            Debug.LogWarning($"StartGrid: グリッド{gridIndex}の横位置（{lateral:F1}m）がTunnelRadius（{_spline.TunnelRadius:F1}m）の外です。ColumnSpacing／Columnsを見直してください");
+            Debug.LogWarning($"StartGrid: グリッド{gridIndex}の横位置（{lateral:F1}m）がその地点のトンネル半径（{tunnelRadius:F1}m）の外です。ColumnSpacing／Columns、または制御点のRadius Scaleを見直してください");
         }
 
         Vector3 up = _spline.EvaluateUpByDistance(distance);
