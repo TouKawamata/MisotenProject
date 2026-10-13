@@ -8,6 +8,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/MainScenes/GameScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Deverop/AT_Minakuchi/Scene/Minakuti_Start_Goal.unity
+    guid: 161cc01e547949e43a0876c5aeb1dfca
+  - enabled: 1
+    path: Assets/Deverop/AT_Minakuchi/Scene/ResultScene.unity
+    guid: 1939f5c7c96ca7b4a81d1cc27194dd93
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
