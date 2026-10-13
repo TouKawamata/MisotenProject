@@ -23,6 +23,9 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。DummyRacerと同じアセットを使う")]
     [SerializeField] private BoostHitProfile _boostHitProfile;
 
+    [Tooltip("自分のブーストが相手に当たったことを受け取るBoostHitDetector。未設定なら、自分か子から探す")]
+    [SerializeField] private BoostHitDetector _boostHitDetector;
+
     [Header("通常の接触")]
     [Tooltip("他のレーサーとの食い込みの計算に使う体のCollider。未設定なら、このGameObjectのColliderを使う")]
     [SerializeField] private Collider _bodyCollider;
@@ -40,9 +43,10 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
-    // 直近に通知したブースト・シールドの状態。変化したときだけイベントを出すために持つ。
+    // 直近に通知したブースト・シールド・スタンの状態。変化したときだけイベントを出すために持つ。
     private bool _wasBoosting;
     private bool _wasShielding;
+    private bool _wasStunned;
 
     // 以下は演出（BoostPresentation / ShieldPresentation）向けの通知。PlayerManagerは演出を直接触らない。
     public event Action BoostStarted;
@@ -55,6 +59,15 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
 
     // シールドでブースト接触を防いだ瞬間（この後、シールドが消えるのでShieldEndedも出る）。
     public event Action ShieldBlocked;
+
+    // 自分のブーストを相手に当てて、効果があった瞬間（はじいた／シールドで防がれた／スタンさせた）。
+    // タックル成功はEBoostHitResult.Stunned。バックミラーの表示条件・当てたときの演出に使う。
+    public event Action<EBoostHitResult> BoostHitLanded;
+
+    // ブーストを当てられてスタンした瞬間・スタンが解けた瞬間（入力を受け付けない間の始まりと終わり）。
+    public event Action StunStarted;
+
+    public event Action StunEnded;
 
     public bool IsInShortcutZone => _currentShortcutZone != null;
 
@@ -70,6 +83,9 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     public bool IsShielding => _shield != null && _shield.IsActive;
 
     public bool IsStunned => _stun.IsStunned;
+
+    // スタンが解けるまでの残り秒数。スタン中でなければ0。
+    public float StunRemainingTime => _stun.StunRemainingTime;
 
     public Collider BodyCollider => _bodyCollider;
 
@@ -102,6 +118,22 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             _bodyCollider = GetComponent<Collider>();
         }
 
+        if (_boostHitDetector == null)
+        {
+            _boostHitDetector = GetComponentInChildren<BoostHitDetector>();
+        }
+
+        if (_boostHitDetector != null)
+        {
+            // Initializeが2回呼ばれても二重に購読しないよう、外してから付ける。
+            _boostHitDetector.HitLanded -= OnBoostHitLanded;
+            _boostHitDetector.HitLanded += OnBoostHitLanded;
+        }
+        else
+        {
+            Debug.LogWarning("PlayerManager: BoostHitDetectorが見つからないため、BoostHitLandedは出ません", this);
+        }
+
         _inputProvider.Initialize();
         _stun.Reset();
         _flightController.Initialize(_defaultProfile);
@@ -131,7 +163,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     }
 
     // カウントダウン中はRaceManagerがTickを呼ばないため、ブースト・シールドは使えない。
-    // 最後にブースト・シールドの状態の変化を見て、演出用のイベントを出す（どの経路で始まった・終わったかに関係なく必ず出す）。
+    // 最後にブースト・シールド・スタンの状態の変化を見て、演出用のイベントを出す（どの経路で始まった・終わったかに関係なく必ず出す）。
     public void Tick(float deltaTime, IReadOnlyRacerData data)
     {
         if (!_isInitialized)
@@ -209,24 +241,24 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
     // シールド中 → 防いでシールドが消える、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
     // BoostHitDetector専用の入口なので、IBoostHitReceiverとしてだけ呼べるよう明示的に実装する。
-    void IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
+    EBoostHitResult IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
     {
         if (!_isInitialized || _isFinished || _stun.IsInvincible)
         {
-            return;
+            return EBoostHitResult.Ignored;
         }
 
         if (_boost.IsBoosting)
         {
             if (!_stun.CanBounce)
             {
-                return;
+                return EBoostHitResult.Ignored;
             }
 
             _stun.BeginBounceInterval(_boostHitProfile.BounceInterval);
             _flightController.ApplyLateralPush(hit.PushDirection, _boostHitProfile.BounceDistance, _boostHitProfile.PushDuration);
             Log($"ブースト同士で接触（はじく） 距離 {_boostHitProfile.BounceDistance:F1}m");
-            return;
+            return EBoostHitResult.Bounced;
         }
 
         if (_shield.TryBlock())
@@ -234,7 +266,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
             ShieldBlocked?.Invoke();
             Log("シールドでブースト接触を防いだ");
-            return;
+            return EBoostHitResult.Blocked;
         }
 
         _boost.ForceStop();
@@ -242,6 +274,14 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         float pushDistance = _boostHitProfile.EvaluatePushDistance(hit.Closeness);
         _flightController.ApplyLateralPush(hit.PushDirection, pushDistance, _boostHitProfile.PushDuration);
         Log($"ブーストを当てられた（スタン） 近さ {hit.Closeness:F2} 横ずれ {pushDistance:F1}m{(hit.HasPushDirection ? "" : "（向き未確定→コース中央側）")}");
+        return EBoostHitResult.Stunned;
+    }
+
+    // 自分のブーストが相手に効果を与えたとき（BoostHitDetectorから）。演出・UI向けにそのまま通知する。
+    private void OnBoostHitLanded(EBoostHitResult result)
+    {
+        Log($"ブーストを当てた（{result}）");
+        BoostHitLanded?.Invoke(result);
     }
 
     // 通常の接触で食い込んだとき、RacerContactResolverから呼ばれる。
@@ -304,6 +344,20 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             else
             {
                 ShieldEnded?.Invoke();
+            }
+        }
+
+        bool isStunned = IsStunned;
+        if (isStunned != _wasStunned)
+        {
+            _wasStunned = isStunned;
+            if (isStunned)
+            {
+                StunStarted?.Invoke();
+            }
+            else
+            {
+                StunEnded?.Invoke();
             }
         }
     }
