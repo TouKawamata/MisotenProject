@@ -171,7 +171,6 @@ public class CourseLine : MonoBehaviour
     private void BuildSide(string childName, float sign)
     {
         float totalLength = _courseSpline.TotalLength;
-        float tunnelRadius = _courseSpline.TunnelRadius;
         bool isLoop = _courseSpline.IsLoop;
 
         // ── サンプリング ──
@@ -190,7 +189,7 @@ public class CourseLine : MonoBehaviour
                 d = totalLength;
             }
 
-            SamplePoint(d, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(d, sign, out Vector3 bottom, out Vector3 top);
             bottomVerts.Add(bottom);
             topVerts.Add(top);
             distances.Add(d);
@@ -200,7 +199,7 @@ public class CourseLine : MonoBehaviour
         float lastDistance = distances[distances.Count - 1];
         if (lastDistance < totalLength - 0.001f)
         {
-            SamplePoint(totalLength, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(totalLength, sign, out Vector3 bottom, out Vector3 top);
             bottomVerts.Add(bottom);
             topVerts.Add(top);
             distances.Add(totalLength);
@@ -209,7 +208,7 @@ public class CourseLine : MonoBehaviour
         // ループなら先頭のサンプルを末尾に追加して閉じる
         if (isLoop)
         {
-            SamplePoint(0f, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(0f, sign, out Vector3 bottom, out Vector3 top);
             bottomVerts.Add(bottom);
             topVerts.Add(top);
             distances.Add(totalLength);
@@ -289,12 +288,14 @@ public class CourseLine : MonoBehaviour
 
     /// <summary>
     /// 指定距離地点の上端・下端のワールド座標を計算する。
+    /// コース幅は区間ごとに変わるため、その距離での半径（Radius Scale 反映済み）を使う。
     /// </summary>
-    private void SamplePoint(float distance, float tunnelRadius, float sign, out Vector3 bottom, out Vector3 top)
+    private void SamplePoint(float distance, float sign, out Vector3 bottom, out Vector3 top)
     {
         Vector3 center = _courseSpline.EvaluatePositionByDistance(distance);
         Vector3 right  = _courseSpline.EvaluateRightByDistance(distance);
         Vector3 up     = _courseSpline.EvaluateUpByDistance(distance);
+        float tunnelRadius = _courseSpline.GetTunnelRadiusByDistance(distance);
 
         Vector3 basePos = center + right * sign * (tunnelRadius + _offset);
         bottom = basePos - up * (_height * 0.5f);
