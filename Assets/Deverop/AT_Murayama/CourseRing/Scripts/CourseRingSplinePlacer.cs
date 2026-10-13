@@ -22,7 +22,7 @@ public class CourseRingSplinePlacer : MonoBehaviour
     [SerializeField] private float _verticalOffset = 0f;
 
     [Header("サイズ設定")]
-    [Tooltip("チェックを入れると、CourseSplineのTunnelRadiusに自動的にサイズを合わせます（違うサイズにしたい場合はチェックを外してCourseRingのRadiusを直接変更してください）")]
+    [Tooltip("チェックを入れると、配置している位置のコース幅（CourseSplineのTunnelRadius×制御点のRadius Scale）に自動的にサイズを合わせます（違うサイズにしたい場合はチェックを外してCourseRingのRadiusを直接変更してください）")]
     [SerializeField] private bool _syncWithTunnelRadius = true;
 
     private CourseRing _ring;
@@ -57,8 +57,9 @@ public class CourseRingSplinePlacer : MonoBehaviour
         // --- サイズの自動同期 ---
         if (_syncWithTunnelRadius && _ring != null)
         {
+            // 配置している距離でのコース幅（Radius Scale 反映済み）に合わせる
             // CourseRingのプロパティを更新（内部で勝手にScaleが調整されます）
-            _ring.Radius = _courseSpline.TunnelRadius;
+            _ring.Radius = _courseSpline.GetTunnelRadiusByDistance(_distance);
         }
     }
 
