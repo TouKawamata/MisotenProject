@@ -587,6 +587,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!4 &83736302 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -1451,6 +1453,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!4 &124496275 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
@@ -3074,7 +3078,7 @@ Transform:
   m_GameObject: {fileID: 288831463}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 155.2, y: 30.656933, z: 710}
+  m_LocalPosition: {x: 155.2, y: 30.656933, z: 712}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3092,6 +3096,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 0.6
 --- !u!1001 &293392099
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3179,7 +3185,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 296288375}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.30070576, y: 0, z: 0, w: 0.953717}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -76, y: 212, z: 398}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3198,6 +3204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: -7
+  radiusScale: 1
 --- !u!1001 &304667124
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3361,6 +3369,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &318830084
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3529,6 +3539,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &353116834
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3611,7 +3623,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 355949245}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2164396, y: 0, z: 0, w: 0.97629607}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -184, y: 194, z: 30}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3630,6 +3642,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 2.5
+  radiusScale: 1
 --- !u!1001 &356585412
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5768,6 +5782,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &554064250
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6171,7 +6187,7 @@ Transform:
   m_GameObject: {fileID: 573118730}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -64, y: 30.88485, z: 715}
+  m_LocalPosition: {x: -64, y: 30.88485, z: 712}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6189,6 +6205,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 0.8
 --- !u!1001 &578809530
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7945,7 +7963,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 727607557}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.13052616, y: 0, z: 0, w: 0.9914449}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -80.5, y: 199.5707, z: -82.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -7964,6 +7982,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 17
+  radiusScale: 1
 --- !u!4 &731776565 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -10653,6 +10673,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &989711720
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11236,7 +11258,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1046762061}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08715578, y: 0, z: 0, w: 0.9961947}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -249, y: 227, z: 556}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -11255,6 +11277,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 5.5
+  radiusScale: 1
 --- !u!1 &1053020837
 GameObject:
   m_ObjectHideFlags: 0
@@ -11280,8 +11304,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1053020837}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -131.6, y: 55.8, z: 714.8}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -131.6, y: 55.8, z: 712}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11299,6 +11323,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 0.9
 --- !u!1001 &1058776468
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12034,6 +12060,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &1187274139
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12661,7 +12689,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1239899663}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.30070576, y: 0, z: 0, w: 0.953717}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -199, y: 213, z: 283}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -12680,6 +12708,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: -4.7
+  radiusScale: 1
 --- !u!1001 &1240453503
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13506,6 +13536,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &1361380332
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17034,6 +17066,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!4 &1703346579 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -17393,6 +17427,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &1750406388
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18141,6 +18177,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &1794521874
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18548,6 +18586,8 @@ MonoBehaviour:
   isLoop: 0
   samplesPerSegment: 20
   defaultAddPointSpacing: 20
+  worldUpBlendStartSlope: 45
+  worldUpBlendEndSlope: 75
   tunnelRadius: 30
   drawTunnelGizmos: 1
   tunnelGizmoSegments: 16
@@ -19117,6 +19157,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 0.9
 --- !u!1001 &1890089503
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19960,6 +20002,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!4 &1960227996 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3990475265187503500, guid: ab137c1a93c6a724f95ea6151001adc5, type: 3}
@@ -20228,7 +20272,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2014986270}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.258819, y: 0, z: 0, w: 0.9659259}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -103, y: 199, z: 160}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -20247,6 +20291,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: -1.9
+  radiusScale: 1
 --- !u!1001 &2016461891
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20852,6 +20898,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
+  bankAngle: 0
+  radiusScale: 1
 --- !u!1001 &2089317818
 PrefabInstance:
   m_ObjectHideFlags: 0
