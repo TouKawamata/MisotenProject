@@ -143,7 +143,6 @@ public class CourseLineTrueUV : MonoBehaviour
     private void BuildSide(string childName, float sign)
     {
         float totalLength = _courseSpline.TotalLength;
-        float tunnelRadius = _courseSpline.TunnelRadius;
         bool isLoop = _courseSpline.IsLoop;
 
         List<Vector3> bottomVerts = new List<Vector3>();
@@ -162,7 +161,7 @@ public class CourseLineTrueUV : MonoBehaviour
             float d = i * interval;
             if (d > totalLength) d = totalLength;
 
-            SamplePoint(d, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(d, sign, out Vector3 bottom, out Vector3 top);
 
             if (bottomVerts.Count > 0)
             {
@@ -179,7 +178,7 @@ public class CourseLineTrueUV : MonoBehaviour
         float lastSplineDistance = (sampleCount - 1) * interval;
         if (lastSplineDistance < totalLength - 0.001f)
         {
-            SamplePoint(totalLength, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(totalLength, sign, out Vector3 bottom, out Vector3 top);
             accumulatedDistance += Vector3.Distance(bottom, bottomVerts[bottomVerts.Count - 1]);
             
             bottomVerts.Add(bottom);
@@ -190,7 +189,7 @@ public class CourseLineTrueUV : MonoBehaviour
         // ループなら先頭のサンプルを末尾に追加して閉じる
         if (isLoop)
         {
-            SamplePoint(0f, tunnelRadius, sign, out Vector3 bottom, out Vector3 top);
+            SamplePoint(0f, sign, out Vector3 bottom, out Vector3 top);
             accumulatedDistance += Vector3.Distance(bottom, bottomVerts[bottomVerts.Count - 1]);
 
             bottomVerts.Add(bottom);
@@ -257,11 +256,13 @@ public class CourseLineTrueUV : MonoBehaviour
         _renderers.Add(renderer);
     }
 
-    private void SamplePoint(float distance, float tunnelRadius, float sign, out Vector3 bottom, out Vector3 top)
+    // コース幅は区間ごとに変わるため、その距離での半径（Radius Scale 反映済み）を使う。
+    private void SamplePoint(float distance, float sign, out Vector3 bottom, out Vector3 top)
     {
         Vector3 center = _courseSpline.EvaluatePositionByDistance(distance);
         Vector3 right  = _courseSpline.EvaluateRightByDistance(distance);
         Vector3 up     = _courseSpline.EvaluateUpByDistance(distance);
+        float tunnelRadius = _courseSpline.GetTunnelRadiusByDistance(distance);
 
         Vector3 basePos = center + right * sign * (tunnelRadius + _offset);
         bottom = basePos - up * (_height * 0.5f);
