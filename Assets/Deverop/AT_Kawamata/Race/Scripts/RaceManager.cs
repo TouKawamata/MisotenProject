@@ -5,7 +5,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using VContainer.Unity;
 
-// レース全体（スタートグリッドへの配置 → カウントダウン → 走行 → ゴール → レース終了）を統括する。
+// レース全体（スタートグリッドへの配置 → スタートの演出（IRaceIntro、任意）→ カウントダウン → 走行 → ゴール → レース終了）を統括する。
 // 状態遷移と「いつ何をするか」の指示だけを持ち、配置の計算はStartGrid、進行度・順位・ゴール判定はRaceProgressTracker、
 // 通常の接触（ブーストなし）の食い込みの押し戻しはRacerContactResolverへ任せる。
 // 各RacerのTickはここから呼ぶ（カウントダウン中はTickを呼ばないことで移動不可にする）。
@@ -27,6 +27,10 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     [Tooltip("ブーストなしの接触で、レーサーどうしの食い込みを押し戻す設定。未設定なら押し戻さない（重なったまま走る）")]
     [SerializeField] private RacerContactProfile _contactProfile;
 
+    [Header("スタートの演出")]
+    [Tooltip("配置の後・カウントダウンの前に再生する演出（IRaceIntroを実装したコンポーネント）。未設定なら、すぐカウントダウンを始める")]
+    [SerializeField] private MonoBehaviour _intro;
+
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs = true;
 
@@ -38,6 +42,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     private RaceProgressTracker _progressTracker;
     private RacerContactResolver _contactResolver;
     private RacerEntry _playerEntry;
+    private IRaceIntro _raceIntro;
     private CancellationTokenSource _cancellationTokenSource;
     private bool _isInitialized;
     private int _lastPlayerRank;
@@ -78,13 +83,14 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
         _entries.Clear();
         _racerDataList.Clear();
-        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName), _settings.PlayerGridIndex);
+        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName, _playerManager.Transform), _settings.PlayerGridIndex);
         AddEntry(_playerEntry);
         AddCpuEntries();
 
         _startGrid = new StartGrid(_courseSpline, _settings);
         _progressTracker = new RaceProgressTracker(_courseSpline);
         SetupContactResolver();
+        SetupIntro();
         _cancellationTokenSource = new CancellationTokenSource();
         State = ERaceState.Ready;
         _isInitialized = true;
@@ -180,7 +186,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 gridIndex++;
             }
 
-            AddEntry(new RacerEntry(racer, new RacerData(racerId, false, cpuObject.name), gridIndex));
+            AddEntry(new RacerEntry(racer, new RacerData(racerId, false, cpuObject.name, racer.Transform), gridIndex));
             gridIndex++;
             racerId++;
         }
@@ -206,10 +212,38 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         }
     }
 
+    // Unityはインターフェイスを直接Inspectorに出せないため、MonoBehaviourで受けてIRaceIntroか確かめる。
+    private void SetupIntro()
+    {
+        _raceIntro = null;
+        if (_intro == null)
+        {
+            return;
+        }
+
+        _raceIntro = _intro as IRaceIntro;
+        if (_raceIntro == null)
+        {
+            Debug.LogError($"RaceManager: Intro（{_intro.GetType().Name}）がIRaceIntroを実装していないため、スタートの演出は再生しません", this);
+        }
+    }
+
     private async UniTaskVoid StartSequenceAsync(CancellationToken token)
     {
         SetupGoalDistance();
         PlaceRacers();
+
+        // スタートの演出。終わるまでStateはReadyのまま（RacerのTickを呼ばないので、配置された位置から動かない）。
+        if (_raceIntro != null)
+        {
+            Log("スタートの演出を再生");
+            bool isIntroCanceled = await _raceIntro.PlayAsync(token).SuppressCancellationThrow();
+            if (isIntroCanceled)
+            {
+                return;
+            }
+        }
+
         State = ERaceState.Countdown;
 
         for (int count = _settings.CountdownSeconds; count > 0; count--)

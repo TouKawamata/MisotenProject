@@ -1,9 +1,14 @@
+using UnityEngine;
+
 // RacerDataの読み取り専用の窓口。RaceManager以外（Racer・UI・Debug HUDなど）にはこちらで渡し、誤って書き換えられないようにする。
 public interface IReadOnlyRacerData
 {
     int RacerId { get; }
 
     bool IsPlayer { get; }
+
+    // レーサー本体のTransform（位置・向き）。UI（後方のCPUの表示）やバックミラーの条件などで、他のレーサーの位置を読むのに使う。
+    Transform Transform { get; }
 
     // ログ・Debug HUDなどでの表示用の名前（PlayerはPlayer、CPUはGameObject名）。
     string DisplayName { get; }

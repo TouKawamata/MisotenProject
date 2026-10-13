@@ -521,7 +521,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttack
 
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
     // それ以外 → スタン（減速）＋横ずれ（中心どうしが近いほど大きく押し出す）。DummyRacerはシールドを使わない
-    public void ReceiveBoostHit(
+    public EBoostHitResult ReceiveBoostHit(
         BoostHitInfo hit
     )
     {
@@ -532,16 +532,16 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttack
                 this
             );
 
-            return;
+            return EBoostHitResult.Ignored;
         }
 
         if (_courseSpline == null || _isFinished || _stun.IsInvincible)
-            return;
+            return EBoostHitResult.Ignored;
 
         if (_isBoosting)
         {
             if (!_stun.CanBounce)
-                return;
+                return EBoostHitResult.Ignored;
 
             _stun.BeginBounceInterval(
                 _boostHitProfile.BounceInterval
@@ -561,7 +561,7 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttack
                 );
             }
 
-            return;
+            return EBoostHitResult.Bounced;
         }
 
         _stun.BeginStun(
@@ -588,6 +588,8 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttack
                 this
             );
         }
+
+        return EBoostHitResult.Stunned;
     }
 
     // 通常の接触で食い込んだとき、RaceManager（RacerContactResolver）から呼ばれる。
