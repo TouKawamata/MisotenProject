@@ -28,6 +28,9 @@ public class ShieldController : MonoBehaviour
     // 再び使えるようになるまでの残り秒数。Broken中でなければ0。
     public float BrokenRemainingTime => _state == EState.Broken ? _stateTimer : 0f;
 
+    // 防いだ後、再び使えるようになるまでの全体の秒数。UIで残り時間をゲージにするときに使う。
+    public float BrokenDuration => _profile != null ? _profile.BrokenDuration : 0f;
+
     // 最高速度に掛ける倍率。シールドを張っていなければ1。
     public float MaxSpeedMultiplier => _state == EState.Active ? _profile.MaxSpeedMultiplier : 1f;
 

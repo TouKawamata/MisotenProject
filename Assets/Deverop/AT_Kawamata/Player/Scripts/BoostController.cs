@@ -38,6 +38,9 @@ public class BoostController : MonoBehaviour
 
     public float MaxGauge => _profile != null ? _profile.MaxGauge : 0f;
 
+    // ブースト時の最高速度（m/s）。UIの速度メーターの最大などに使う。
+    public float BoostMaxSpeed => _profile != null ? _profile.BoostMaxSpeed : 0f;
+
     // 0～1。
     public float GaugeNormalized => MaxGauge > 0f ? Gauge / MaxGauge : 0f;
 

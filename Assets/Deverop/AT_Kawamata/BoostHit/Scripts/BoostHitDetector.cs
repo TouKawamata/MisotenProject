@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 // ブースト中に他のレーサーと重なったら、相手のIBoostHitReceiver.ReceiveBoostHitを呼ぶ。
-// 効果を受けるかどうか（シールド・無敵・お互いにブースト中か）は、当てられた側が判断する。
+// 効果を受けるかどうか（シールド・無敵・お互いにブースト中か）は、当てられた側が判断して結果を返し、
+// 効果があったとき（Ignored以外）だけHitLandedで通知する（当てた側の演出・UI向け）。
 // Rigidbodyを持つGameObject（Player・DummyRacerのルート）に付ける。
 // レーサーはすべてKinematicなので、ColliderがTriggerでないと接触の通知が来ない（Kinematic同士は衝突しないため）。
 // そのため、各レーサーは自分か子にTriggerのColliderを持つこと（無ければ起動時に警告を出す）。
@@ -20,6 +22,10 @@ public class BoostHitDetector : MonoBehaviour
     private IBoostAttacker _attacker;
 
     public float HalfWidth => Mathf.Max(0f, _halfWidth);
+
+    // 当てた相手に効果があった瞬間（はじいた／シールドで防がれた／スタンさせた）。
+    // 相手の無敵時間・はじいた後の間隔の間はIgnoredになるので、1回の接触で1回だけ出る。
+    public event Action<EBoostHitResult> HitLanded;
 
     private void Awake()
     {
@@ -74,7 +80,11 @@ public class BoostHitDetector : MonoBehaviour
             return;
         }
 
-        receiver.ReceiveBoostHit(CreateHitInfo(attackerTransform, receiverComponent));
+        EBoostHitResult result = receiver.ReceiveBoostHit(CreateHitInfo(attackerTransform, receiverComponent));
+        if (result != EBoostHitResult.Ignored)
+        {
+            HitLanded?.Invoke(result);
+        }
     }
 
     private BoostHitInfo CreateHitInfo(Transform attackerTransform, Component receiverComponent)

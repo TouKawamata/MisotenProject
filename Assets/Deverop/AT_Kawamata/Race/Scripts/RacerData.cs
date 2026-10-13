@@ -1,18 +1,23 @@
+using UnityEngine;
+
 // レース中に変わる参加者ごとの状態。書き込みはRaceManager（RaceProgressTracker）だけが行い、
 // 外へはIReadOnlyRacerDataとして渡す。
 public class RacerData : IReadOnlyRacerData
 {
-    public RacerData(int racerId, bool isPlayer, string displayName)
+    public RacerData(int racerId, bool isPlayer, string displayName, Transform transform)
     {
         RacerId = racerId;
         IsPlayer = isPlayer;
         DisplayName = displayName;
+        Transform = transform;
         SpeedMultiplier = 1f;
     }
 
     public int RacerId { get; }
 
     public bool IsPlayer { get; }
+
+    public Transform Transform { get; }
 
     public string DisplayName { get; }
 
