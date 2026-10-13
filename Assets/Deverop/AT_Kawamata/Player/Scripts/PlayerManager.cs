@@ -43,9 +43,10 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
-    // 直近に通知したブースト・シールドの状態。変化したときだけイベントを出すために持つ。
+    // 直近に通知したブースト・シールド・スタンの状態。変化したときだけイベントを出すために持つ。
     private bool _wasBoosting;
     private bool _wasShielding;
+    private bool _wasStunned;
 
     // 以下は演出（BoostPresentation / ShieldPresentation）向けの通知。PlayerManagerは演出を直接触らない。
     public event Action BoostStarted;
@@ -63,6 +64,11 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     // タックル成功はEBoostHitResult.Stunned。バックミラーの表示条件・当てたときの演出に使う。
     public event Action<EBoostHitResult> BoostHitLanded;
 
+    // ブーストを当てられてスタンした瞬間・スタンが解けた瞬間（入力を受け付けない間の始まりと終わり）。
+    public event Action StunStarted;
+
+    public event Action StunEnded;
+
     public bool IsInShortcutZone => _currentShortcutZone != null;
 
     public bool IsShortcutProfileActive => _isShortcutProfileActive;
@@ -77,6 +83,9 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     public bool IsShielding => _shield != null && _shield.IsActive;
 
     public bool IsStunned => _stun.IsStunned;
+
+    // スタンが解けるまでの残り秒数。スタン中でなければ0。
+    public float StunRemainingTime => _stun.StunRemainingTime;
 
     public Collider BodyCollider => _bodyCollider;
 
@@ -154,7 +163,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     }
 
     // カウントダウン中はRaceManagerがTickを呼ばないため、ブースト・シールドは使えない。
-    // 最後にブースト・シールドの状態の変化を見て、演出用のイベントを出す（どの経路で始まった・終わったかに関係なく必ず出す）。
+    // 最後にブースト・シールド・スタンの状態の変化を見て、演出用のイベントを出す（どの経路で始まった・終わったかに関係なく必ず出す）。
     public void Tick(float deltaTime, IReadOnlyRacerData data)
     {
         if (!_isInitialized)
@@ -335,6 +344,20 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             else
             {
                 ShieldEnded?.Invoke();
+            }
+        }
+
+        bool isStunned = IsStunned;
+        if (isStunned != _wasStunned)
+        {
+            _wasStunned = isStunned;
+            if (isStunned)
+            {
+                StunStarted?.Invoke();
+            }
+            else
+            {
+                StunEnded?.Invoke();
             }
         }
     }
