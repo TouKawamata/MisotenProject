@@ -148,10 +148,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceGoalDirection
   raceManager: {fileID: 0}
-  slowMotionScale: 0.2
+  slowMotionScale: 0.129
   slowMotionSeconds: 1.2
   fadeSeconds: 0.6
   fadeCanvasGroup: {fileID: 7468417508015217484}
+  transitionGraphic: {fileID: 7319995699855243940}
+  transitionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   resultSceneName: ResultScene
   showDebugLogs: 1
 --- !u!1 &3679340855877430247

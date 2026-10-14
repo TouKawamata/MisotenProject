@@ -56,7 +56,8 @@ public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
 
     private void LateUpdate()
     {
-        if (isPlaying)
+        // Timeline が終了したあとに、初期時刻へ戻ったカメラ位置で上書きしない。
+        if (isPlaying && !finished && !skipRequested)
             UpdateCinematicCamera();
     }
 
@@ -121,21 +122,29 @@ public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
                 }
             }
 
+            // 最重要：Timeline を Stop する前にカメラを切り替える。
+            // Stop により Animation の値や再生位置がリセットされても、演出カメラを映さない。
+            isPlaying = false;
+            SetIntroCameraActive(false);
             director.Stop();
 
             // 今の降下Animationは、終了時のlocalPositionが(0, 0, 0)。
             // スキップでも必ずスタート位置に戻して、レース側の座標に影響させない。
             playerModelAnimator.transform.localPosition = Vector3.zero;
-
-            SetIntroCameraActive(false);
-            isPlaying = false;
         }
     }
 
     private void OnDirectorStopped(PlayableDirector stoppedDirector)
     {
-        if (stoppedDirector == director)
-            finished = true;
+        if (stoppedDirector != director || !isPlaying)
+            return;
+
+        // 自然終了の場合、WaitUntil / finally の実行を待つと
+        // Timeline のリセットされたカメラ位置が一瞬映る可能性がある。
+        // stopped イベントの時点で表示カメラを切り替え、以後 LateUpdate で更新しない。
+        finished = true;
+        isPlaying = false;
+        SetIntroCameraActive(false);
     }
 
     private void BindPlayerTrack()

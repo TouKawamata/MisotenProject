@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efc9e550bb895cb4ea67af09911bea9e, type: 3}
   m_Name: BoostProfile_Goal
   m_EditorClassIdentifier: Assembly-CSharp::BoostProfile
-  _normalMaxSpeed: 40
-  _normalForwardAcceleration: 20
-  _normalSteeringPower: 100
+  _normalMaxSpeed: 600
+  _normalForwardAcceleration: 600
+  _normalSteeringPower: 0
   _boostMaxSpeed: 100
   _boostForwardAcceleration: 70
   _boostSteeringPower: 70
