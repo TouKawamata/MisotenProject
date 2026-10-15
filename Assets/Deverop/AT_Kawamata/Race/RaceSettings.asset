@@ -20,4 +20,4 @@ MonoBehaviour:
   _countdownSeconds: 3
   _goalDistanceFromEnd: 100
   _finishDelayAfterPlayerGoal: 3
-  _goalStopDuration: 2
+  _goalStopDuration: 0
