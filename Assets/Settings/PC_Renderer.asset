@@ -1,5 +1,23 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-38761033167834628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a31ac13a77fadf4ea58a694a3e50425, type: 3}
+  m_Name: SpeedLine
+  m_EditorClassIdentifier: Assembly-CSharp::ConditionalFullScreenFeature
+  m_Active: 1
+  _material: {fileID: 2100000, guid: 84f24a74e6189bf4384a303a46460603, type: 2}
+  _passIndex: 0
+  _injectionPoint: 600
+  _strengthProperty: _SpeedLineStrength
+  _threshold: 0.001
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27,7 +45,9 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
   - {fileID: 237692135761671700}
-  m_RendererFeatureMap: ad6b866f10d7b46c1476faf5bc734c03
+  - {fileID: 8666306435003430682}
+  - {fileID: -38761033167834628}
+  m_RendererFeatureMap: ad6b866f10d7b46c1476faf5bc734c031ab70f5dc9e74478fc71e7b20b4b76ff
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -68,7 +88,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
   m_Name: FullScreenPassRendererFeature
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FullScreenPassRendererFeature
-  m_Active: 1
+  m_Active: 0
   injectionPoint: 600
   fetchColorBuffer: 1
   requirements: 0
@@ -102,3 +122,21 @@ MonoBehaviour:
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1
+--- !u!114 &8666306435003430682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a31ac13a77fadf4ea58a694a3e50425, type: 3}
+  m_Name: 'RadialBlur '
+  m_EditorClassIdentifier: Assembly-CSharp::ConditionalFullScreenFeature
+  m_Active: 1
+  _material: {fileID: 2100000, guid: 2ea97eb5d024faf44a6fd24bfceaa76a, type: 2}
+  _passIndex: 0
+  _injectionPoint: 600
+  _strengthProperty: _RadialBlurStrength
+  _threshold: 0.001
