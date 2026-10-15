@@ -292,7 +292,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         _lastPlayerRank = _playerEntry.Data.CurrentRank;
     }
 
-    // ゴール済みのRacerに、停止までの速度の倍率を渡す（実際の減速はRacer側が行う）。
+    // ゴール済みのRacerに、停止用の速度の倍率を渡す（実際の停止はRacer側が行う）。
     private void UpdateGoalStop(float dt)
     {
         foreach (RacerEntry entry in _entries)
