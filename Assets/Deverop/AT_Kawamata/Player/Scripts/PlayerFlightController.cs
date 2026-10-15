@@ -126,6 +126,14 @@ public class PlayerFlightController : MonoBehaviour
         LookAheadWorldPosition = _guide.GetLookAheadPosition(transform.position, profile.LookAheadDistance);
     }
 
+    // その場で止める（ゴール後の停止用）。速度・横ずれ・左右入力を消すだけなので、この後Tickを呼ばなければ位置も動かない。
+    public void Stop()
+    {
+        _velocity = Vector3.zero;
+        _lateralPush.Stop();
+        Steering = 0f;
+    }
+
     // 機首の向きの成分が最高速度を超えていれば、その成分だけを切り詰める（横・上下の成分は変えない）。
     private Vector3 ClampForwardSpeed(Vector3 velocity, float maxSpeed)
     {

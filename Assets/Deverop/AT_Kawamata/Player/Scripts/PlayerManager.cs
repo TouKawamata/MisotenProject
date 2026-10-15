@@ -4,7 +4,7 @@ using UnityEngine;
 // Playerに関する機能の窓口。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
 // 現在有効なFlightTuningProfile（通常／ショートカット吸着）を選んでPlayerFlightControllerへ渡す。
 // レースの参加者（IRacer）として、Initialize/PlaceAt/TickはRaceManagerから呼び出される。
-// ゴール後は入力を無視し、RaceSettingsの設定に沿って減速・停止させる（Tickは呼ばれ続ける）。
+// ゴール後は入力を無視し、RaceSettingsの秒数が経ったらその場で停止させる（Tickは呼ばれ続ける）。
 // ブースト接触は、当てる側（IBoostAttacker → BoostHitDetector）と当てられる側（IBoostHitReceiver）の両方を持つ。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
 public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
@@ -180,9 +180,9 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         _stun.Tick(deltaTime);
         _isFinished = data.IsFinished;
 
-        // ゴール後は入力を無視し、ブースト・シールドを解除して、通常のProfileでまっすぐ飛ばしながら停止させる。
-        // 速度の上限を「ゴールした瞬間の速度 × SpeedMultiplier」にすることで、RaceSettingsのカーブ通りに減速する
-        // （途中でブーストが切れても落ち方が変わらないよう、ブーストの最高速度ではなくゴール時の速度を基準にする）。
+        // ゴール後は入力を無視し、ブースト・シールドを解除して、通常のProfileでまっすぐ飛ばす。
+        // 速度の上限はゴールした瞬間の速度のまま（途中でブーストが切れても変わらないよう、ブーストの最高速度は使わない）。
+        // SpeedMultiplierが0になったら（RaceSettingsのGoalStopDuration経過）、その場でぴたっと止め、以降は飛行の計算をしない。
         if (data.IsFinished)
         {
             _boost.ForceStop();
@@ -198,8 +198,13 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             }
 
             CurrentProfile = _defaultProfile;
-            float finishMaxSpeed = _speedAtFinish * data.SpeedMultiplier;
-            _flightController.Tick(0f, finishMaxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
+            if (data.SpeedMultiplier <= 0f)
+            {
+                _flightController.Stop();
+                return;
+            }
+
+            _flightController.Tick(0f, _speedAtFinish, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
             return;
         }
 

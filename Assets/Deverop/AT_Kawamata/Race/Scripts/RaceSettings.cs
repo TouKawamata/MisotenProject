@@ -28,10 +28,8 @@ public class RaceSettings : ScriptableObject
     [SerializeField] private float _finishDelayAfterPlayerGoal = 3f;
 
     [Header("ゴール後の停止")]
-    [Tooltip("ゴールしてから完全に停止するまでの秒数。0なら即停止。ゴール後の走行区間（GoalDistanceFromEnd）を走り切らない長さにする")]
+    [Tooltip("ゴールしてから停止するまでの秒数。それまではゴールした瞬間の速度のまま進み、この秒数でその場にぴたっと止まる。0なら即停止。ゴール後の走行区間（GoalDistanceFromEnd）を走り切らない長さにする")]
     [SerializeField] private float _goalStopDuration = 2f;
-    [Tooltip("停止までの速度の落ち方。横軸＝経過の割合（0＝ゴール、1＝停止）、縦軸＝ゴールした瞬間の速度に対する倍率（1＝そのまま、0＝停止）。横軸が1に達した時点で必ず停止する")]
-    [SerializeField] private AnimationCurve _goalStopCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
     public float StartDistance => _startDistance;
 
@@ -51,20 +49,9 @@ public class RaceSettings : ScriptableObject
 
     public float GoalStopDuration => Mathf.Max(0f, _goalStopDuration);
 
-    // ゴールからの経過時間に対する速度の倍率（1＝そのまま、0＝停止）。GoalStopDurationを過ぎたら必ず0を返す。
+    // ゴールからの経過時間に対する速度の倍率。GoalStopDurationまでは1（減速しない）、過ぎたら0（停止）。
     public float EvaluateGoalStopSpeedMultiplier(float timeSinceFinish)
     {
-        float duration = GoalStopDuration;
-        if (duration <= 0f || timeSinceFinish >= duration)
-        {
-            return 0f;
-        }
-
-        if (_goalStopCurve == null || _goalStopCurve.length == 0)
-        {
-            return 1f - timeSinceFinish / duration;
-        }
-
-        return Mathf.Clamp01(_goalStopCurve.Evaluate(timeSinceFinish / duration));
+        return timeSinceFinish >= GoalStopDuration ? 0f : 1f;
     }
 }
