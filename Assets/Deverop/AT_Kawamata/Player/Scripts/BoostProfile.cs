@@ -8,12 +8,18 @@ public class BoostProfile : ScriptableObject
     [Header("通常時")]
     [SerializeField] private float _normalMaxSpeed = 40f;
     [SerializeField] private float _normalForwardAcceleration = 20f;
+    [Tooltip("左右の入力で、横の速さを上げるときの加速度（m/s²）。大きいほど押した瞬間に横へ動き出す")]
     [SerializeField] private float _normalSteeringPower = 100f;
+    [Tooltip("左右の入力いっぱいのときの横の速さ（m/s）")]
+    [SerializeField] private float _normalMaxLateralSpeed = 20f;
 
     [Header("ブースト時")]
     [SerializeField] private float _boostMaxSpeed = 100f;
     [SerializeField] private float _boostForwardAcceleration = 70f;
+    [Tooltip("左右の入力で、横の速さを上げるときの加速度（m/s²）。大きいほど押した瞬間に横へ動き出す")]
     [SerializeField] private float _boostSteeringPower = 70f;
+    [Tooltip("左右の入力いっぱいのときの横の速さ（m/s）")]
+    [SerializeField] private float _boostMaxLateralSpeed = 12f;
     [Tooltip("ブーストが終わってから、最高速度をブースト時の値から通常の値まで下げる秒数（0なら一瞬で下がる）。速度がガクッと落ちないようにする")]
     [SerializeField] private float _boostEndEaseDuration = 0.2f;
 
@@ -35,11 +41,15 @@ public class BoostProfile : ScriptableObject
 
     public float NormalSteeringPower => _normalSteeringPower;
 
+    public float NormalMaxLateralSpeed => Mathf.Max(0f, _normalMaxLateralSpeed);
+
     public float BoostMaxSpeed => _boostMaxSpeed;
 
     public float BoostForwardAcceleration => _boostForwardAcceleration;
 
     public float BoostSteeringPower => _boostSteeringPower;
+
+    public float BoostMaxLateralSpeed => Mathf.Max(0f, _boostMaxLateralSpeed);
 
     public float BoostEndEaseDuration => Mathf.Max(0f, _boostEndEaseDuration);
 

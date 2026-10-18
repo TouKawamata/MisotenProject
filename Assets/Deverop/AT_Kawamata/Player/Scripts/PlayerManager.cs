@@ -204,7 +204,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
                 return;
             }
 
-            _flightController.Tick(0f, _speedAtFinish, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
+            _flightController.Tick(0f, _speedAtFinish, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
             return;
         }
 
@@ -239,7 +239,7 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
 
         CurrentProfile = _isShortcutProfileActive ? _shortcutProfile : _defaultProfile;
         float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier();
-        _flightController.Tick(horizontal, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, CurrentProfile, deltaTime);
+        _flightController.Tick(horizontal, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
     }
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。

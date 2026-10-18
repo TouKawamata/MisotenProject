@@ -33,6 +33,7 @@ public class BoostController : MonoBehaviour
     public float CurrentMaxSpeed { get; private set; }
     public float CurrentForwardAcceleration { get; private set; }
     public float CurrentSteeringPower { get; private set; }
+    public float CurrentMaxLateralSpeed { get; private set; }
 
     public float Gauge { get; private set; }
 
@@ -186,6 +187,7 @@ public class BoostController : MonoBehaviour
         CurrentMaxSpeed = _profile.NormalMaxSpeed;
         CurrentForwardAcceleration = _profile.NormalForwardAcceleration;
         CurrentSteeringPower = _profile.NormalSteeringPower;
+        CurrentMaxLateralSpeed = _profile.NormalMaxLateralSpeed;
     }
 
     // ブースト時の値にする（終了時の最高速度の下げ途中に再発動した場合も、ここで打ち切る）。
@@ -195,5 +197,6 @@ public class BoostController : MonoBehaviour
         CurrentMaxSpeed = _profile.BoostMaxSpeed;
         CurrentForwardAcceleration = _profile.BoostForwardAcceleration;
         CurrentSteeringPower = _profile.BoostSteeringPower;
+        CurrentMaxLateralSpeed = _profile.BoostMaxLateralSpeed;
     }
 }
