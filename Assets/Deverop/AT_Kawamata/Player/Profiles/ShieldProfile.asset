@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: ShieldProfile
   m_EditorClassIdentifier: Assembly-CSharp::ShieldProfile
   _maxSpeedMultiplier: 0.95
-  _brokenDuration: 5
+  _brokenDuration: 3

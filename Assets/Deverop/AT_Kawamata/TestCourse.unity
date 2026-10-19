@@ -1409,6 +1409,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ab137c1a93c6a724f95ea6151001adc5, type: 3}
+--- !u!114 &119953937 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 977394030160389999, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 659967152165127082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ff793dc6f68ebc4a8228590099da55e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldShellHitbox
 --- !u!1 &120516352
 GameObject:
   m_ObjectHideFlags: 0
@@ -9159,7 +9170,7 @@ GameObject:
   - component: {fileID: 869247016}
   - component: {fileID: 869247015}
   - component: {fileID: 869247014}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CPURacer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9698,7 +9709,7 @@ GameObject:
   - component: {fileID: 907193519}
   - component: {fileID: 907193518}
   - component: {fileID: 907193517}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: CPURacer (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11382,6 +11393,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
+--- !u!114 &1074407851 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5835013902339143918, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+  m_PrefabInstance: {fileID: 659967152165127082}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ff793dc6f68ebc4a8228590099da55e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldShellHitbox
 --- !u!4 &1075394537 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
@@ -21518,10 +21540,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 63099834888480051, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: m_Name
+      value: FrontShield
+      objectReference: {fileID: 0}
+    - target: {fileID: 1324316576405271903, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: m_Name
+      value: BackShield
+      objectReference: {fileID: 0}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _shield
       value: 
       objectReference: {fileID: 659967152165127083}
+    - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: _backShell
+      value: 
+      objectReference: {fileID: 1074407851}
+    - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: _frontShell
+      value: 
+      objectReference: {fileID: 119953937}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _boostHitProfile
       value: 
@@ -21534,6 +21572,10 @@ PrefabInstance:
       propertyPath: _courseSpline
       value: 
       objectReference: {fileID: 1839428154}
+    - target: {fileID: 5963809229936467385, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6206948270024191021, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

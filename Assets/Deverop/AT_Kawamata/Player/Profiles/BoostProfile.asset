@@ -16,7 +16,7 @@ MonoBehaviour:
   _normalForwardAcceleration: 30
   _normalSteeringPower: 90
   _normalMaxLateralSpeed: 30
-  _boostMaxSpeed: 45
+  _boostMaxSpeed: 60
   _boostForwardAcceleration: 35
   _boostSteeringPower: 45
   _boostMaxLateralSpeed: 12

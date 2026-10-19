@@ -6,6 +6,8 @@ using UnityEngine;
 // レースの参加者（IRacer）として、Initialize/PlaceAt/TickはRaceManagerから呼び出される。
 // ゴール後は入力を無視し、RaceSettingsの秒数が経ったらその場で停止させる（Tickは呼ばれ続ける）。
 // ブースト接触は、当てる側（IBoostAttacker → BoostHitDetector）と当てられる側（IBoostHitReceiver）の両方を持つ。
+// shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
+// シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
 public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
 {
@@ -23,8 +25,15 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
     [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。DummyRacerと同じアセットを使う")]
     [SerializeField] private BoostHitProfile _boostHitProfile;
 
-    [Tooltip("自分のブーストが相手に当たったことを受け取るBoostHitDetector。未設定なら、自分か子から探す")]
+    [Tooltip("自分のブーストが相手に当たったことを受け取るBoostHitDetector（前方のshild_01の当たり判定に付ける）。未設定なら、自分か子から探す")]
     [SerializeField] private BoostHitDetector _boostHitDetector;
+
+    [Header("shild_01")]
+    [Tooltip("前方のshild_01の当たり判定。ブースト中だけ有効にする")]
+    [SerializeField] private ShieldShellHitbox _frontShell;
+
+    [Tooltip("後方のshild_01の当たり判定。シールド中だけ有効にする")]
+    [SerializeField] private ShieldShellHitbox _backShell;
 
     [Header("通常の接触")]
     [Tooltip("他のレーサーとの食い込みの計算に使う体のCollider。未設定なら、このGameObjectのColliderを使う")]
@@ -111,6 +120,12 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
         if (!_boost.Initialize() || !_shield.Initialize())
         {
             return;
+        }
+
+        // shild_01が無くても走れるよう、止めずに知らせるだけにする（ブースト接触の当てる・防ぐが効かなくなる）。
+        if (_frontShell == null || _backShell == null)
+        {
+            Debug.LogError("PlayerManager: Front Shell / Back Shell が未設定です（ブーストを当てる・シールドで防ぐ判定が取れません）", this);
         }
 
         if (_bodyCollider == null)
@@ -244,7 +259,8 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
-    // シールド中 → 防いでシールドが消える、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
+    // シールド中 → 後方のshild_01に当たったら防いでシールドが消え、前へ少し押し出される（加速）。体に当たっただけなら無視
+    // （シールド中はshild_01同士で判定する）、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
     // BoostHitDetector専用の入口なので、IBoostHitReceiverとしてだけ呼べるよう明示的に実装する。
     EBoostHitResult IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
     {
@@ -266,11 +282,17 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             return EBoostHitResult.Bounced;
         }
 
-        if (_shield.TryBlock())
+        if (_shield.IsActive)
         {
+            if (!hit.HitShell || !_shield.TryBlock())
+            {
+                return EBoostHitResult.Ignored;
+            }
+
             _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
+            _flightController.ApplyForwardPush(_boostHitProfile.BlockPushDistance, _boostHitProfile.BlockPushDuration);
             ShieldBlocked?.Invoke();
-            Log("シールドでブースト接触を防いだ");
+            Log($"シールドでブースト接触を防いだ 前へ {_boostHitProfile.BlockPushDistance:F1}m");
             return EBoostHitResult.Blocked;
         }
 
@@ -364,6 +386,22 @@ public class PlayerManager : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoos
             {
                 StunEnded?.Invoke();
             }
+        }
+
+        UpdateShellHitboxes(isBoosting, isShielding);
+    }
+
+    // shild_01の当たり判定を、ブースト中は前方・シールド中は後方だけ有効にする。状態の通知と同じく、どの経路で変わっても毎回そろえる。
+    private void UpdateShellHitboxes(bool isBoosting, bool isShielding)
+    {
+        if (_frontShell != null)
+        {
+            _frontShell.SetActive(isBoosting);
+        }
+
+        if (_backShell != null)
+        {
+            _backShell.SetActive(isShielding);
         }
     }
 
