@@ -19,6 +19,9 @@ public class BoostPresentation : MonoBehaviour
     [Tooltip("集中線")]
     [SerializeField] private SpeedLineEffect _speedLines;
 
+    [Tooltip("前方のshild_01の見た目（FrontShellの中）")]
+    [SerializeField] private ShieldShellView _frontShellView;
+
     private void Awake()
     {
         if (_playerManager == null)
@@ -58,6 +61,11 @@ public class BoostPresentation : MonoBehaviour
         {
             _speedLines.Play();
         }
+
+        if (_frontShellView != null)
+        {
+            _frontShellView.Show();
+        }
     }
 
     private void StopBoostEffect()
@@ -75,6 +83,11 @@ public class BoostPresentation : MonoBehaviour
         if (_speedLines != null)
         {
             _speedLines.Stop();
+        }
+
+        if (_frontShellView != null)
+        {
+            _frontShellView.Hide();
         }
     }
 }

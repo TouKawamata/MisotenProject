@@ -4,6 +4,7 @@ using UnityEngine;
 // ・ブースト中でない相手に当たった → 当てられた側がスタン（入力不可・減速）＋横ずれし、その後しばらく無敵
 //   横ずれの距離は、当てた側の左右方向で見た中心どうしの近さ（BoostHitInfo.Closeness）で変わる
 // ・お互いにブースト中 → お互いを少しはじくだけ（ブーストは解除しない）
+// ・シールド中の相手の後方のshild_01に当たった → 防がれる。防いだ側は少し前へ押し出される（加速）
 [CreateAssetMenu(fileName = "BoostHitProfile", menuName = "Race/BoostHitProfile")]
 public class BoostHitProfile : ScriptableObject
 {
@@ -32,6 +33,12 @@ public class BoostHitProfile : ScriptableObject
     [Tooltip("重なっている間に何度もはじかないよう、次にはじくまで空ける秒数")]
     [SerializeField] private float _bounceInterval = 0.5f;
 
+    [Header("シールドで防いだとき")]
+    [Tooltip("ブースト中の相手を後方のshild_01で防いだとき、防いだ側を前へ押し出す距離（m）。最高速度に関係なく押し出す")]
+    [SerializeField] private float _blockPushDistance = 6f;
+    [Tooltip("前へ押し出し切るまでの秒数（最初に大きく動き、だんだん止まる）")]
+    [SerializeField] private float _blockPushDuration = 0.5f;
+
     public float StunDuration => Mathf.Max(0f, _stunDuration);
 
     public float StunSpeedMultiplier => _stunSpeedMultiplier;
@@ -43,6 +50,10 @@ public class BoostHitProfile : ScriptableObject
     public float BounceDistance => Mathf.Max(0f, _bounceDistance);
 
     public float BounceInterval => Mathf.Max(0f, _bounceInterval);
+
+    public float BlockPushDistance => Mathf.Max(0f, _blockPushDistance);
+
+    public float BlockPushDuration => Mathf.Max(0f, _blockPushDuration);
 
     // closeness：0＝端をかすめた、1＝中心どうしが一致。
     public float EvaluatePushDistance(float closeness)

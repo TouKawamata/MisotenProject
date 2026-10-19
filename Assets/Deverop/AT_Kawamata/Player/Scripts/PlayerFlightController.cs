@@ -24,14 +24,17 @@ public class PlayerFlightController : MonoBehaviour
     private Vector3 _steerRight = Vector3.right;
     private readonly LateralPush _lateralPush = new LateralPush();
 
+    // 機首の向きへの押し出し（シールドで防いだときの加速など）。横ずれと同じく「何mを何秒で」位置へ足すため、LateralPushを使い回す。
+    private readonly LateralPush _forwardPush = new LateralPush();
+
     // 慣性の速度と横の速さを合わせた、ワールド座標の速度。
     public Vector3 Velocity => _velocity + _steerRight * _steerSpeed;
 
-    // 機首の向きの速さ（最高速度で制限している成分）。
+    // 機首の向きの速さ（最高速度で制限している成分）。押し出し（ApplyForwardPush）の分は含まない。
     public float ForwardSpeed => Vector3.Dot(Velocity, _playerForward);
 
-    // ブースト接触などで横へ押し出している途中か。
-    public bool IsBeingPushed => _lateralPush.IsActive;
+    // ブースト接触などで横・前後へ押し出している途中か。
+    public bool IsBeingPushed => _lateralPush.IsActive || _forwardPush.IsActive;
 
     // 機体の位置でのコースの上方向（バンク込み）。機体の回転の上方向に使う。カメラの向きの基準にもする。
     public Vector3 ReferenceUp { get; private set; } = Vector3.up;
@@ -68,6 +71,7 @@ public class PlayerFlightController : MonoBehaviour
         ReferenceUp = transform.up;
         Steering = 0f;
         _lateralPush.Stop();
+        _forwardPush.Stop();
         IsClampedToTunnel = false;
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
         StateReset?.Invoke();
@@ -123,8 +127,10 @@ public class PlayerFlightController : MonoBehaviour
         _velocity = ClampForwardSpeed(_velocity, splineRight, maxSpeed, profile);
 
         // 7. 位置積分（円筒境界＝壁の外には出られず、当たった角度に応じて減速する）。
-        //    横ずれ（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
-        Vector3 desiredPosition = position + Velocity * deltaTime + splineRight * _lateralPush.Advance(deltaTime);
+        //    横ずれ・前への押し出し（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
+        Vector3 desiredPosition = position + Velocity * deltaTime
+            + splineRight * _lateralPush.Advance(deltaTime)
+            + _playerForward * _forwardPush.Advance(deltaTime);
         transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, tunnelRadius, profile);
 
         // 8. 回転：ForwardはPlayerForward、Upはコースの上方向（ワールドの真上は使わないので、垂直の区間・逆さの区間でも崩れない）
@@ -141,6 +147,7 @@ public class PlayerFlightController : MonoBehaviour
         _velocity = Vector3.zero;
         _steerSpeed = 0f;
         _lateralPush.Stop();
+        _forwardPush.Stop();
         Steering = 0f;
     }
 
@@ -208,6 +215,19 @@ public class PlayerFlightController : MonoBehaviour
         }
 
         _lateralPush.Start(side * distance, duration);
+    }
+
+    // 機首の向きへdistance（m）をduration秒かけて押し出す（最初に大きく動き、だんだん止まる）。負なら後ろへ下げる。
+    // 速度ではなく位置に足すので、最高速度で切り詰められない（シールドで防いだときの加速、障害物で後ろへ下げるときなど）。
+    // 押し出している途中で呼ばれたら、そこから押し出し直す。
+    public void ApplyForwardPush(float distance, float duration)
+    {
+        if (Mathf.Approximately(distance, 0f))
+        {
+            return;
+        }
+
+        _forwardPush.Start(distance, duration);
     }
 
     // 他のレーサーとの通常の接触で、食い込みを押し戻す（RacerContactResolverから、PlayerManager経由で呼ばれる）。
