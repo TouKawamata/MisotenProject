@@ -26,14 +26,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _CenterRadius: 0.3
-    - _FlickerSpeed: 30
+    - _FlickerSpeed: 15
     - _FullRadius: 0.8
-    - _LineCount: 200
+    - _LineCount: 13
     - _LineSoftness: 0.3
-    - _LineThickness: 0.5
+    - _LineThickness: 0.133
     - _ThicknessRandomness: 1
     m_Colors:
     - _Center: {r: 0.5, g: 0.5, b: 0, a: 0}
-    - _LineColor: {r: 1, g: 1, b: 1, a: 0.19607843}
+    - _LineColor: {r: 1, g: 1, b: 1, a: 0.101960786}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

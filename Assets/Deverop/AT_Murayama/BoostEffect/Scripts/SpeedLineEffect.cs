@@ -24,6 +24,11 @@ public class SpeedLineEffect : MonoBehaviour
     private float _strength;
     private Tween _tween;
 
+    private void Awake()
+    {
+        SetStrength(0f);
+    }
+
     private void OnDisable()
     {
         KillTween();
