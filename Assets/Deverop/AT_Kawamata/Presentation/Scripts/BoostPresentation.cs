@@ -1,13 +1,13 @@
 using UnityEngine;
 
-// ブースト時の演出の窓口。PlayerManagerのBoostStarted／BoostEndedを購読し、各演出のPlay／Stopを呼ぶだけ。
+// ブースト時の演出の窓口。レーサー（PlayerManager／CPUManager）のBoostStarted／BoostEndedを購読し、各演出のPlay／Stopを呼ぶだけ。
 // 演出を足すときは、Play／Stopを持つコンポーネントを作ってここから呼ぶ（PlayerManagerは演出を直接触らない）。
 // 未設定の演出は飛ばすので、必要なものだけ割り当てればよい。
 // Playerプレハブの中で完結する（シーンに依存しない）ため、VContainerには登録せず、Awake／OnDestroyで購読・解除する
 // （イベントはPlaceAt・Tickからしか出ないので、全員のAwakeの後になり、購読が間に合わないことはない）。
 public class BoostPresentation : MonoBehaviour
 {
-    [SerializeField] private PlayerManager _playerManager;
+    [SerializeField] private RacerManagerBase _playerManager;
 
     [Header("演出")]
     [Tooltip("1人称→3人称の切り替えとFOV")]

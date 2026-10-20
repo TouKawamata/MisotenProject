@@ -27,6 +27,9 @@ public class PlayerFlightController : MonoBehaviour
     // 機首の向きへの押し出し（シールドで防いだときの加速など）。横ずれと同じく「何mを何秒で」位置へ足すため、LateralPushを使い回す。
     private readonly LateralPush _forwardPush = new LateralPush();
 
+    // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。CPUの入力（判断）などが読む。
+    public ICourseGuide Guide => _guide;
+
     // 慣性の速度と横の速さを合わせた、ワールド座標の速度。
     public Vector3 Velocity => _velocity + _steerRight * _steerSpeed;
 
