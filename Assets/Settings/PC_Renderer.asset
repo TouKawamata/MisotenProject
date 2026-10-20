@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: SpeedLine
   m_EditorClassIdentifier: Assembly-CSharp::ConditionalFullScreenFeature
   m_Active: 1
-  _material: {fileID: 2100000, guid: 84f24a74e6189bf4384a303a46460603, type: 2}
+  _material: {fileID: 2100000, guid: 7a37c543ccf1e5944a7d68179865a325, type: 2}
   _passIndex: 0
   _injectionPoint: 600
   _strengthProperty: _SpeedLineStrength

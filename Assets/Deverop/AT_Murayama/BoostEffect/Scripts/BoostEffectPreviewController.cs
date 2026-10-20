@@ -26,29 +26,48 @@ public class BoostEffectPreviewController : MonoBehaviour
     private static readonly int RadialBlurStrengthId = Shader.PropertyToID("_RadialBlurStrength");
     private static readonly int SpeedLineStrengthId  = Shader.PropertyToID("_SpeedLineStrength");
 
+    private void OnEnable()
+    {
+        // スクリプトのチェックをONにした時、即座にスライダー値を反映（ゲーム実行中・エディタ非実行中問わず）
+        ApplyStrength();
+    }
+
+    private void OnDisable()
+    {
+        // スクリプトのチェックをOFFにした時、またはオブジェクト非アクティブ時は即座に0に戻す
+        ResetGlobals();
+    }
+
     private void OnValidate()
     {
-        ApplyStrength();
+        // スクリプトが有効な時だけスライダー値を反映し、無効時は0に保つ
+        if (isActiveAndEnabled)
+        {
+            ApplyStrength();
+        }
+        else
+        {
+            ResetGlobals();
+        }
     }
 
     private void Update()
     {
-        // エディタ上でスライダーを動かした時、即座にシェーダーに送る
-        if (!Application.isPlaying)
+        // スクリプトが有効な間は、スライダーの値を常にリアルタイム反映（ゲーム実行中もスライダーで確認可能）
+        if (isActiveAndEnabled)
         {
             ApplyStrength();
         }
     }
 
-    private void ApplyStrength()
+    public void ApplyStrength()
     {
         Shader.SetGlobalFloat(RadialBlurStrengthId, radialBlurStrength);
         Shader.SetGlobalFloat(SpeedLineStrengthId, speedLineStrength);
     }
 
-    private void OnDisable()
+    public void ResetGlobals()
     {
-        // オブジェクトが無効化されたりシーンを抜ける時は0に戻す
         Shader.SetGlobalFloat(RadialBlurStrengthId, 0f);
         Shader.SetGlobalFloat(SpeedLineStrengthId, 0f);
     }
