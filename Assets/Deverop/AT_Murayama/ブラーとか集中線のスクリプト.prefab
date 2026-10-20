@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5022553193465443193
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7143735588935656214}
+  - component: {fileID: 1996437662053459021}
+  - component: {fileID: 2312753194847670272}
+  - component: {fileID: 4983546854642733969}
+  m_Layer: 0
+  m_Name: "\u30D6\u30E9\u30FC\u3068\u304B\u96C6\u4E2D\u7DDA\u306E\u30B9\u30AF\u30EA\u30D7\u30C8"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7143735588935656214
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022553193465443193}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 188.58096, y: -65.12962, z: 289.7534}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1996437662053459021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022553193465443193}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49c7b80249519d84babd5a9d89b8f770, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BoostEffectPreviewController
+  radialBlurStrength: 0
+  speedLineStrength: 0
+  _radialBlurEffect: {fileID: 4983546854642733969}
+  _speedLineEffect: {fileID: 2312753194847670272}
+--- !u!114 &2312753194847670272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022553193465443193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 149aa00fe7dfaa442a1651f113b2bbdc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpeedLineEffect
+  _boostStrength: 1
+  _playDuration: 0.25
+  _playEase: 9
+  _stopDuration: 0.4
+  _stopEase: 4
+--- !u!114 &4983546854642733969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5022553193465443193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6426e727044fb3a4f90522aa1c98157c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RadialBlurEffect
+  _boostStrength: 1
+  _playDuration: 0.35
+  _playEase: 9
+  _stopDuration: 0.5
+  _stopEase: 4

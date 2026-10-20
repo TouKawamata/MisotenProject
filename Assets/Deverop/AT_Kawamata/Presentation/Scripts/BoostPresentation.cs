@@ -13,10 +13,14 @@ public class BoostPresentation : MonoBehaviour
     [Tooltip("1人称→3人称の切り替えとFOV")]
     [SerializeField] private BoostCameraEffect _cameraEffect;
 
-    // TODO: 以下の演出は未実装。RadialBlurEffect（ラジアルブラー）・SpeedLineEffect（集中線）を、
-    //       Play／Stopを持つコンポーネントとして実装したら、コメントアウトを外して追加する（PlayBoostEffect／StopBoostEffectも同様）。
-    // [SerializeField] private RadialBlurEffect _radialBlur;
-    // [SerializeField] private SpeedLineEffect _speedLines;
+    [Tooltip("ラジアルブラー")]
+    [SerializeField] private RadialBlurEffect _radialBlur;
+
+    [Tooltip("集中線")]
+    [SerializeField] private SpeedLineEffect _speedLines;
+
+    [Tooltip("前方のshild_01の見た目（FrontShellの中）")]
+    [SerializeField] private ShieldShellView _frontShellView;
 
     private void Awake()
     {
@@ -48,16 +52,20 @@ public class BoostPresentation : MonoBehaviour
             _cameraEffect.Play();
         }
 
-        // TODO: RadialBlurEffect・SpeedLineEffectを実装したら追加する。
-        // if (_radialBlur != null)
-        // {
-        //     _radialBlur.Play();
-        // }
-        //
-        // if (_speedLines != null)
-        // {
-        //     _speedLines.Play();
-        // }
+        if (_radialBlur != null)
+        {
+            _radialBlur.Play();
+        }
+
+        if (_speedLines != null)
+        {
+            _speedLines.Play();
+        }
+
+        if (_frontShellView != null)
+        {
+            _frontShellView.Show();
+        }
     }
 
     private void StopBoostEffect()
@@ -67,15 +75,19 @@ public class BoostPresentation : MonoBehaviour
             _cameraEffect.Stop();
         }
 
-        // TODO: RadialBlurEffect・SpeedLineEffectを実装したら追加する。
-        // if (_radialBlur != null)
-        // {
-        //     _radialBlur.Stop();
-        // }
-        //
-        // if (_speedLines != null)
-        // {
-        //     _speedLines.Stop();
-        // }
+        if (_radialBlur != null)
+        {
+            _radialBlur.Stop();
+        }
+
+        if (_speedLines != null)
+        {
+            _speedLines.Stop();
+        }
+
+        if (_frontShellView != null)
+        {
+            _frontShellView.Hide();
+        }
     }
 }

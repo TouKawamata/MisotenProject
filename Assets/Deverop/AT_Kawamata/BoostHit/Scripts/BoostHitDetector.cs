@@ -4,9 +4,11 @@ using UnityEngine;
 // ブースト中に他のレーサーと重なったら、相手のIBoostHitReceiver.ReceiveBoostHitを呼ぶ。
 // 効果を受けるかどうか（シールド・無敵・お互いにブースト中か）は、当てられた側が判断して結果を返し、
 // 効果があったとき（Ignored以外）だけHitLandedで通知する（当てた側の演出・UI向け）。
-// Rigidbodyを持つGameObject（Player・DummyRacerのルート）に付ける。
+// Playerは、前方のshild_01の当たり判定（ShieldShellHitboxのオブジェクト）に付ける。Triggerの通知はそのColliderのGameObjectに届くので、
+// 前方のshild_01が相手に重なったときだけ判定する（体どうしが重なっても当たらない）。DummyRacerは、今まで通りルートに付ける。
 // レーサーはすべてKinematicなので、ColliderがTriggerでないと接触の通知が来ない（Kinematic同士は衝突しないため）。
-// そのため、各レーサーは自分か子にTriggerのColliderを持つこと（無ければ起動時に警告を出す）。
+// そのため、付けたGameObjectか子にTriggerのColliderを持つこと（無ければ起動時に警告を出す）。
+// 相手のshild_01（ShieldShellHitbox）に重なったときは、BoostHitInfo.HitShellをtrueにして渡す。
 // 重なっている間は呼び続けるため、同じ相手に何度も効果が出ないようにする処理は、当てられた側の無敵時間に任せる。
 //
 // 近さ：当てた側の左右方向で見た、中心どうしの距離dを「自分の横幅の1/2 ＋ 相手の横幅の1/2」で割合にしたもの。
@@ -80,14 +82,14 @@ public class BoostHitDetector : MonoBehaviour
             return;
         }
 
-        EBoostHitResult result = receiver.ReceiveBoostHit(CreateHitInfo(attackerTransform, receiverComponent));
+        EBoostHitResult result = receiver.ReceiveBoostHit(CreateHitInfo(attackerTransform, receiverComponent, other));
         if (result != EBoostHitResult.Ignored)
         {
             HitLanded?.Invoke(result);
         }
     }
 
-    private BoostHitInfo CreateHitInfo(Transform attackerTransform, Component receiverComponent)
+    private BoostHitInfo CreateHitInfo(Transform attackerTransform, Component receiverComponent, Collider other)
     {
         BoostHitDetector receiverDetector = receiverComponent.GetComponentInChildren<BoostHitDetector>();
         float receiverHalfWidth = receiverDetector != null ? receiverDetector.HalfWidth : 0f;
@@ -98,6 +100,8 @@ public class BoostHitDetector : MonoBehaviour
         float closeness = range > 0f ? 1f - Mathf.Clamp01(Mathf.Abs(lateral) / range) : 0f;
         Vector3 pushDirection = Mathf.Abs(lateral) < UndeterminedSideDistance ? Vector3.zero : right * Mathf.Sign(lateral);
 
-        return new BoostHitInfo(pushDirection, closeness);
+        bool hitShell = other.TryGetComponent(out ShieldShellHitbox _);
+
+        return new BoostHitInfo(pushDirection, closeness, hitShell);
     }
 }
