@@ -158,6 +158,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     }
 
     // CPUはPlayerのグリッド番号を飛ばして、0番から順に空いているグリッドへ割り当てる。RacerIdは1から振る。
+    // CPUManagerは、Playerと同じくここで初期化する（DummyRacerは自分のStartで初期化するので呼ばない）。
     private void AddCpuEntries()
     {
         if (_cpuRacers == null)
@@ -179,6 +180,13 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
             {
                 Debug.LogError($"RaceManager: {cpuObject.name} にIRacerを実装したコンポーネントが無いため、参加させません", cpuObject);
                 continue;
+            }
+
+            // 全員のRacerDataのリストを先に渡す（同じリストなので、この後に加わる参加者も見える）。
+            if (racer is CPUManager cpu)
+            {
+                cpu.SetRacers(_racerDataList);
+                cpu.Initialize();
             }
 
             if (gridIndex == _settings.PlayerGridIndex)
