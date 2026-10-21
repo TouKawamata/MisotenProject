@@ -5,7 +5,8 @@ using UnityEngine;
 //   1. 後ろからのブーストを避ける（シールドを張っていないとき）
 //   2. 狙う相手と同じ横位置へ寄せる
 //   3. 前の近いレーサーとぶつかりそうなら、空いている側へよける
-//   4. 個性の走行ライン（CPUどうしが一列に重ならないよう、RacerIdで左右を分け、ときどき変える）
+//   4. 先頭なら中央
+//   5. 個性の走行ライン（CPUどうしが一列に重ならないよう、RacerIdで左右を分け、ときどき変える）
 // 目標はトンネル半径の内側に収める。壁に触れたら（減速するので）、しばらくはさらに内側に収める。
 // Horizontalには難易度のぶれを足す。
 public class CpuSteeringBrain
@@ -23,6 +24,9 @@ public class CpuSteeringBrain
 
     // 後ろからのブーストを避けるときに、相手から離す横位置の差（m）。
     private const float DodgeLateralWidth = 3.5f;
+
+    // 走行ラインの横位置＝外寄りの度合い（PreferredLine）×目標の横位置の限界×この割合。小さいほど全体が中央寄りになる。
+    private const float LineSpread = 0.5f;
 
     // 走行ラインを変える間隔（秒）。ライン変更の頻度0～1で、長い～短い。実際の間隔は、これに0.7～1.3倍のばらつきを掛ける。
     private const float LineChangeIntervalAtLowFrequency = 15f;
@@ -96,13 +100,33 @@ public class CpuSteeringBrain
             return targetSelector.Target.Lateral;
         }
 
-        float baseLateral = _baseLine * limit;
+        // 先頭なら、よける相手も並ぶ相手もいないので、中央を走る。
+        if (IsLeading(situation))
+        {
+            return 0f;
+        }
+
+        float baseLateral = _baseLine * limit * LineSpread;
         if (TryFindBlocker(situation, targetSelector, out CpuRacerView blocker))
         {
             return AwayFrom(blocker.Lateral, baseLateral, AvoidLateralWidth, limit);
         }
 
         return baseLateral;
+    }
+
+    // 前に誰もいない（ゴール済みのレーサーは除く）。
+    private static bool IsLeading(CpuSituation situation)
+    {
+        foreach (CpuRacerView other in situation.Others)
+        {
+            if (other.ForwardGap > 0f)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // 前の近いレーサーのうち、一番近くて横位置が重なっている相手。

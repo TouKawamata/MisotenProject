@@ -54,7 +54,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6929844204703215832, guid: 492ec4466f589c34dad1d854952ba84b, type: 3}
       propertyPath: m_Name
-      value: CPURacer_Guardian
+      value: CPURacer_SpeedSter
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -83,7 +83,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CpuRaceInput
   _difficulty: {fileID: 11400000, guid: 0ad5497034c344244a353e697f5fe9b6, type: 2}
   _followGlobalDifficulty: 1
-  _personality: {fileID: 11400000, guid: 146e9d7d411d1fd479d3341a51466458, type: 2}
+  _personality: {fileID: 11400000, guid: e6b8422bf7024854592e409b2ba81196, type: 2}
   _randomSeed: 0
   _showDebugLogs: 1
   _drawGizmos: 1
+  _showLabel: 1
+  _labelHeight: 2.5

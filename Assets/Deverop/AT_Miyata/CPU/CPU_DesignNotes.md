@@ -1,6 +1,7 @@
 # CPU（AI）設計メモ
 
 CPUレーサーの「判断」（入力）を作る機能の仕様・構成・経緯をまとめたもの。次の作業者（人・Claude）が前提をすぐ把握できるようにする。
+（他のメンバーの Claude 用の設定とぶつからないように、ファイル名は `CLAUDE.md` にせず `CPU_DesignNotes.md` にしている。CPU の作業を始めるときは、まずこのファイルを読む）
 
 ## 作業ルール（重要）
 - 新規作業は `Assets/Deverop/AT_Miyata` 内で行う（フォルダ名は `Develop` ではなく `Deverop`）。担当者はAT_Miyata。
@@ -52,7 +53,7 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 - **執念**：`BoostHitInfo` に当てた相手が含まれないため、「自分がスタンした瞬間に、前後15m以内でブーストしていた一番近い相手」を当てた相手とみなす（既存ファイルを変えないための代わりの方法）。
 - **シールド**：後ろの一定距離以内（慎重さで 8～25m）、横位置の差3m以内、ブースト中で近づいてくる相手を脅威とみなす。自分がブースト中なら張らない（ブースト同士ははじくだけのため）。
 - **ブースト**：攻撃＝相手が25m以内で横位置がそろっている（そろいの許容は難易度の AttackAlignTolerance）。加速＝先のカーブの角度が BoostCurveLimit 以下で、ゲージが閾値以上。閾値は「ブーストの使い方」、追い上げ補正（Playerとの差）、RankRatio（最下位で -0.15）で変わる。相手がシールドを張ったら攻撃をやめる。
-- **左右**：優先順位は 脅威を避ける ＞ 狙う相手 ＞ 前の相手をよける ＞ 走行ライン（RacerId の偶奇で左右に分け、ライン変更の頻度でときどき変える）。トンネル半径の80%以内に収め、壁に触れたら1.5秒間は55%以内にする。
+- **左右**：優先順位は 脅威を避ける ＞ 狙う相手 ＞ 先頭なら中央 ＞ 前の相手をよける ＞ 走行ライン（RacerId の偶奇で左右に分け、ライン変更の頻度でときどき変える）。走行ラインは `LineSpread`（0.5）を掛けて中央寄りにしている（全体の寄り具合はこの値で、個性ごとの差は PreferredLine で調整）。トンネル半径の80%以内に収め、壁に触れたら1.5秒間は55%以内にする。
 - **追い上げ補正**：速度（物理）は変えない。判断（ブーストの閾値）だけを Playerとの前後の差で変える。強さは難易度の CatchUpStrength（0で無効）。ゲーム側の `BoostRankTable`（下位ほどゲージ消費が少ない）とは別の仕組み。
 - 個性の重みを実際の距離・閾値に直す換算は、各 Brain の先頭にある `private const` にまとめてある（調整はここで行う）。
 
@@ -71,14 +72,17 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 - Show Debug Logs：狙う相手の変更、ブースト（攻撃／加速）、シールド、ショートカットを Console に出す。
 - Gizmos（選択中）：黄＝目標の横位置、赤＝狙う相手、水色＝脅威。
 - 頭上の表示（Show Label / Label Height）：「個性 / 難易度」と今していること。
-- Unity を使わないコンパイル確認（Unity 6000.3.23f1 の Roslyn を使う）：
+- **パスについて**：作業するPCがよく変わるため、このメモにはユーザー名入りのパス（`C:/Users/<名前>/...`）を書かない。プロジェクトの場所は `git rev-parse --show-toplevel`、Unity のバージョンは `ProjectSettings/ProjectVersion.txt`、ユーザーのフォルダは環境変数（`$LOCALAPPDATA` など）から、その場で求める。
+- Unity を使わないコンパイル確認（プロジェクトの Unity バージョンの Roslyn を使う。Git Bash で、リポジトリ内のどこからでも実行できる）：
   ```bash
-  U="/c/Program Files/Unity/Hub/Editor/6000.3.23f1/Editor/Data"; P=/c/Users/georg/Documents/GitHub/MisotenProject
-  REFS=""; for f in "$U"/Managed/UnityEngine/*.dll; do REFS="$REFS -r:\"$f\""; done
-  eval "\"$U/NetCoreRuntime/dotnet.exe\" \"$U/DotNetSdkRoslyn/csc.dll\" -nologo -langversion:9 -target:library -nostdlib -define:UNITY_EDITOR -nowarn:1701,1702,0649,0436 -out:<scratchpad>/cpu.dll -r:\"$U/NetStandard/ref/2.1.0/netstandard.dll\" -r:\"$P/Library/ScriptAssemblies/Assembly-CSharp.dll\" $REFS $P/Assets/Deverop/AT_Miyata/CPU/Scripts/*.cs $P/Assets/Deverop/AT_Miyata/CPU/Editor/*.cs"
+  P=$(git rev-parse --show-toplevel)
+  V=$(sed -n 's/^m_EditorVersion: //p' "$P/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
+  U="/c/Program Files/Unity/Hub/Editor/$V/Editor/Data"
+  REFS=(); for f in "$U"/Managed/UnityEngine/*.dll; do REFS+=("-r:$f"); done
+  "$U/NetCoreRuntime/dotnet.exe" "$U/DotNetSdkRoslyn/csc.dll" -nologo -langversion:9 -target:library -nostdlib -define:UNITY_EDITOR -nowarn:1701,1702,0649,0436 -out:"<scratchpad>/cpu.dll" -r:"$U/NetStandard/ref/2.1.0/netstandard.dll" -r:"$P/Library/ScriptAssemblies/Assembly-CSharp.dll" "${REFS[@]}" "$P"/Assets/Deverop/AT_Miyata/CPU/Scripts/*.cs "$P"/Assets/Deverop/AT_Miyata/CPU/Editor/*.cs
   ```
-  （`UnityEditor.dll` は追加しない。UnityEngine フォルダの UnityEditor.CoreModule と重複してエラーになる）
-- 実行時のログは `C:/Users/georg/AppData/Local/Unity/Editor/Editor.log` で読める。
+  （`<scratchpad>` は一時フォルダに置き換える。Unity Hub を標準以外の場所に入れている PC では `U` を直す。`UnityEditor.dll` は追加しない。UnityEngine フォルダの UnityEditor.CoreModule と重複してエラーになる）
+- 実行時のログは `$LOCALAPPDATA/Unity/Editor/Editor.log`（Windows では `%LOCALAPPDATA%\Unity\Editor\Editor.log`）で読める。
 
 ## 現状と残っていること
 - CPUTestCourse で動作し、頭上の表示まで確認済み。数値の調整はこれから。
