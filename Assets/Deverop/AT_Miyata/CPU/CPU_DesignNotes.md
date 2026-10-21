@@ -7,6 +7,8 @@ CPUレーサーの「判断」（入力）を作る機能の仕様・構成・�
 - 新規作業は `Assets/Deverop/AT_Miyata` 内で行う（フォルダ名は `Develop` ではなく `Deverop`）。担当者はAT_Miyata。
 - **既存ファイル（AT_Kawamata など他メンバーのスクリプト・シーン・Prefab）を変更する場合は、どのファイルをどう変えるかを提示して、承認を得てから変更する。**
 - コードは周りに合わせる：日本語コメント、`_field`、波括弧は省略しない、Tooltip/Headerを付ける、namespaceなし。
+- 作業するPCがよく変わるので、このメモにユーザー名入りのパスを書かない（詳しくは「デバッグ」）。
+- 数値調整の進め方：変更 → コンパイル確認（「デバッグ」のコマンド）→ ユーザーが Unity で確認 → OK が出たら「現状と残っていること」に日付つきで記録する。
 
 ## 前提（既存の仕組み。AT_Kawamata側、変更しない）
 - `CPUManager : RacerManagerBase` が CPU 本体。入力だけを `ICpuRaceInput`（`IRaceInput` に `UpdateInput(CPUManager owner, float dt, IReadOnlyRacerData data)` を足したもの）から受け取る。
@@ -85,7 +87,10 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 - 実行時のログは `$LOCALAPPDATA/Unity/Editor/Editor.log`（Windows では `%LOCALAPPDATA%\Unity\Editor\Editor.log`）で読める。
 
 ## 現状と残っていること
-- CPUTestCourse で動作し、頭上の表示まで確認済み。数値の調整はこれから。
+- CPUTestCourse で動作し、頭上の表示まで確認済み。
+- 数値の調整を始めた。調整した内容（ユーザーが動作を確認して OK を出したもの）：
+  - 2026-10-21 左右：走行ラインを中央寄りに（`CpuSteeringBrain.LineSpread` = 0.5）、先頭のCPUは中央を走る。
+- まだ調整していない：ブーストの頻度・閾値、シールドの成功率、狙う相手の選び方、難易度ごとの差など。ユーザーの要望を聞いてから進める。
 - ブランチの作成・コミットはユーザーが自分で行う（Claude は git の操作をしない）。
 - `DeveropGameScene.unity` の CPU は Prefab とのつながりが切れた（Unpack された）オブジェクト。本番シーンへ入れるには置き直しが必要で、既存シーンの変更になるので要承認。
 - 執念を正確にするには、`RacerManagerBase` / `BoostHitInfo` に当てた相手の情報を足す必要がある（既存ファイルの変更なので要承認）。

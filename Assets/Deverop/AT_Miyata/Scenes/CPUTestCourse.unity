@@ -7213,6 +7213,67 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 654989323}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &659336684
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 864224007937198166, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: _courseSpline
+      value: 
+      objectReference: {fileID: 1839428154}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -27.74867
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 389.07324
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3040642244863552895, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+      propertyPath: m_Name
+      value: CPURacer_SpeedSter
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
 --- !u!1001 &661245414
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17352,6 +17413,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
+--- !u!1 &1737858290 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3040642244863552895, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
+  m_PrefabInstance: {fileID: 659336684}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1750406388
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18589,7 +18655,7 @@ PrefabInstance:
       objectReference: {fileID: 659967152165127084}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _useKeyboardForDebug
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _trackingSettings.maxTiltAngle
@@ -21655,7 +21721,7 @@ PrefabInstance:
       objectReference: {fileID: 11400000, guid: 6c59d50c7d450334fb345e322a128638, type: 2}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _cpuRacers.Array.size
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[0]'
@@ -21669,6 +21735,10 @@ PrefabInstance:
       propertyPath: '_cpuRacers.Array.data[2]'
       value: 
       objectReference: {fileID: 114442541}
+    - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
+      propertyPath: '_cpuRacers.Array.data[3]'
+      value: 
+      objectReference: {fileID: 1737858290}
     - target: {fileID: 2312420566621798446, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -21738,3 +21808,4 @@ SceneRoots:
   - {fileID: 358467098}
   - {fileID: 1009783531}
   - {fileID: 986295255}
+  - {fileID: 659336684}
