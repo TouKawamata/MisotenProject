@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3524d4d1380fd148afa6060f5f7b56f, type: 3}
+  m_Name: CpuPersonality_Attacker
+  m_EditorClassIdentifier: Assembly-CSharp::CpuPersonalityProfile
+  _displayName: "\u30A2\u30BF\u30C3\u30AB\u30FC"
+  _labelColor: {r: 1, g: 0.35, b: 0.3, a: 1}
+  _aggression: 0.9
+  _caution: 0.2
+  _boostEagerness: 0.8
+  _preferredLine: 0.3
+  _lineChangeFrequency: 0.6
+  _vengefulness: 0.6
+  _shortcutPreference: 0.5
