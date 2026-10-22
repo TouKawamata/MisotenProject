@@ -9178,7 +9178,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
-      value: 0.72
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: m_LocalPosition.x
