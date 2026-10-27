@@ -7399,6 +7399,108 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
+--- !u!1001 &677372365
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: sky
+      value: 
+      objectReference: {fileID: 1654811840}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: targetActor
+      value: 
+      objectReference: {fileID: 659967152165127085}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationHour
+      value: 11.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: atmosphereEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: overrideTimeOfDay
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: transitionSeconds
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: overrideCloudHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationCloudHeight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationCloudCoverage
+      value: 0.783
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -251.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 572.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9932345
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.11612609
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 13.337
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6401365679133084884, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Size.x
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 6401365679133084884, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Size.y
+      value: 20000
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154881459192135128, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Name
+      value: "02 \u5927\u6C17\u570F\u4ED8\u8FD1\u3078\uFF0815\u79D2\u30FB\u663C\u9593\uFF09
+        (1)"
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
 --- !u!1001 &678224709
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7938,7 +8040,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudHeight
-      value: 300
+      value: 1200
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
@@ -8385,6 +8487,40 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 746480275}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &755325136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+  m_PrefabInstance: {fileID: 1654811839}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &755325139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755325136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1001 &770558468
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9154,7 +9290,7 @@ PrefabInstance:
       objectReference: {fileID: 659967152165127085}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: atmosphereEnabled
@@ -9166,7 +9302,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: transitionSeconds
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: overrideCloudHeight
@@ -9174,11 +9310,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudHeight
-      value: -100
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
-      value: 1
+      value: 0.783
       objectReference: {fileID: 0}
     - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -16425,9 +16561,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: timeOfDay
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudHeight
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: skyTemplate
+      value: 
+      objectReference: {fileID: 2100000, guid: cdc7b40c5e5b4ee7b665dad3c037a55d, type: 2}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetSpread
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudCoverage
+      value: 0.392
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetColor.b
@@ -16450,6 +16606,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudShadowStrength
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: enableDemoCameraControl
       value: 0
       objectReference: {fileID: 0}
@@ -16460,6 +16620,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9839215780587951, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1841003561}
+    - targetCorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 755325139}
   m_SourcePrefab: {fileID: 100100000, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
 --- !u!114 &1654811840 stripped
 MonoBehaviour:
@@ -19644,12 +19807,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 659967152165127085}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationHour
+      value: 17.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: overrideTimeOfDay
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
-      value: 0.14
+      value: 0.536
       objectReference: {fileID: 0}
     - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -22121,4 +22288,5 @@ SceneRoots:
   - {fileID: 1654811839}
   - {fileID: 1903181123}
   - {fileID: 844331273}
+  - {fileID: 677372365}
   - {fileID: 720496362}
