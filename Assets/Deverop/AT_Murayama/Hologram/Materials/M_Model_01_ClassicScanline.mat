@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Model_01_ClassicScanline
+  m_Shader: {fileID: 4800000, guid: 120dd16c6ed59ad4e9eb571f6eb079e6, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _USEWORLDSPACESCAN_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CenterAlpha: 0.2
+    - _Cull: 2
+    - _DstBlend: 1
+    - _FlickerIntensity: 0.1
+    - _FresnelPower: 2.5
+    - _GlitchFrequency: 0.15
+    - _GlitchIntensity: 0.06
+    - _ScanlineContrast: 0.55
+    - _ScanlineDensity: 28
+    - _ScanlineSpeed: 1.5
+    - _SrcBlend: 5
+    - _SweepDensity: 1.2
+    - _SweepIntensity: 0.8
+    - _SweepSpeed: -0.4
+    - _UseTexColor: 0
+    - _UseWorldSpaceScan: 1
+    - _ZWrite: 0
+    m_Colors:
+    - _MainColor: {r: 0, g: 1.8, b: 2.8, a: 0.45}
+    - _RimColor: {r: 0.4, g: 3.8, b: 4.5, a: 0.95}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
