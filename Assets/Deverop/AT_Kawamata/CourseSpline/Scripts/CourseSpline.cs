@@ -42,6 +42,20 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
     private readonly List<CourseSplinePoint> _pointsBuffer = new List<CourseSplinePoint>();
     private int _lastDirtyHash;
 
+    // 探索用。サンプルの位置・距離だけを並べた配列（_samples[i]だと60バイトの構造体を毎回コピーするため）と、
+    // 最寄り点探索で、サンプルをNearestSearchBlockSize個ずつまとめたブロックを囲む球。遠いブロックは中を調べずに飛ばす。
+    private const int NearestSearchBlockSize = 16;
+    private Vector3[] _samplePositions = new Vector3[0];
+    private float[] _sampleDistances = new float[0];
+    private Vector3[] _blockCenters = new Vector3[0];
+    private float[] _blockRadii = new float[0];
+    private float[] _blockLowerBounds = new float[0];
+
+    // 同じ位置で続けて呼ばれることが多い（GetForward・GetRight・GetUpなどを順に呼ぶ）ので、直前の結果を使い回す。
+    private bool _hasLastQuery;
+    private Vector3 _lastQueryPosition;
+    private float _lastQueryResult;
+
     public float DefaultAddPointSpacing => defaultAddPointSpacing;
 
     public bool IsLoop => isLoop;
@@ -101,7 +115,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         }
 
         FindBracketingSamples(WrapOrClampDistance(distance), out int lower, out int upper, out float t);
-        return Vector3.Lerp(_samples[lower].Position, _samples[upper].Position, t);
+        return Vector3.Lerp(_samplePositions[lower], _samplePositions[upper], t);
     }
 
     public Vector3 EvaluateForwardByDistance(float distance)
@@ -164,21 +178,85 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
             return 0f;
         }
 
+        // Equalsは誤差を許さずに比べる（==は近い位置も同じとみなすため使わない）。
+        if (_hasLastQuery && worldPosition.Equals(_lastQueryPosition))
+        {
+            return _lastQueryResult;
+        }
+
+        float result = RefineAroundSample(FindNearestSampleIndex(worldPosition), worldPosition);
+        _lastQueryPosition = worldPosition;
+        _lastQueryResult = result;
+        _hasLastQuery = true;
+        return result;
+    }
+
+    // 一番近いサンプルを全件探索と同じ結果で求める（距離が同じなら番号の小さいほう）。
+    // まず一番近そうなブロックを調べて「最寄りはこれ以下」という距離を決め、それより確実に遠いブロックは飛ばす。
+    // 残ったブロックは番号順に、全件探索と同じく「より小さいとき」だけ更新する。
+    private int FindNearestSampleIndex(Vector3 worldPosition)
+    {
+        int blockCount = _blockCenters.Length;
+        int seedBlock = 0;
+        float seedLowerBound = float.MaxValue;
+
+        for (int block = 0; block < blockCount; block++)
+        {
+            // ブロックの中の点は、球の中心までの距離−半径より近くならない。
+            // 浮動小数点の誤差で本当の距離より大きくならないよう、少し小さめに見積もる。
+            float distanceToCenter = Vector3.Distance(worldPosition, _blockCenters[block]);
+            float lowerBound = distanceToCenter * 0.9999f - _blockRadii[block] - 0.01f;
+            _blockLowerBounds[block] = lowerBound;
+
+            if (lowerBound < seedLowerBound)
+            {
+                seedLowerBound = lowerBound;
+                seedBlock = block;
+            }
+        }
+
+        float limitSqrDistance = float.MaxValue;
+        int unusedIndex = 0;
+        ScanBlock(seedBlock, worldPosition, ref limitSqrDistance, ref unusedIndex);
+
         int nearestIndex = 0;
         float nearestSqrDistance = float.MaxValue;
 
-        for (int i = 0; i < _samples.Count; i++)
+        for (int block = 0; block < blockCount; block++)
         {
-            float sqrDistance = (_samples[i].Position - worldPosition).sqrMagnitude;
+            float lowerBound = _blockLowerBounds[block];
+            if (lowerBound > 0f && lowerBound * lowerBound > Mathf.Min(limitSqrDistance, nearestSqrDistance))
+            {
+                continue;
+            }
+
+            ScanBlock(block, worldPosition, ref nearestSqrDistance, ref nearestIndex);
+        }
+
+        return nearestIndex;
+    }
+
+    private void ScanBlock(int block, Vector3 worldPosition, ref float nearestSqrDistance, ref int nearestIndex)
+    {
+        int start = block * NearestSearchBlockSize;
+        int end = Mathf.Min(start + NearestSearchBlockSize, _samplePositions.Length);
+
+        for (int i = start; i < end; i++)
+        {
+            float sqrDistance = (_samplePositions[i] - worldPosition).sqrMagnitude;
             if (sqrDistance < nearestSqrDistance)
             {
                 nearestSqrDistance = sqrDistance;
                 nearestIndex = i;
             }
         }
+    }
 
+    // 一番近いサンプルの前後の区間へ投影して、サンプルの間の距離まで求める。
+    private float RefineAroundSample(int nearestIndex, Vector3 worldPosition)
+    {
         float bestDistance = _samples[nearestIndex].Distance;
-        float bestSqrDistance = nearestSqrDistance;
+        float bestSqrDistance = (_samplePositions[nearestIndex] - worldPosition).sqrMagnitude;
 
         if (nearestIndex > 0)
         {
@@ -260,6 +338,87 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         return true;
     }
 
+#if UNITY_EDITOR
+    // 最寄り点探索（ブロックで絞る方式）が、全件探索と同じ結果になるかと、どれだけ速いかを確かめる。
+    // コースの周り（トンネル半径の3倍まで）のランダムな位置で比べ、結果をConsoleに出す。
+    [ContextMenu("最寄り点探索を検証")]
+    private void VerifyNearestSearch()
+    {
+        RebuildSamplesAndCacheHash();
+        if (_samples.Count == 0)
+        {
+            Debug.LogWarning("CourseSpline: サンプルがないため検証できません", this);
+            return;
+        }
+
+        const int QueryCount = 5000;
+        Random.State previousState = Random.state;
+        Random.InitState(12345);
+        Vector3[] queries = new Vector3[QueryCount];
+        for (int i = 0; i < QueryCount; i++)
+        {
+            Vector3 basePosition = _samplePositions[Random.Range(0, _samplePositions.Length)];
+            queries[i] = basePosition + Random.insideUnitSphere * tunnelRadius * 3f;
+        }
+        Random.state = previousState;
+
+        System.Diagnostics.Stopwatch linearWatch = System.Diagnostics.Stopwatch.StartNew();
+        int[] linearResults = new int[QueryCount];
+        for (int i = 0; i < QueryCount; i++)
+        {
+            linearResults[i] = FindNearestSampleIndexLinear(queries[i]);
+        }
+        linearWatch.Stop();
+
+        System.Diagnostics.Stopwatch blockWatch = System.Diagnostics.Stopwatch.StartNew();
+        int[] blockResults = new int[QueryCount];
+        for (int i = 0; i < QueryCount; i++)
+        {
+            blockResults[i] = FindNearestSampleIndex(queries[i]);
+        }
+        blockWatch.Stop();
+
+        int mismatchCount = 0;
+        for (int i = 0; i < QueryCount; i++)
+        {
+            if (linearResults[i] != blockResults[i])
+            {
+                mismatchCount++;
+            }
+        }
+
+        string message = $"CourseSpline 最寄り点探索の検証：{QueryCount}回 / サンプル{_samplePositions.Length}点 / 不一致{mismatchCount}件 / " +
+                         $"全件探索 {linearWatch.Elapsed.TotalMilliseconds:F2}ms → ブロック探索 {blockWatch.Elapsed.TotalMilliseconds:F2}ms";
+        if (mismatchCount == 0)
+        {
+            Debug.Log(message, this);
+        }
+        else
+        {
+            Debug.LogError(message, this);
+        }
+    }
+
+    // 以前の方式（全サンプルを順に調べる）。検証の比較用。
+    private int FindNearestSampleIndexLinear(Vector3 worldPosition)
+    {
+        int nearestIndex = 0;
+        float nearestSqrDistance = float.MaxValue;
+
+        for (int i = 0; i < _samples.Count; i++)
+        {
+            float sqrDistance = (_samples[i].Position - worldPosition).sqrMagnitude;
+            if (sqrDistance < nearestSqrDistance)
+            {
+                nearestSqrDistance = sqrDistance;
+                nearestIndex = i;
+            }
+        }
+
+        return nearestIndex;
+    }
+#endif
+
     // ----------------------------------------------------
     // 内部処理
     // ----------------------------------------------------
@@ -285,6 +444,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         _samples.Clear();
         _baseUps.Clear();
         TotalLength = 0f;
+        _hasLastQuery = false;
 
         List<CourseSplinePoint> points = GetPoints();
         int count = points.Count;
@@ -334,6 +494,52 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         }
 
         TotalLength = accumulatedDistance;
+        BuildSearchData();
+    }
+
+    private void BuildSearchData()
+    {
+        int count = _samples.Count;
+        if (_samplePositions.Length != count)
+        {
+            _samplePositions = new Vector3[count];
+            _sampleDistances = new float[count];
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            _samplePositions[i] = _samples[i].Position;
+            _sampleDistances[i] = _samples[i].Distance;
+        }
+
+        int blockCount = (count + NearestSearchBlockSize - 1) / NearestSearchBlockSize;
+        if (_blockCenters.Length != blockCount)
+        {
+            _blockCenters = new Vector3[blockCount];
+            _blockRadii = new float[blockCount];
+            _blockLowerBounds = new float[blockCount];
+        }
+
+        for (int block = 0; block < blockCount; block++)
+        {
+            int start = block * NearestSearchBlockSize;
+            int end = Mathf.Min(start + NearestSearchBlockSize, count);
+
+            Bounds bounds = new Bounds(_samplePositions[start], Vector3.zero);
+            for (int i = start + 1; i < end; i++)
+            {
+                bounds.Encapsulate(_samplePositions[i]);
+            }
+
+            float radius = 0f;
+            for (int i = start; i < end; i++)
+            {
+                radius = Mathf.Max(radius, Vector3.Distance(bounds.center, _samplePositions[i]));
+            }
+
+            _blockCenters[block] = bounds.center;
+            _blockRadii[block] = radius;
+        }
     }
 
     // 前のサンプルの上方向を、進行方向の変化分だけ回して引き継ぐ（ねじれない）。
@@ -495,9 +701,9 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
     private void FindBracketingSamples(float distance, out int lowerIndex, out int upperIndex, out float t)
     {
-        int count = _samples.Count;
+        int count = _sampleDistances.Length;
 
-        if (count == 1 || distance <= _samples[0].Distance)
+        if (count == 1 || distance <= _sampleDistances[0])
         {
             lowerIndex = 0;
             upperIndex = 0;
@@ -505,7 +711,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
             return;
         }
 
-        if (distance >= _samples[count - 1].Distance)
+        if (distance >= _sampleDistances[count - 1])
         {
             lowerIndex = count - 1;
             upperIndex = count - 1;
@@ -519,7 +725,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         while (low < high - 1)
         {
             int mid = (low + high) / 2;
-            if (_samples[mid].Distance <= distance)
+            if (_sampleDistances[mid] <= distance)
             {
                 low = mid;
             }
@@ -532,8 +738,8 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         lowerIndex = low;
         upperIndex = high;
 
-        float lowerDistance = _samples[low].Distance;
-        float upperDistance = _samples[high].Distance;
+        float lowerDistance = _sampleDistances[low];
+        float upperDistance = _sampleDistances[high];
         float span = upperDistance - lowerDistance;
         t = span > 0.0001f ? (distance - lowerDistance) / span : 0f;
     }
