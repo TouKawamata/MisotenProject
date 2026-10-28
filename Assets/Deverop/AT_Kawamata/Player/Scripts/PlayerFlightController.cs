@@ -109,7 +109,12 @@ public class PlayerFlightController : MonoBehaviour
         Vector3 centerOffset = centerPosition - position;
         float lateralCenterOffset = Vector3.Dot(centerOffset, splineRight);
         float verticalCenterOffset = Vector3.Dot(centerOffset, splineUp);
-        Vector3 verticalCorrectionAccel = splineUp * Mathf.Clamp(verticalCenterOffset * profile.VerticalCorrectionGain, -profile.MaxVerticalCorrectionAccel, profile.MaxVerticalCorrectionAccel);
+        // 上下の補正は「ずれに比例して引き寄せる加速度（ばね）」から「上下の速さに比例するブレーキ（減衰）」を引いたもの。
+        // ブレーキの係数は 2√Gain × Damping（Damping＝1で、行き過ぎずに最短で収まる）。
+        float verticalSpeed = Vector3.Dot(_velocity, splineUp);
+        float verticalDampingCoefficient = 2f * Mathf.Sqrt(Mathf.Max(0f, profile.VerticalCorrectionGain)) * profile.VerticalCorrectionDamping;
+        float verticalCorrection = verticalCenterOffset * profile.VerticalCorrectionGain - verticalSpeed * verticalDampingCoefficient;
+        Vector3 verticalCorrectionAccel = splineUp * Mathf.Clamp(verticalCorrection, -profile.MaxVerticalCorrectionAccel, profile.MaxVerticalCorrectionAccel);
 
         // 4. 速度積分
         _velocity += (forwardAccel + verticalCorrectionAccel) * deltaTime;
