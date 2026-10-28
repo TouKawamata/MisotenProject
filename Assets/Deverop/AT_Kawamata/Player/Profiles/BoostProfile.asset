@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: BoostProfile
   m_EditorClassIdentifier: Assembly-CSharp::BoostProfile
   _normalMaxSpeed: 45
-  _normalForwardAcceleration: 30
+  _normalForwardAcceleration: 120
   _normalSteeringPower: 90
-  _normalMaxLateralSpeed: 30
+  _normalMaxLateralSpeed: 60
   _boostMaxSpeed: 60
-  _boostForwardAcceleration: 35
+  _boostForwardAcceleration: 45
   _boostSteeringPower: 45
-  _boostMaxLateralSpeed: 12
+  _boostMaxLateralSpeed: 45
   _boostEndEaseDuration: 0.2
   _maxGauge: 100
   _minGaugeToActivate: 10
