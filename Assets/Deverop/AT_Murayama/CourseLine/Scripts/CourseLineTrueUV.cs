@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// CourseSpline に沿って左右のコース境界を示す半透明の帯を生成する。
-/// ※UV計算において「実際の壁の長さ（True Length）」を測ることで、カーブ時のテクスチャ歪みをなくしたバージョン。
+/// ※UV計算において「実際の壁の長さ（True Length）」を測ることで、カーブ時の歪みをなくしたバージョン。
 /// </summary>
 [ExecuteAlways]
 public class CourseLineTrueUV : MonoBehaviour
@@ -27,33 +27,46 @@ public class CourseLineTrueUV : MonoBehaviour
     [SerializeField] private float _offset = 0f;
 
     [Header("見た目")]
-    [Tooltip("帯に使うマテリアル（Shader Graph で作成したものを割り当て）")]
+    [Tooltip("帯に使うマテリアル（ドット版 / 矢印版のマテリアルを割り当て）")]
     [SerializeField] private Material _material;
 
-    [Tooltip("テクスチャ1枚が何メートルでリピートするか（※ループ調整なしの純粋な長さ）")]
-    [SerializeField] private float _textureRepeatLength = 10f;
-
-    [Header("発光設定")]
-    [Tooltip("発光が届く範囲")]
+    [Header("発光設定（最大8スロット）")]
+    [Tooltip("発光が届く範囲（m）")]
     [SerializeField] private float _glowRadius = 20f;
 
-    [Tooltip("発光の強さ")]
+    [Tooltip("発光の強さ倍率")]
     [SerializeField] private float _glowIntensity = 2f;
 
-    [Tooltip("発光させる対象の Transform（Player を割り当て）")]
+    [Tooltip("確認用：Transform を割り当てると1枠目の座標として常時発光します（未割り当てならスクリプトから制御）")]
     [SerializeField] private Transform _glowTarget;
+
+    [Tooltip("複数人確認用：割り当てた枠（0〜7）の Transform 位置を常時発光させます")]
+    [SerializeField] private Transform[] _glowTargets = new Transform[MaxHitSlots];
 
     // ──────────────────────────────────────────────
     // 内部
     // ──────────────────────────────────────────────
 
+    public const int MaxHitSlots = 8;
+
     private readonly List<MeshRenderer> _renderers = new List<MeshRenderer>();
+    private readonly Vector4[] _hitSlots = new Vector4[MaxHitSlots];
     private MaterialPropertyBlock _mpb;
 
-    private static readonly int PlayerPositionId = Shader.PropertyToID("_PlayerPosition");
-    private static readonly int GlowRadiusId     = Shader.PropertyToID("_GlowRadius");
-    private static readonly int GlowIntensityId  = Shader.PropertyToID("_GlowIntensity");
-    private static readonly int TilingId         = Shader.PropertyToID("_Tilling");
+    private static readonly int[] HitDataIds = new int[MaxHitSlots]
+    {
+        Shader.PropertyToID("_HitData1"),
+        Shader.PropertyToID("_HitData2"),
+        Shader.PropertyToID("_HitData3"),
+        Shader.PropertyToID("_HitData4"),
+        Shader.PropertyToID("_HitData5"),
+        Shader.PropertyToID("_HitData6"),
+        Shader.PropertyToID("_HitData7"),
+        Shader.PropertyToID("_HitData8")
+    };
+    private static readonly int HitGlowRadiusId    = Shader.PropertyToID("_HitGlowRadius");
+    private static readonly int HitGlowIntensityId = Shader.PropertyToID("_HitGlowIntensity");
+    private static readonly int BandHeightId       = Shader.PropertyToID("_BandHeight");
 
     // ──────────────────────────────────────────────
     // ライフサイクル
@@ -75,28 +88,110 @@ public class CourseLineTrueUV : MonoBehaviour
 #endif
     }
 
-    private Vector2 _cachedTiling = Vector2.one;
-
     private void Start()
     {
         _mpb = new MaterialPropertyBlock();
-        RecalculateTiling();
+        EnsureRenderersCached();
     }
 
     private void Update()
     {
-        if (_glowTarget == null || _renderers.Count == 0) return;
+        EnsureRenderersCached();
+        if (_renderers.Count == 0) return;
 
         if (_mpb == null)
         {
             _mpb = new MaterialPropertyBlock();
-            RecalculateTiling();
         }
 
-        _mpb.SetVector(PlayerPositionId, _glowTarget.position);
-        _mpb.SetFloat(GlowRadiusId, _glowRadius);
-        _mpb.SetFloat(GlowIntensityId, _glowIntensity);
-        _mpb.SetVector(TilingId, _cachedTiling);
+        UpdatePreviewTargets();
+        ApplyPropertyBlock();
+    }
+
+    // ──────────────────────────────────────────────
+    // 衝突発光 設定用関数（衝突側から値を直接送る）
+    // ──────────────────────────────────────────────
+
+    /// <summary>
+    /// 指定スロット（0〜7）の発光座標と発光強度（0〜1）を設定する。
+    /// </summary>
+    /// <param name="slotIndex">スロット番号（0〜7）</param>
+    /// <param name="worldPosition">発光させるワールド座標</param>
+    /// <param name="intensity">発光強度（0 = 消灯、1 = 最大）</param>
+    public void SetHitData(int slotIndex, Vector3 worldPosition, float intensity)
+    {
+        if (slotIndex < 0 || slotIndex >= MaxHitSlots)
+        {
+            return;
+        }
+
+        _hitSlots[slotIndex] = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, Mathf.Clamp01(intensity));
+    }
+
+    /// <summary>
+    /// 指定スロット（0〜7）の発光強度（w成分：0〜1）のみを変更する。
+    /// </summary>
+    public void SetHitIntensity(int slotIndex, float intensity)
+    {
+        if (slotIndex < 0 || slotIndex >= MaxHitSlots)
+        {
+            return;
+        }
+
+        Vector4 current = _hitSlots[slotIndex];
+        current.w = Mathf.Clamp01(intensity);
+        _hitSlots[slotIndex] = current;
+    }
+
+    /// <summary>
+    /// 指定スロット（0〜7）の発光を消灯（0にリセット）する。
+    /// </summary>
+    public void ClearHitData(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= MaxHitSlots)
+        {
+            return;
+        }
+
+        _hitSlots[slotIndex] = Vector4.zero;
+    }
+
+    /// <summary>
+    /// 全8スロットの発光を消灯（0にリセット）する。
+    /// </summary>
+    public void ClearAllHitData()
+    {
+        for (int i = 0; i < MaxHitSlots; i++)
+        {
+            _hitSlots[i] = Vector4.zero;
+        }
+    }
+
+    private void UpdatePreviewTargets()
+    {
+        for (int i = 0; i < MaxHitSlots; i++)
+        {
+            Transform target = (i == 0 && _glowTarget != null)
+                ? _glowTarget
+                : (_glowTargets != null && i < _glowTargets.Length ? _glowTargets[i] : null);
+
+            if (target != null)
+            {
+                Vector3 pos = target.position;
+                _hitSlots[i] = new Vector4(pos.x, pos.y, pos.z, 1f);
+            }
+        }
+    }
+
+    private void ApplyPropertyBlock()
+    {
+        for (int i = 0; i < MaxHitSlots; i++)
+        {
+            _mpb.SetVector(HitDataIds[i], _hitSlots[i]);
+        }
+        _mpb.SetFloat(HitGlowRadiusId, _glowRadius);
+        _mpb.SetFloat(HitGlowIntensityId, _glowIntensity);
+        _mpb.SetFloat(BandHeightId, _height);
 
         for (int i = 0; i < _renderers.Count; i++)
         {
@@ -107,20 +202,15 @@ public class CourseLineTrueUV : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 最適なタイリング値を事前計算する。
-    /// ※このバージョンは左右の壁の長さが異なるため、ループ時の整数丸めをしません。
-    /// </summary>
-    private void RecalculateTiling()
+    private void EnsureRenderersCached()
     {
-        float tiling = 1f;
-        if (_textureRepeatLength > 0.001f)
+        if (_renderers.Count > 0)
         {
-            // 単純な割り算のみ（物理的な距離に対して正確にリピートする）
-            tiling = 1f / _textureRepeatLength;
+            return;
         }
-        
-        _cachedTiling = new Vector2(tiling, 1f);
+
+        GetComponentsInChildren(true, _renderers);
+        _renderers.RemoveAll(r => r == null || r.gameObject == gameObject);
     }
 
     // ──────────────────────────────────────────────
@@ -136,8 +226,6 @@ public class CourseLineTrueUV : MonoBehaviour
 
         BuildSide("CourseLine_Left",  -1f);
         BuildSide("CourseLine_Right", +1f);
-
-        RecalculateTiling();
     }
 
     private void BuildSide(string childName, float sign)
@@ -279,4 +367,3 @@ public class CourseLineTrueUV : MonoBehaviour
         }
     }
 }
-

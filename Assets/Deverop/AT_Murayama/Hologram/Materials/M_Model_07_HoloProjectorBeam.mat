@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Model_07_HoloProjectorBeam
+  m_Shader: {fileID: 4800000, guid: e6479d8e96b8d0b41b06528ec56258a2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _PATTERNMODE_TEXTUREONLY
+  - _USETEXCOLOR_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BeamDensity: 28
+    - _BeamIntensity: 0.55
+    - _BeamSpeed: 4
+    - _CenterAlpha: 0.15
+    - _ChromaticSplit: 0.015
+    - _Cull: 2
+    - _DstBlend: 1
+    - _EmitterBaseY: -1
+    - _EmitterGlowHeight: 0.35
+    - _FresnelPower: 2.2
+    - _GlitchRate: 0.25
+    - _GlitchStrength: 0.05
+    - _PatternMode: 0
+    - _PatternScrollSpeed: 1.2
+    - _SrcBlend: 5
+    - _TopDissolveHeight: 0.5
+    - _TopDissolveStartY: 0.6
+    - _UseTexColor: 1
+    - _ZWrite: 0
+    m_Colors:
+    - _EmitterColor: {r: 1.5, g: 4, b: 4.5, a: 1}
+    - _MainColor: {r: 0.1, g: 2.4, b: 3.5, a: 0.75}
+    - _PatternScale: {r: 6, g: 3, b: 0, a: 0}
+    - _RimColor: {r: 0.5, g: 3.5, b: 4.5, a: 0.95}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
