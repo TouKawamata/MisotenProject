@@ -10,8 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2363611044364067668}
   - component: {fileID: 6454354765493393146}
+  - component: {fileID: 3024722685075332828}
   m_Layer: 0
-  m_Name: 太陽のライト
+  m_Name: "\u592A\u967D\u306E\u30E9\u30A4\u30C8"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -97,6 +98,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &3024722685075332828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9839215780587951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1402935718447556893
 GameObject:
   m_ObjectHideFlags: 0
@@ -108,7 +138,7 @@ GameObject:
   - component: {fileID: 1640545035296341691}
   - component: {fileID: 5809688119142477144}
   m_Layer: 0
-  m_Name: 空の制御
+  m_Name: SkyEnvironment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -141,7 +171,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 288e5075527ac464b9b7eebba85fc1cc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::Minakuchi.Sky.SkyTransitionController
   skyTemplate: {fileID: 2100000, guid: d14e67030a1321549a71cbb35186851b, type: 2}
   sun: {fileID: 6454354765493393146}
@@ -151,7 +181,9 @@ MonoBehaviour:
   sunsetColor: {r: 1, g: 0.28, b: 0.055, a: 1}
   sunsetIntensity: 0.85
   sunsetSpread: 0.85
+  sunsetEndHour: 19.25
   nightStartHour: 17
+  nightCompleteHour: 21.5
   transitionSeconds: 12
   cloudCoverage: 1
   night: 0
@@ -169,9 +201,9 @@ MonoBehaviour:
   cloudMorningShadow: 0.35
   cloudPassageStrength: 1
   cloudMeshShader: {fileID: 4800000, guid: 6573867864c946458bcfa0451babee32, type: 3}
+  wind: {x: 0.015, y: 0.008}
   enableCloudFlow: 1
   cloudFlowSpeed: 4
-  wind: {x: 0.015, y: 0.008}
   showDemoControls: 0
 --- !u!1 &2471544683475451861
 GameObject:
@@ -184,7 +216,7 @@ GameObject:
   - component: {fileID: 3719023638205108804}
   - component: {fileID: 3851208975920090820}
   m_Layer: 0
-  m_Name: 月のライト
+  m_Name: "\u6708\u306E\u30E9\u30A4\u30C8"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
