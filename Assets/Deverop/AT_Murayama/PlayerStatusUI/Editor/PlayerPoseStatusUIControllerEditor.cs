@@ -159,6 +159,36 @@ namespace AT_Murayama.PlayerStatusUI.Editor
                 EditorUtility.SetDirty(controller);
             }
 
+            EditorGUILayout.Space(5);
+            EditorGUILayout.LabelField("【演出 ＆ 表示切り替え】", EditorStyles.miniBoldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+
+            // 瞬間フラッシュ演出 ON/OFF
+            Color origColor = GUI.backgroundColor;
+            GUI.backgroundColor = controller.EnableEventFlash ? new Color(1.0f, 0.9f, 0.4f) : new Color(0.75f, 0.75f, 0.75f);
+            string flashLabel = controller.EnableEventFlash ? "⚡ 瞬間フラッシュ: 有効" : "⚡ 瞬間フラッシュ: 無効";
+            if (GUILayout.Button(flashLabel, GUILayout.Height(26)))
+            {
+                Undo.RecordObject(controller, "Toggle Event Flash");
+                controller.EnableEventFlash = !controller.EnableEventFlash;
+                EditorUtility.SetDirty(controller);
+            }
+
+            // 状態名テキスト表示 ON/OFF
+            GUI.backgroundColor = controller.ShowStateLabel ? new Color(0.45f, 0.85f, 1.0f) : new Color(0.75f, 0.75f, 0.75f);
+            string labelText = controller.ShowStateLabel ? "🔤 状態テキスト: 表示" : "🔤 状態テキスト: 非表示";
+            if (GUILayout.Button(labelText, GUILayout.Height(26)))
+            {
+                Undo.RecordObject(controller, "Toggle State Label Text");
+                controller.ShowStateLabel = !controller.ShowStateLabel;
+                EditorUtility.SetDirty(controller);
+                SceneView.RepaintAll();
+            }
+
+            GUI.backgroundColor = origColor;
+            EditorGUILayout.EndHorizontal();
+
             EditorGUILayout.EndVertical();
         }
 

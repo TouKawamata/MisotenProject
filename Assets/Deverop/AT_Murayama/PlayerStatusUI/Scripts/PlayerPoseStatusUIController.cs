@@ -134,11 +134,17 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("【カスタムマテリアル時】モデルの全スロットに割り当てるカスタムマテリアル")]
         [SerializeField] private Material _customMaterial;
 
+        [Tooltip("切り替わり瞬間（BoostStarted / ShieldStarted / ShieldBlocked / Stun開始）の発光フラッシュ＆スケール演出を有効にするか")]
+        [SerializeField] private bool _enableEventFlash = true;
+
         [Tooltip("切り替わり瞬間（BoostStarted / ShieldStarted / ShieldBlocked / Stun開始）の発光パルス強度")]
         [Range(0f, 4.0f)]
         [SerializeField] private float _eventFlashIntensity = 2.0f;
 
         [Header("6. UI背景・枠線・サブカメラ設定")]
+        [Tooltip("UI下部の状態名テキスト（NORMAL / BOOST / SHIELD / STUNNED 等）を表示するか")]
+        [SerializeField] private bool _showStateLabel = true;
+
         [Tooltip("UI背景の半透明バックプレートを表示するか")]
         [SerializeField] private bool _showUIBackdrop = true;
 
@@ -313,6 +319,22 @@ namespace AT_Murayama.PlayerStatusUI
         {
             get => _selectedEditState;
             set => _selectedEditState = value;
+        }
+
+        public bool EnableEventFlash
+        {
+            get => _enableEventFlash;
+            set => _enableEventFlash = value;
+        }
+
+        public bool ShowStateLabel
+        {
+            get => _showStateLabel;
+            set
+            {
+                _showStateLabel = value;
+                UpdateUILayoutAndCamera();
+            }
         }
 
         public MaterialDisplayMode MaterialMode
@@ -598,6 +620,7 @@ namespace AT_Murayama.PlayerStatusUI
 
         public void TriggerEventFlash(Color flashColor, float intensity, float punchScale)
         {
+            if (!_enableEventFlash) return;
             _eventFlashColor = flashColor;
             _eventFlashTimer = Mathf.Max(_eventFlashTimer, intensity);
             _eventScalePunch = Mathf.Max(_eventScalePunch, punchScale);
@@ -812,7 +835,7 @@ namespace AT_Murayama.PlayerStatusUI
             // 切り替わり瞬間フラッシュの加算
             Color finalMain = _currentMainColor;
             Color finalRim = _currentRimColor;
-            if (_eventFlashTimer > 0.001f)
+            if (_enableEventFlash && _eventFlashTimer > 0.001f)
             {
                 float flashWeight = _eventFlashTimer * _eventFlashIntensity * 0.5f;
                 finalMain += _eventFlashColor * flashWeight;
@@ -1244,7 +1267,7 @@ namespace AT_Murayama.PlayerStatusUI
             RectTransform rawRect = _uiRawImage.rectTransform;
             rawRect.anchorMin = Vector2.zero;
             rawRect.anchorMax = Vector2.one;
-            rawRect.offsetMin = new Vector2(4f, 24f);
+            rawRect.offsetMin = new Vector2(4f, _showStateLabel ? 24f : 4f);
             rawRect.offsetMax = new Vector2(-4f, -4f);
 
             // 8. 状態名テキスト（NORMAL / BOOST!! / SHIELD / STUNNED!）
@@ -1257,6 +1280,7 @@ namespace AT_Murayama.PlayerStatusUI
             _uiStateLabelText.alignment = TextAnchor.MiddleCenter;
             _uiStateLabelText.text = "NORMAL";
             _uiStateLabelText.raycastTarget = false;
+            labelObj.SetActive(_showStateLabel);
 
             RectTransform labelRect = _uiStateLabelText.rectTransform;
             labelRect.anchorMin = new Vector2(0f, 0f);
@@ -1313,6 +1337,22 @@ namespace AT_Murayama.PlayerStatusUI
                 {
                     _uiCanvas.gameObject.SetActive(true);
                     UpdateCornerRectTransform(_uiRootRect);
+                }
+
+                // 状態テキスト表示・非表示 ＆ RawImage レイアウト連動
+                if (_uiStateLabelText != null && _uiStateLabelText.gameObject.activeSelf != _showStateLabel)
+                {
+                    _uiStateLabelText.gameObject.SetActive(_showStateLabel);
+                }
+                if (_uiRawImage != null)
+                {
+                    float bottomMargin = _showStateLabel ? 24f : 4f;
+                    RectTransform rawRect = _uiRawImage.rectTransform;
+                    if (Mathf.Abs(rawRect.offsetMin.y - bottomMargin) > 0.5f)
+                    {
+                        rawRect.offsetMin = new Vector2(4f, bottomMargin);
+                        rawRect.offsetMax = new Vector2(-4f, -4f);
+                    }
                 }
 
                 // 背景・枠線の表示・色更新
