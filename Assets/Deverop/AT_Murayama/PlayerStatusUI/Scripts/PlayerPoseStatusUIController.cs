@@ -77,7 +77,7 @@ namespace AT_Murayama.PlayerStatusUI
         [SerializeField] private PlayerFlightController _flightController;
 
         [Header("2. 3Dキャラクターモデル ＆ ポーズプリセットデータ")]
-        [Tooltip("UIに表示するボーン入りキャラクターモデルプレハブ（未指定時は Assets/Deverop/AT_Murayama/born model.fbx を自動ロード）")]
+        [Tooltip("UIに表示するボーン入りキャラクターモデルプレハブ（未指定時は Assets/TeamResources/Art/Models/born model.fbx を自動ロード）")]
         [SerializeField] private GameObject _characterModelPrefab;
 
         [Tooltip("実行前に保存したポーズデータを保持する ScriptableObject アセット（任意・インスペクターからワンクリック作成＆保存可能）")]
@@ -523,6 +523,10 @@ namespace AT_Murayama.PlayerStatusUI
             if (_playerManager == null)
             {
                 _playerManager = FindAnyObjectByType<PlayerManager>();
+                if (_playerManager != null)
+                {
+                    SubscribePlayerEvents();
+                }
             }
 
             if (_flightController == null)
@@ -533,8 +537,12 @@ namespace AT_Murayama.PlayerStatusUI
             if (_characterModelPrefab == null)
             {
 #if UNITY_EDITOR
-                string defaultPath = "Assets/Deverop/AT_Murayama/born model.fbx";
+                string defaultPath = "Assets/TeamResources/Art/Models/born model.fbx";
                 _characterModelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(defaultPath);
+                if (_characterModelPrefab == null)
+                {
+                    _characterModelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Deverop/AT_Murayama/born model.fbx");
+                }
 #endif
             }
         }
@@ -656,7 +664,13 @@ namespace AT_Murayama.PlayerStatusUI
                 }
 
                 // トラッキング境界での微細なチャタリング防止デバウンス
-                float now = Application.isPlaying ? Time.unscaledTime : 0f;
+                float now = Application.isPlaying ? Time.unscaledTime : (float)
+#if UNITY_EDITOR
+                    UnityEditor.EditorApplication.timeSinceStartup
+#else
+                    0f
+#endif
+                    ;
                 if (desiredSubState != _pendingNormalSubState)
                 {
                     _pendingNormalSubState = desiredSubState;
