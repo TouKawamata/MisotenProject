@@ -12,6 +12,7 @@ namespace Minakuchi.Sky
         [SerializeField] private Shader cloudShader;
         [SerializeField] private TextAsset cloudNoiseData;
         private Texture3D noise;
+        private Texture2D distantImage;
         private Material material;
         private readonly Dictionary<CloudVolumeObject, CloudPass> passes = new Dictionary<CloudVolumeObject, CloudPass>();
         private readonly List<CloudVolumeObject> ordered = new List<CloudVolumeObject>();
@@ -28,7 +29,9 @@ namespace Minakuchi.Sky
             ClearPasses();
             CoreUtils.Destroy(material);
             CoreUtils.Destroy(noise);
+            CoreUtils.Destroy(distantImage);
             if (cloudShader) material = CoreUtils.CreateEngineMaterial(cloudShader);
+            distantImage = DistantCloudImage.Create();
             if (cloudNoiseData && cloudNoiseData.bytes.Length == 64 * 64 * 64 * 4)
             {
                 noise = new Texture3D(64, 64, 64, TextureFormat.RGBA32, false)
@@ -80,6 +83,7 @@ namespace Minakuchi.Sky
                 }
                 cloud.Apply(cloudPass.material);
                 cloudPass.material.SetTexture("_CloudNoise", noise);
+                cloudPass.material.SetTexture("_DistantCloudImage", distantImage);
                 renderer.EnqueuePass(cloudPass);
             }
         }
@@ -89,6 +93,7 @@ namespace Minakuchi.Sky
             ClearPasses();
             CoreUtils.Destroy(material);
             CoreUtils.Destroy(noise);
+            CoreUtils.Destroy(distantImage);
         }
 
         private sealed class CloudPass : ScriptableRenderPass

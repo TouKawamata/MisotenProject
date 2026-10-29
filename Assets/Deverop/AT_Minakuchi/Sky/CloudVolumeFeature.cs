@@ -11,6 +11,7 @@ namespace Minakuchi.Sky
         [SerializeField] private Shader cloudShader;
         [SerializeField] private TextAsset cloudNoiseData;
         private Texture3D noise;
+        private Texture2D distantImage;
         private Material material;
         private CloudPass pass;
 
@@ -18,7 +19,9 @@ namespace Minakuchi.Sky
         {
             CoreUtils.Destroy(material);
             CoreUtils.Destroy(noise);
+            CoreUtils.Destroy(distantImage);
             if (cloudShader) material = CoreUtils.CreateEngineMaterial(cloudShader);
+            distantImage = DistantCloudImage.Create();
             if (cloudNoiseData && cloudNoiseData.bytes.Length == 64 * 64 * 64 * 4)
             {
                 noise = new Texture3D(64, 64, 64, TextureFormat.RGBA32, false)
@@ -41,6 +44,7 @@ namespace Minakuchi.Sky
             var controller = SkyTransitionController.Active;
             if (!material || !noise || !controller || !controller.PrepareCloudVolume(material)) return;
             material.SetTexture("_CloudNoise", noise);
+            material.SetTexture("_DistantCloudImage", distantImage);
             pass.material = material;
             renderer.EnqueuePass(pass);
         }
@@ -49,6 +53,7 @@ namespace Minakuchi.Sky
         {
             CoreUtils.Destroy(material);
             CoreUtils.Destroy(noise);
+            CoreUtils.Destroy(distantImage);
         }
 
         private sealed class CloudPass : ScriptableRenderPass

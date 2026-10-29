@@ -50,6 +50,7 @@ Shader "Minakuchi/PlacedCloudVolume"
             float3 _CloudHalfSize;
             int _CloudSteps;
             CBUFFER_END
+            #include "DistantCloud.hlsl"
             TEXTURE3D(_CloudNoise);
             SAMPLER(sampler_CloudNoise);
             float Noise(float3 p)
@@ -179,6 +180,10 @@ Shader "Minakuchi/PlacedCloudVolume"
                     }
                 }
                 if(exit<=entry || _Clouds<=0) return half4(0,0,0,1);
+                // Temporarily hide the distant illustration; keep the near-volume cutoff unchanged.
+                float4 distantCloud=float4(0,0,0,1);
+                if(entry>=CloudImageEnd) return distantCloud;
+                exit=min(exit,CloudImageEnd);
                 int steps=clamp(_CloudSteps,16,64);
                 // Grazing rays cross a much longer distance through the layer.
                 steps*=abs(normalize(localDirection).y)<0.4 ? 2 : 1;
@@ -193,9 +198,10 @@ Shader "Minakuchi/PlacedCloudVolume"
                 float passage=smoothstep(0,0.18,observerHeight)
                     *(1-smoothstep(0.82,1,observerHeight))*saturate(_Clouds*3)*_CloudPassageStrength;
                 passage*=all(abs(localOrigin.xz)<_CloudHalfSize.xz) ? 1 : 0;
-                // Stratified spatial samples turn coherent contour bands into small, filterable error.
-                // The pattern is fixed in time so it does not introduce animated grain.
-                float jitter=frac(sin(dot(floor(i.positionCS.xy),float2(12.9898,78.233)))*43758.5453);
+                // A small, time-independent interleaved offset breaks up midpoint contour bands.
+                // Keep it narrower than the original jitter; the existing spatial filter smooths it.
+                float jitter=frac(52.9829189*frac(dot(floor(i.positionCS.xy),float2(0.06711056,0.00583715))));
+                float sampleOffset=0.5+(jitter-0.5)*0.4;
                 // Bias samples toward the entry point so nearby fog is not skipped on long horizontal rays.
                 [loop] for(int k=0;k<steps;k++)
                 {
@@ -203,7 +209,7 @@ Shader "Minakuchi/PlacedCloudVolume"
                     float start=entry+(exit-entry)*u0*u0;
                     float end=entry+(exit-entry)*u1*u1;
                     float stepLength=end-start;
-                    float distance=lerp(start,end,0.1+0.8*jitter);
+                    float distance=lerp(start,end,sampleOffset);
                     float3 position=origin+direction*distance;
                     float density=Density(position,true);
                     float vapor=passage>0.001 ? PassageVapor(position,distance,passage) : 0;
@@ -218,13 +224,15 @@ Shader "Minakuchi/PlacedCloudVolume"
                         color*=lerp(1,0.65,_Twilight*(1-_Night));
                         float3 vaporColor=lerp(float3(0.73,0.77,0.81),float3(0.055,0.065,0.09),_Night);
                         color=lerp(color,vaporColor,saturate((vapor-originalDensity)/max(density,0.001)));
-                        float fade=1-smoothstep(16000,24000,distance);
+                        float fade=1-smoothstep(CloudImageStart,CloudImageEnd,distance);
                         float alpha=1-exp(-density*_CloudDensity*stepLength*fade/140);
                         scattering+=transmittance*alpha*color;
                         transmittance*=1-alpha;
                         if(transmittance<0.01) break;
                     }
                 }
+                scattering+=transmittance*distantCloud.rgb;
+                transmittance*=distantCloud.a;
                 return half4(scattering,transmittance);
             }
             ENDHLSL
