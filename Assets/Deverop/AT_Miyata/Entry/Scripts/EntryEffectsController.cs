@@ -7,6 +7,8 @@ public class EntryEffectsController : MonoBehaviour {
 	[SerializeField]
 	private float _revealSpeed = 1.0f;
 
+
+
 	[SerializeField]
 	private Material[] materials;
 
