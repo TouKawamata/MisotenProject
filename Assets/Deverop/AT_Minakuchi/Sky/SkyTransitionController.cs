@@ -6,6 +6,7 @@ namespace Minakuchi.Sky
     [DisallowMultipleComponent]
     public sealed class SkyTransitionController : MonoBehaviour
     {
+        public static SkyTransitionController Active { get; private set; }
         [Header("空の設定")]
         [SerializeField] private Material skyTemplate;
         [SerializeField] private Light sun;
@@ -19,13 +20,25 @@ namespace Minakuchi.Sky
         [Range(16, 23)] public float nightStartHour = 17;
         [Range(18.1f, 24)] public float nightCompleteHour = 21.5f;
         [Min(0.1f)] public float transitionSeconds = 12;
-        [Range(0, 1)] public float cloudCoverage = 0.72f;
+        [Range(0, 1)] public float cloudCoverage = 1f;
         [Range(0, 1)] public float night;
         [Header("時刻と天体（12=正午、0=真夜中）")]
         [Range(0, 24)] public float timeOfDay = 10;
         [Range(0, 1)] public float upperAtmosphere;
-        public float cloudHeight = 1200;
-        [Min(1)] public float cloudScale = 1800;
+        public float cloudHeight = -400;
+        [Min(1)] public float cloudScale = 1200;
+        [Min(1)] public float cloudThickness = 400;
+        [Range(0.1f, 5)] public float cloudDensity = 2f;
+        public bool useMeshClouds;
+        [Range(16, 64)] public int cloudSteps = 40;
+        [Range(0, 3)] public float cloudShadowStrength = 1.3f;
+        [Range(0, 1)] public float cloudTopContrast = 1f;
+        [UnityEngine.Serialization.FormerlySerializedAs("cloudTopWarmth")]
+        [Range(0, 1)] public float cloudTopBlueTint = 0.65f;
+        [Range(0, 1)] public float cloudMorningShadow = 0.35f;
+        [Range(0, 2)] public float cloudPassageStrength = 1f;
+        [SerializeField] private Shader cloudMeshShader;
+        private MeshCloudLayer meshClouds;
         public Vector2 wind = new Vector2(0.015f, 0.008f);
         public bool enableCloudFlow = true;
         [Min(0)] public float cloudFlowSpeed = 4;
@@ -56,6 +69,12 @@ namespace Minakuchi.Sky
             previousGround = RenderSettings.ambientGroundColor;
             previousReflection = RenderSettings.reflectionIntensity;
             runtimeSky = new Material(skyTemplate) { name = "空のマテリアル（実行中）" };
+            Active = this;
+            if (useMeshClouds)
+            {
+                var shader = cloudMeshShader ? cloudMeshShader : Shader.Find("Minakuchi/MeshCloud");
+                if (shader) meshClouds = MeshCloudLayer.Create(shader);
+            }
             RenderSettings.skybox = runtimeSky;
             ownsEnvironment = true;
             upperAtmosphere = atmosphereEnabled ? 1 : 0;
@@ -130,14 +149,20 @@ namespace Minakuchi.Sky
             float sunsetDescent = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(18, sunsetEnd, hour));
             runtimeSky.SetFloat("_SunsetSpread", sunsetSpread * Mathf.Lerp(1, 0.025f, sunsetDescent));
             runtimeSky.SetFloat("_Space", space);
-            runtimeSky.SetFloat("_Clouds", cloudCoverage);
+            // The renderer feature composites volume clouds against scene depth.
+            runtimeSky.SetFloat("_Clouds", 0);
             runtimeSky.SetFloat("_CloudHeight", cloudHeight);
             runtimeSky.SetFloat("_CloudScale", cloudScale);
+            runtimeSky.SetFloat("_CloudThickness", Mathf.Max(1, cloudThickness));
+            runtimeSky.SetFloat("_CloudDensity", cloudDensity);
             runtimeSky.SetFloat("_Clock", clock);
             runtimeSky.SetVector("_Wind", new Vector4(wind.x, wind.y, 0, 0));
             runtimeSky.SetVector("_CloudOffset", new Vector4(cloudOffset.x, cloudOffset.y, 0, 0));
             runtimeSky.SetVector("_SunDir", sunDirection);
             runtimeSky.SetVector("_MoonDir", moonDirection);
+            if (meshClouds)
+                meshClouds.Apply(cloudHeight, cloudThickness, cloudScale, cloudCoverage, cloudDensity,
+                    cloudOffset, sunDirection, night, twilight, enableSunsetTint ? sunset * sunsetIntensity : 0, sunsetColor);
             if (sun)
             {
                 sun.transform.rotation = Quaternion.LookRotation(-sunDirection);
@@ -176,8 +201,31 @@ namespace Minakuchi.Sky
             GUILayout.EndArea();
         }
 
+        public bool PrepareCloudVolume(Material material)
+        {
+            if (!isActiveAndEnabled || !runtimeSky || meshClouds || cloudCoverage <= 0) return false;
+            material.CopyPropertiesFromMaterial(runtimeSky);
+            material.SetFloat("_Clouds", cloudCoverage);
+            material.SetInt("_CloudSteps", Mathf.Clamp(cloudSteps, 16, 64));
+            material.SetFloat("_CloudShadowStrength", cloudShadowStrength);
+            material.SetFloat("_CloudTopContrast", cloudTopContrast);
+            material.SetFloat("_CloudTopBlueTint", cloudTopBlueTint);
+            material.SetFloat("_CloudMorningShadow", cloudMorningShadow);
+            material.SetFloat("_CloudHour", Mathf.Repeat(timeOfDay, 24));
+            material.SetFloat("_CloudPassageStrength", cloudPassageStrength);
+            return true;
+        }
+
         private void OnDisable()
         {
+            if (Active == this) Active = null;
+            if (meshClouds)
+            {
+                meshClouds.gameObject.SetActive(false);
+                if (Application.isPlaying) Destroy(meshClouds.gameObject);
+                else DestroyImmediate(meshClouds.gameObject);
+                meshClouds = null;
+            }
             if (ownsEnvironment && RenderSettings.skybox == runtimeSky)
             {
                 RenderSettings.skybox = previousSky;
@@ -189,7 +237,12 @@ namespace Minakuchi.Sky
                 RenderSettings.reflectionIntensity = previousReflection;
             }
             ownsEnvironment = false;
-            if (runtimeSky) Destroy(runtimeSky);
+            if (runtimeSky)
+            {
+                if (Application.isPlaying) Destroy(runtimeSky);
+                else DestroyImmediate(runtimeSky);
+                runtimeSky = null;
+            }
         }
     }
 }
