@@ -108,32 +108,43 @@ namespace AT_Murayama.AtmosphericScattering.Editor
         private void DrawTestCityButtons(AtmosphericScatteringController controller)
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("🏙️ 動作確認用・遠景サイバービル群（ワンクリック生成／削除）", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("※まだシーンに遠景ビルが無い場合でも、画像左奥のようなビル群＋地上ネオンを仮配置して散乱効果をすぐ確認できます。", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField("🏙️ 動作確認用・サイバービル群テスト（専用スクリプトへ分離完了）", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "テスト用ビル群の生成機能は、より広大なシーン（数百m〜数千m規模・4つの規模プリセット）に対応した専用コンポーネント【CyberCityTestGenerator】に分離されました。\n" +
+                "大気散乱コントローラーとは完全に疎結合で安全に動作します。",
+                MessageType.Info);
 
-            EditorGUILayout.BeginHorizontal();
-            Color prevBg = GUI.backgroundColor;
-            GUI.backgroundColor = new Color(0.45f, 0.8f, 1.0f);
-            if (GUILayout.Button("🏙️ テスト用・遠景ビル群を生成", GUILayout.Height(30)))
+            CyberCityTestGenerator generator = controller.GetComponent<CyberCityTestGenerator>();
+            if (generator != null)
             {
-                Undo.RecordObject(controller, "Generate Test Cyber City");
-                controller.GenerateTestCyberCity();
-                EditorUtility.SetDirty(controller);
-                SceneView.RepaintAll();
+                EditorGUILayout.HelpBox("✅ このオブジェクトに【CyberCityTestGenerator】がアタッチされています。下のコンポーネントで規模やプリセットを選択してビル群を生成できます。", MessageType.None);
+            }
+            else
+            {
+                Color prevColor = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(0.4f, 0.85f, 1.0f);
+                if (GUILayout.Button("➕ このオブジェクトに【CyberCityTestGenerator】を追加して大きいシーンを試す", GUILayout.Height(30)))
+                {
+                    Undo.AddComponent<CyberCityTestGenerator>(controller.gameObject);
+                }
+                GUI.backgroundColor = prevColor;
             }
 
-            GUI.backgroundColor = controller.HasTestCity ? new Color(1.0f, 0.55f, 0.55f) : Color.gray;
-            EditorGUI.BeginDisabledGroup(!controller.HasTestCity);
-            if (GUILayout.Button("🧹 テストビル群を削除", GUILayout.Height(30)))
+            // 過去に生成された旧テストビル群が残っていれば削除ボタンを表示
+            if (controller.HasTestCity)
             {
-                Undo.RecordObject(controller, "Clear Test Cyber City");
-                controller.ClearTestCyberCity();
-                EditorUtility.SetDirty(controller);
-                SceneView.RepaintAll();
+                EditorGUILayout.Space(2);
+                Color prevBg = GUI.backgroundColor;
+                GUI.backgroundColor = new Color(1.0f, 0.5f, 0.5f);
+                if (GUILayout.Button("🧹 既存の旧テストビル群を削除（Clear Old Buildings）", GUILayout.Height(28)))
+                {
+                    Undo.RecordObject(controller, "Clear Test Cyber City");
+                    controller.ClearTestCyberCity();
+                    EditorUtility.SetDirty(controller);
+                    SceneView.RepaintAll();
+                }
+                GUI.backgroundColor = prevBg;
             }
-            EditorGUI.EndDisabledGroup();
-            GUI.backgroundColor = prevBg;
-            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
         }
