@@ -102,6 +102,6 @@ public class BoostHitDetector : MonoBehaviour
 
         bool hitShell = other.TryGetComponent(out ShieldShellHitbox _);
 
-        return new BoostHitInfo(pushDirection, closeness, hitShell);
+        return new BoostHitInfo(pushDirection, closeness, hitShell, _attacker.ForwardSpeed);
     }
 }

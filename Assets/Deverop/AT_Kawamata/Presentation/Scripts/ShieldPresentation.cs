@@ -4,6 +4,7 @@ using UnityEngine;
 // 演出を足すときは、BoostPresentationと同じく、Play／Stopなどを持つコンポーネントを作ってここから呼ぶ。
 // BoostPresentationと同じく、Playerプレハブの中で完結するため、VContainerには登録せずAwake／OnDestroyで購読・解除する。
 // 今あるもの：後方のshild_01の表示（張る／消す）と、防いだときに砕ける演出。
+// 防いだときのヒットストップ・カメラの揺れ・集中線などは、画面全体にかかるのでShieldBlockPresentation（Playerにだけ置く）が行う。
 // 予定：防いだときのエフェクト・SE、防いだ後に使えない間の表示。
 public class ShieldPresentation : MonoBehaviour
 {
@@ -56,8 +57,8 @@ public class ShieldPresentation : MonoBehaviour
         }
     }
 
-    // シールドでブースト接触を防いだ瞬間（この後StopShieldEffectも呼ばれる）。
-    private void PlayBlockEffect()
+    // シールドでブースト接触を防いだ瞬間（この後StopShieldEffectも呼ばれる）。押し出しに合わせた演出はShieldBlockPresentationが行う。
+    private void PlayBlockEffect(float pushSpeed, float pushDuration)
     {
         if (_backShellView != null)
         {

@@ -2,6 +2,8 @@ using UnityEngine;
 
 // ブーストのゲージと状態（Ready→Boosting→RecoveryDelay／Overheat→Ready）、現在有効な速度／加速度／旋回性能を管理する。
 // 押した瞬間にTryActivateで開始し、押し続けている間（TickのisHeld）だけゲージを消費する。
+// 押し続けたまま止まった後（オーバーヒート明けなど）は、ゲージがMinGaugeToRestartWhileHeldまで戻れば押し直さずに再発動できる（CanRestartWhileHeld）。
+// ForceStopに秒数を渡すと、その間は押し直しても再発動できない（シールドで防がれてブーストを解除されたときなど）。
 // 消費速度は発動した瞬間の順位の割合でBoostRankTableから引き、そのブーストが終わるまで変えない。
 // PlayerManagerがここから現在値を読んでPlayerFlightControllerへ渡すため、ブースト状態そのものは重複して持たない。
 // ブースト終了時は、最高速度だけをBoostEndEaseDuration秒かけて通常の値まで下げる（速度がガクッと落ちないように）。
@@ -24,6 +26,9 @@ public class BoostController : MonoBehaviour
 
     private EState _state = EState.Ready;
     private float _stateTimer;
+
+    // 再発動できない残り秒数（ForceStopで指定）。状態とは別に数える。
+    private float _activationLockTimer;
 
     // ブースト終了時に最高速度を下げている途中の残り秒数・全体の秒数と、下げ始めの値。
     private float _endEaseTimer;
@@ -56,7 +61,10 @@ public class BoostController : MonoBehaviour
     public bool IsOverheated => _state == EState.Overheat;
 
     public bool CanActivate =>
-        _profile != null && (_state == EState.Ready || _state == EState.RecoveryDelay) && Gauge >= _profile.MinGaugeToActivate;
+        _profile != null && (_state == EState.Ready || _state == EState.RecoveryDelay) && _activationLockTimer <= 0f && Gauge >= _profile.MinGaugeToActivate;
+
+    // 押し直さずに、押し続けたまま再発動できるか（CanActivateより多くのゲージが要る）。
+    public bool CanRestartWhileHeld => CanActivate && Gauge >= _profile.MinGaugeToRestartWhileHeld;
 
     // 今のゲージで、あと何秒ブーストできるか。ブースト中でなければ0。
     public float BoostRemainingTime => _state == EState.Boosting && ConsumptionPerSecond > 0f ? Gauge / ConsumptionPerSecond : 0f;
@@ -74,6 +82,7 @@ public class BoostController : MonoBehaviour
 
         _state = EState.Ready;
         _stateTimer = 0f;
+        _activationLockTimer = 0f;
         Gauge = _profile.MaxGauge;
         ConsumptionPerSecond = 0f;
         ApplyNormalTuning();
@@ -104,6 +113,11 @@ public class BoostController : MonoBehaviour
         }
 
         UpdateEndEase(deltaTime);
+
+        if (_activationLockTimer > 0f)
+        {
+            _activationLockTimer -= deltaTime;
+        }
 
         switch (_state)
         {
@@ -140,12 +154,14 @@ public class BoostController : MonoBehaviour
         }
     }
 
-    // 入力に関係なくブーストを終了する（ゴール時・スタン時）。使い切った扱いにはせず、通常の待ち時間に入る。
-    public void ForceStop()
+    // 入力に関係なくブーストを終了する（ゴール時・スタン時・シールドで防がれたとき）。使い切った扱いにはせず、通常の待ち時間に入る。
+    // activationLockDuration：再発動できない秒数。押し続けていても、すぐに再発動しないようにする。
+    public void ForceStop(float activationLockDuration = 0f)
     {
         if (_state == EState.Boosting)
         {
             EndBoost(EState.RecoveryDelay, _profile.RecoveryDelay);
+            _activationLockTimer = Mathf.Max(_activationLockTimer, activationLockDuration);
         }
     }
 

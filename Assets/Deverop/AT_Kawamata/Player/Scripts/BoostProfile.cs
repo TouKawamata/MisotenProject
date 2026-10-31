@@ -28,6 +28,8 @@ public class BoostProfile : ScriptableObject
     [SerializeField] private float _maxGauge = 100f;
     [Tooltip("発動に必要な最低量。これ未満では発動できない（発動と終了を細かく繰り返すのを防ぐ）")]
     [SerializeField] private float _minGaugeToActivate = 10f;
+    [Tooltip("押し直さずに、押し続けたまま再発動するのに必要な量（オーバーヒート明け・スタン明け・シールド解除など）。発動に必要な最低量より多くし、使い切ってすぐ再発動するのを繰り返さないようにする")]
+    [SerializeField] private float _minGaugeToRestartWhileHeld = 30f;
     [Tooltip("1秒あたりの回復量")]
     [SerializeField] private float _recoveryPerSecond = 20f;
     [Tooltip("ブーストを離して終了してから、回復を始めるまでの秒数（この間も、ゲージが残っていれば再発動できる）")]
@@ -56,6 +58,8 @@ public class BoostProfile : ScriptableObject
     public float MaxGauge => Mathf.Max(0.0001f, _maxGauge);
 
     public float MinGaugeToActivate => Mathf.Clamp(_minGaugeToActivate, 0f, MaxGauge);
+
+    public float MinGaugeToRestartWhileHeld => Mathf.Clamp(_minGaugeToRestartWhileHeld, MinGaugeToActivate, MaxGauge);
 
     public float RecoveryPerSecond => Mathf.Max(0f, _recoveryPerSecond);
 

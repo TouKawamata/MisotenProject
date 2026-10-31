@@ -11,6 +11,13 @@ public class LateralPush
 
     public bool IsActive => _elapsed < _duration;
 
+    // 押し出し始めの速さ（m/s）がinitialSpeedになる距離（m）。イーズアウト（1 −（1 − t）²）は始めの傾きが2なので、
+    // 始めの速さ＝2×距離÷秒数、つまり距離＝初速×秒数÷2。
+    public static float GetDistanceForInitialSpeed(float initialSpeed, float duration)
+    {
+        return initialSpeed * Mathf.Max(0f, duration) * 0.5f;
+    }
+
     // signedDistance：コースの右方向を正とした押し出す距離（m）。動いている途中で呼ばれたら、そこから新しく押し出し直す。
     public void Start(float signedDistance, float duration)
     {
