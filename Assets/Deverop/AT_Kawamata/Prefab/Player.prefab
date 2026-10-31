@@ -97,6 +97,7 @@ GameObject:
   - component: {fileID: 918592705436321776}
   - component: {fileID: 775241823792952702}
   - component: {fileID: 4573234749840560132}
+  - component: {fileID: 6346551993770716258}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -263,6 +264,25 @@ MonoBehaviour:
   _playEase: 9
   _stopDuration: 0.5
   _stopEase: 4
+  _kickFieldOfView: 8
+  _kickInDuration: 0.06
+  _kickOutDuration: 0.4
+--- !u!114 &6346551993770716258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 658736547751301983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8011d189609738e4f9e7aa3c5114ea52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShakeEffect
+  _cameraController: {fileID: 775241823792952702}
+  _maxAmplitude: 0.3
+  _frequency: 25
+  _duration: 0.35
 --- !u!1 &983617624101110548
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,6 +525,7 @@ GameObject:
   - component: {fileID: 4209057477350365912}
   - component: {fileID: -7268944218637680035}
   - component: {fileID: 6281600909184474877}
+  - component: {fileID: 927409305864383182}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -688,6 +709,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShieldPresentation
   _playerManager: {fileID: 2079369644378980432}
   _backShellView: {fileID: 3044176943503039356}
+--- !u!114 &927409305864383182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93f3df10e5d83f54cbda419803da6dd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShieldBlockPresentation
+  _playerManager: {fileID: 2079369644378980432}
+  _fullStrengthPushSpeed: 30
+  _blockedStrength: 0.5
+  _hitStop: {fileID: 0}
+  _cameraShake: {fileID: 6346551993770716258}
+  _cameraEffect: {fileID: 4573234749840560132}
+  _speedLines: {fileID: 0}
+  _radialBlur: {fileID: 0}
 --- !u!1001 &1738267748168641387
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,11 +1,11 @@
 using UnityEngine;
 
 // プレイヤーカメラの制御。Playerの子オブジェクトとして置き、向き（LookAhead方向へのブレンド・遅延・コースの上方向への追従・
-// 左右入力による傾き）と、1人称／3人称の位置の補間を扱う。上方向の基準はワールドの真上ではなくPlayerのReferenceUp（コースの上方向）。3人称の度合いは演出側（BoostCameraEffect）がIThirdPersonView経由で変えるだけで、
-// カメラのTransformを書き換えるのはこのスクリプトだけにする。
+// 左右入力による傾き）と、1人称／3人称の位置の補間を扱う。上方向の基準はワールドの真上ではなくPlayerのReferenceUp（コースの上方向）。3人称の度合いは演出側（BoostCameraEffect）がIThirdPersonView経由で、
+// 揺れは演出側（CameraShakeEffect）がICameraShakeView経由で変えるだけで、カメラのTransformを書き換えるのはこのスクリプトだけにする。
 // Splineへは直接問い合わせず、PlayerFlightControllerが公開する値だけを参照する
 // （二重に最近傍探索を行うと計算コストが倍増し、Playerと異なる最近傍点を拾って向きがズレる恐れがあるため）。
-public class CameraController : MonoBehaviour, IThirdPersonView
+public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeView
 {
     [SerializeField] private PlayerFlightController player;
 
@@ -46,12 +46,20 @@ public class CameraController : MonoBehaviour, IThirdPersonView
     private Vector3 _smoothedThirdPersonOffset;
     private Vector3 _thirdPersonOffsetVelocity;
     private float _thirdPersonWeight;
+    private Vector3 _shakeOffset;
 
     // 0＝1人称、1＝3人称。演出側がIThirdPersonView経由でだけ変える。
     float IThirdPersonView.ThirdPersonWeight
     {
         get => _thirdPersonWeight;
         set => _thirdPersonWeight = Mathf.Clamp01(value);
+    }
+
+    // カメラの向きを基準にした揺れ。演出側がICameraShakeView経由でだけ変える。
+    Vector3 ICameraShakeView.ShakeOffset
+    {
+        get => _shakeOffset;
+        set => _shakeOffset = value;
     }
 
     private void Awake()
@@ -97,6 +105,9 @@ public class CameraController : MonoBehaviour, IThirdPersonView
 
         Quaternion thirdPersonRotation = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(_thirdPersonRotationOffset), _thirdPersonWeight);
         transform.rotation = Quaternion.LookRotation(_smoothedForward, _smoothedUp) * thirdPersonRotation * Quaternion.AngleAxis(_steeringTilt, Vector3.forward);
+
+        // 揺れは最後に足す（位置は毎フレームUpdatePositionで決め直すので、揺れが積み重ならない）。
+        transform.position += transform.rotation * _shakeOffset;
     }
 
     // コースの上方向（Player.ReferenceUp）へ遅れて追従させ、カメラの向きに直交させる。
