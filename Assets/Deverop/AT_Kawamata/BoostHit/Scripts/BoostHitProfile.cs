@@ -51,8 +51,11 @@ public class BoostHitProfile : ScriptableObject
     [SerializeField] private float _billiardMaxPushSpeed = 60f;
     [Tooltip("ON：防がれた側（当てた側）のブーストを解除する。OFF：解除しない")]
     [SerializeField] private bool _cancelAttackerBoostOnBlock;
-    [Tooltip("ブーストを解除されてから、再び発動できるようになるまでの秒数（押し続けていても、押し直しても発動しない）")]
+    [Tooltip("ブーストを解除されてから、再び発動できるようになるまでの秒数（押し続けていても、押し直しても発動しない）。"
+        + "Lock Attacker Steering On CancelがONなら、この秒数だけ横入力も受け付けない")]
     [SerializeField] private float _attackerBoostLockDuration = 1f;
+    [Tooltip("ON：ブーストを解除されたとき、Attacker Boost Lock Durationの秒数だけ横入力も受け付けない（Cancel Attacker Boost On BlockがONのときだけ）。OFF：横入力は受け付ける")]
+    [SerializeField] private bool _lockAttackerSteeringOnCancel;
 
     public float StunDuration => Mathf.Max(0f, _stunDuration);
 
@@ -75,6 +78,8 @@ public class BoostHitProfile : ScriptableObject
     public bool CancelAttackerBoostOnBlock => _cancelAttackerBoostOnBlock;
 
     public float AttackerBoostLockDuration => Mathf.Max(0f, _attackerBoostLockDuration);
+
+    public bool LockAttackerSteeringOnCancel => _lockAttackerSteeringOnCancel;
 
     // シールドで防いだ側を前へ押し出す初速（m/s）。relativeSpeed：当てた側の前進の速さ − 防いだ側の前進の速さ（m/s）。
     // ビリヤード方式がOFFならBlockPushSpeedで一定。

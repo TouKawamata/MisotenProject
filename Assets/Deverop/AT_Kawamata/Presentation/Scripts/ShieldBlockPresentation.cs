@@ -2,8 +2,8 @@ using UnityEngine;
 
 // シールドで防いだ・防がれたときの演出の窓口。レーサーのShieldBlocked（自分が防いだ）と、
 // BoostHitLanded（Blocked＝自分のブーストが防がれた）を購読し、各演出を呼ぶ。
-// ・防いだとき：ヒットストップ、カメラの揺れ、FOVを一瞬広げる、押し出されている間だけ集中線・ラジアルブラー。強さは押し出しの初速で決める
-// ・防がれたとき：ヒットストップとカメラの揺れだけ（強さは一定）
+// ・防いだとき：FOVを一瞬広げる、押し出されている間だけ集中線・ラジアルブラー（ブーストと同じもの）。FOVの広げる量は押し出しの初速で決める
+// ・防がれたとき：ヒットストップとカメラの揺れ（横揺れ＋横の傾き。強さは一定）
 // ヒットストップ・集中線などは画面全体にかかるので、Playerプレハブにだけ置く（CPURacerには置かない）。
 // shild_01が砕ける演出はShieldPresentationが行う。未設定の演出は飛ばすので、必要なものだけ割り当てればよい。
 // BoostPresentationと同じく、Playerプレハブの中で完結するため、VContainerには登録せずAwake／OnDestroyで購読・解除する。
@@ -12,17 +12,18 @@ public class ShieldBlockPresentation : MonoBehaviour
     [SerializeField] private RacerManagerBase _playerManager;
 
     [Header("強さ")]
-    [Tooltip("押し出しの初速（m/s）がこれ以上なら、防いだときの演出の強さを最大（1）にする。これより遅ければ、初速に比例して弱くする")]
+    [Tooltip("押し出しの初速（m/s）がこれ以上なら、防いだときにFOVを広げる量を最大にする。これより遅ければ、初速に比例して小さくする")]
     [SerializeField] private float _fullStrengthPushSpeed = 30f;
-    [Tooltip("自分のブーストがシールドで防がれたときの演出の強さ（0～1）")]
+    [Tooltip("自分のブーストがシールドで防がれたときの、ヒットストップの長さとカメラの揺れ（横揺れの幅・横の傾き）の強さ（0～1）")]
     [Range(0f, 1f)]
     [SerializeField] private float _blockedStrength = 0.5f;
 
-    [Header("演出")]
+    [Header("防がれたときの演出")]
     [SerializeField] private HitStopEffect _hitStop;
 
     [SerializeField] private CameraShakeEffect _cameraShake;
 
+    [Header("防いだときの演出")]
     [Tooltip("FOVを一瞬広げる（ブーストのカメラ演出と同じコンポーネントを使う）")]
     [SerializeField] private BoostCameraEffect _cameraEffect;
 
@@ -76,8 +77,6 @@ public class ShieldBlockPresentation : MonoBehaviour
     private void PlayBlockEffect(float pushSpeed, float pushDuration)
     {
         float strength = _fullStrengthPushSpeed > 0f ? Mathf.Clamp01(pushSpeed / _fullStrengthPushSpeed) : 1f;
-        PlayImpact(strength);
-
         if (_cameraEffect != null)
         {
             _cameraEffect.PlayFieldOfViewKick(strength);
@@ -89,25 +88,22 @@ public class ShieldBlockPresentation : MonoBehaviour
         }
     }
 
-    // 自分のブーストを当てて、効果があったとき。シールドで防がれたときだけ演出する。
+    // 自分のブーストを当てて、効果があったとき。シールドで防がれたときだけ、ヒットストップとカメラの揺れを出す。
     private void PlayBlockedEffect(EBoostHitResult result)
     {
-        if (result == EBoostHitResult.Blocked)
+        if (result != EBoostHitResult.Blocked)
         {
-            PlayImpact(_blockedStrength);
+            return;
         }
-    }
 
-    private void PlayImpact(float strength)
-    {
         if (_hitStop != null)
         {
-            _hitStop.Play(strength);
+            _hitStop.Play(_blockedStrength);
         }
 
         if (_cameraShake != null)
         {
-            _cameraShake.Play(strength);
+            _cameraShake.Play(_blockedStrength);
         }
     }
 

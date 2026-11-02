@@ -2,7 +2,7 @@ using UnityEngine;
 
 // プレイヤーカメラの制御。Playerの子オブジェクトとして置き、向き（LookAhead方向へのブレンド・遅延・コースの上方向への追従・
 // 左右入力による傾き）と、1人称／3人称の位置の補間を扱う。上方向の基準はワールドの真上ではなくPlayerのReferenceUp（コースの上方向）。3人称の度合いは演出側（BoostCameraEffect）がIThirdPersonView経由で、
-// 揺れは演出側（CameraShakeEffect）がICameraShakeView経由で変えるだけで、カメラのTransformを書き換えるのはこのスクリプトだけにする。
+// 揺れ（位置のずれと横の傾き）は演出側（CameraShakeEffect）がICameraShakeView経由で変えるだけで、カメラのTransformを書き換えるのはこのスクリプトだけにする。
 // Splineへは直接問い合わせず、PlayerFlightControllerが公開する値だけを参照する
 // （二重に最近傍探索を行うと計算コストが倍増し、Playerと異なる最近傍点を拾って向きがズレる恐れがあるため）。
 public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeView
@@ -47,6 +47,8 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
     private Vector3 _thirdPersonOffsetVelocity;
     private float _thirdPersonWeight;
     private Vector3 _shakeOffset;
+    private float _shakeTilt;
+    private float _shakeTiltWeight;
 
     // 0＝1人称、1＝3人称。演出側がIThirdPersonView経由でだけ変える。
     float IThirdPersonView.ThirdPersonWeight
@@ -60,6 +62,20 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
     {
         get => _shakeOffset;
         set => _shakeOffset = value;
+    }
+
+    // 揺れによる横の傾き（度。＋で右）。演出側がICameraShakeView経由でだけ変える。
+    float ICameraShakeView.ShakeTilt
+    {
+        get => _shakeTilt;
+        set => _shakeTilt = value;
+    }
+
+    // 左右入力による傾きの代わりに、揺れの傾きをどれだけ使うか（0～1）。演出側がICameraShakeView経由でだけ変える。
+    float ICameraShakeView.ShakeTiltWeight
+    {
+        get => _shakeTiltWeight;
+        set => _shakeTiltWeight = Mathf.Clamp01(value);
     }
 
     private void Awake()
@@ -103,8 +119,12 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
             ? Mathf.SmoothDamp(_steeringTilt, targetTilt, ref _steeringTiltVelocity, steeringTiltSmoothTime, Mathf.Infinity, deltaTime)
             : targetTilt;
 
+        // 揺れている間は、左右入力による傾きの代わりに揺れの傾きを使う（両方を足して傾き過ぎないように）。
+        // 左右入力による傾きは裏で追従し続けるので、揺れが終わればそのまま戻る。揺れの傾きも＋で右なので、符号を逆にする。
+        float tilt = Mathf.Lerp(_steeringTilt, -_shakeTilt, _shakeTiltWeight);
+
         Quaternion thirdPersonRotation = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(_thirdPersonRotationOffset), _thirdPersonWeight);
-        transform.rotation = Quaternion.LookRotation(_smoothedForward, _smoothedUp) * thirdPersonRotation * Quaternion.AngleAxis(_steeringTilt, Vector3.forward);
+        transform.rotation = Quaternion.LookRotation(_smoothedForward, _smoothedUp) * thirdPersonRotation * Quaternion.AngleAxis(tilt, Vector3.forward);
 
         // 揺れは最後に足す（位置は毎フレームUpdatePositionで決め直すので、揺れが積み重ならない）。
         transform.position += transform.rotation * _shakeOffset;

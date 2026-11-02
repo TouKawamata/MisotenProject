@@ -52,6 +52,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
+    // 横入力を受け付けない残りの秒数（シールドで防がれてブーストを解除されたとき。検証用）。
+    private float _steeringLockTimer;
+
     // 直近に通知したブースト・シールド・スタンの状態。変化したときだけイベントを出すために持つ。
     private bool _wasBoosting;
     private bool _wasShielding;
@@ -184,6 +187,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
         InitializeInput();
         _stun.Reset();
+        _steeringLockTimer = 0f;
         _flightController.Initialize(_defaultProfile);
         _isInitialized = true;
     }
@@ -200,6 +204,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         _boost.Initialize();
         _shield.Initialize();
         _stun.Reset();
+        _steeringLockTimer = 0f;
         // 発動エリアに居るかどうか（_currentShortcutZone）はShortcutZone側のトリガー通知に任せ、吸着状態だけ解除する。
         _isShortcutProfileActive = false;
         _wasHorizontalAboveThreshold = false;
@@ -226,6 +231,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     private void TickCore(float deltaTime, IReadOnlyRacerData data)
     {
         _stun.Tick(deltaTime);
+        _steeringLockTimer = Mathf.Max(0f, _steeringLockTimer - deltaTime);
         _isFinished = data.IsFinished;
 
         // ゴール後は入力を無視し、ブースト・シールドを解除して、通常のProfileでまっすぐ飛ばす。
@@ -263,8 +269,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         }
 
         // スタン中は入力を受け付けない（左右・ブースト・シールド・ショートカットのすべて）。
+        // シールドで防がれてブーストを解除された後（検証用の切り替えがONのとき）は、横入力だけを受け付けない。
         bool canControl = !_stun.IsStunned;
-        float horizontal = canControl ? input.Horizontal : 0f;
+        float horizontal = canControl && _steeringLockTimer <= 0f ? input.Horizontal : 0f;
 
         if (canControl)
         {
@@ -352,6 +359,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         {
             _boost.ForceStop(_boostHitProfile.AttackerBoostLockDuration);
             Log($"シールドで防がれたため、ブーストを解除した（{_boostHitProfile.AttackerBoostLockDuration:F1}秒は再発動しない）");
+
+            if (_boostHitProfile.LockAttackerSteeringOnCancel)
+            {
+                _steeringLockTimer = Mathf.Max(_steeringLockTimer, _boostHitProfile.AttackerBoostLockDuration);
+                Log($"シールドで防がれたため、{_boostHitProfile.AttackerBoostLockDuration:F1}秒は横入力を受け付けない");
+            }
         }
 
         BoostHitLanded?.Invoke(result);

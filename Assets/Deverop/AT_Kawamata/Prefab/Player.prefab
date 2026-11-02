@@ -280,9 +280,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShakeEffect
   _cameraController: {fileID: 775241823792952702}
-  _maxAmplitude: 0.3
-  _frequency: 25
-  _duration: 0.35
+  _amplitude: 3
+  _tiltAngle: 5
+  _duration: 1
 --- !u!1 &983617624101110548
 GameObject:
   m_ObjectHideFlags: 0
