@@ -21,7 +21,7 @@ namespace Minakuchi.Sky
             CoreUtils.Destroy(noise);
             CoreUtils.Destroy(distantImage);
             if (cloudShader) material = CoreUtils.CreateEngineMaterial(cloudShader);
-            distantImage = DistantCloudImage.Create();
+            // distantImage = DistantCloudImage.Create();
             if (cloudNoiseData && cloudNoiseData.bytes.Length == 64 * 64 * 64 * 4)
             {
                 noise = new Texture3D(64, 64, 64, TextureFormat.RGBA32, false)
@@ -41,10 +41,11 @@ namespace Minakuchi.Sky
             var camera = renderingData.cameraData;
             if (camera.cameraType == CameraType.Preview || camera.cameraType == CameraType.Reflection
                 || camera.renderType == CameraRenderType.Overlay) return;
+            if (camera.cameraType == CameraType.Game && !camera.camera.CompareTag("MainCamera")) return;
             var controller = SkyTransitionController.Active;
             if (!material || !noise || !controller || !controller.PrepareCloudVolume(material)) return;
             material.SetTexture("_CloudNoise", noise);
-            material.SetTexture("_DistantCloudImage", distantImage);
+            // material.SetTexture("_DistantCloudImage", distantImage);
             pass.material = material;
             renderer.EnqueuePass(pass);
         }
