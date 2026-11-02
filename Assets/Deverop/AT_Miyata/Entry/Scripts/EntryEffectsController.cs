@@ -3,10 +3,10 @@ using UnityEngine.VFX;
 
 public class EntryEffectsController : MonoBehaviour {
 	public float RevealHeight = 0.0f;
+	public float RevealHeightMax = 2.6f;
 
 	[SerializeField]
 	private float _revealSpeed = 1.0f;
-
 
 
 	[SerializeField]
@@ -14,6 +14,12 @@ public class EntryEffectsController : MonoBehaviour {
 
 	[SerializeField]
 	private VisualEffect[] visualEffects;
+
+	[SerializeField]
+	private GameObject underRing;
+
+	[SerializeField]
+	private GameObject overRing;
 
 	private readonly int revealHeightId = Shader.PropertyToID("_RevealHeight");
 	private readonly int revealHeightIdVFX = Shader.PropertyToID("RevealHeight");
@@ -29,6 +35,9 @@ public class EntryEffectsController : MonoBehaviour {
 	void Update() {
 		if (_isRevealing) {
 			RevealHeight += _revealSpeed * Time.deltaTime;
+			if (RevealHeight > RevealHeightMax) {
+				RevealHeight = RevealHeightMax;
+			}
 		}
 
 		foreach (var item in materials) {

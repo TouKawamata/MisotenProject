@@ -95,7 +95,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DisolveAlphaHeight: 0.3
+    - _DisolveAlphaHeight: 0.1
     - _DisolveEmissionHeight: 0.1
     - _DstBlend: 10
     - _DstBlendAlpha: 0
@@ -113,7 +113,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RevealHeight: 0.36
+    - _RevealHeight: 15.213105
     - _SPECULAR_IOR: 1.5
     - _SPECULAR_ROUGHNESS: 0.2
     - _Smoothness: 0

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3808622646208356568
+--- !u!114 &-6557286306310126580
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: main_model_kuro_HR
+  m_Name: main_model_munepad_kage_HR
   m_Shader: {fileID: -6465566751694194690, guid: 5edbdddf6e60715468960fb4b96d13aa, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -95,7 +95,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DisolveAlphaHeight: 0.3
+    - _DisolveAlphaHeight: 0.1
     - _DisolveEmissionHeight: 0.1
     - _DstBlend: 10
     - _DstBlendAlpha: 0
@@ -113,7 +113,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RevealHeight: 0.36
+    - _RevealHeight: 15.213105
     - _SPECULAR_IOR: 1.5
     - _SPECULAR_ROUGHNESS: 0.2
     - _Smoothness: 0
@@ -127,7 +127,7 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 0
     m_Colors:
-    - _BASE_COLOR: {r: 0, g: 0, b: 0, a: 1}
+    - _BASE_COLOR: {r: 0.5783, g: 0.5783, b: 0.5783, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EMISSION_COLOR: {r: 0, g: 6.730942, b: 8, a: 0}
