@@ -241,6 +241,7 @@ public class CourseMinimapController : MonoBehaviour
         if (_subCamera != null)
         {
             _subCamera.targetTexture = null;
+            _subCamera.enabled = false;
         }
         else
         {
@@ -248,13 +249,22 @@ public class CourseMinimapController : MonoBehaviour
             if (camTrans != null)
             {
                 Camera cam = camTrans.GetComponent<Camera>();
-                if (cam != null) cam.targetTexture = null;
+                if (cam != null)
+                {
+                    cam.targetTexture = null;
+                    cam.enabled = false;
+                }
             }
         }
 
         if (_uiRawImage != null)
         {
             _uiRawImage.texture = null;
+        }
+
+        if (_uiCanvas != null)
+        {
+            _uiCanvas.enabled = false;
         }
 
         if (_renderTexture != null)
@@ -382,7 +392,10 @@ public class CourseMinimapController : MonoBehaviour
         }
         else
         {
-            GameObject pivotObj = new GameObject("Minimap_HologramPivot");
+            GameObject pivotObj = new GameObject("Minimap_HologramPivot")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             pivotObj.transform.SetParent(transform, false);
             _hologramPivot = pivotObj.transform;
         }
@@ -394,7 +407,10 @@ public class CourseMinimapController : MonoBehaviour
         }
         else
         {
-            GameObject rootObj = new GameObject("Minimap_MeshRoot");
+            GameObject rootObj = new GameObject("Minimap_MeshRoot")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             rootObj.transform.SetParent(_hologramPivot, false);
             _meshRoot = rootObj.transform;
         }
@@ -466,6 +482,12 @@ public class CourseMinimapController : MonoBehaviour
         Transform oldRoad = _meshRoot.Find("Minimap_Road");
         if (oldRoad != null)
         {
+            MeshFilter oldMf = oldRoad.GetComponent<MeshFilter>();
+            if (oldMf != null && oldMf.sharedMesh != null)
+            {
+                if (Application.isPlaying) Destroy(oldMf.sharedMesh);
+                else DestroyImmediate(oldMf.sharedMesh);
+            }
             if (Application.isPlaying) Destroy(oldRoad.gameObject);
             else DestroyImmediate(oldRoad.gameObject);
         }
@@ -811,7 +833,10 @@ public class CourseMinimapController : MonoBehaviour
         Transform camTrans = transform.Find("Minimap_SubCamera");
         if (camTrans == null)
         {
-            GameObject camObj = new GameObject("Minimap_SubCamera");
+            GameObject camObj = new GameObject("Minimap_SubCamera")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             camObj.transform.SetParent(transform, false);
             _subCamera = camObj.AddComponent<Camera>();
         }
@@ -839,7 +864,10 @@ public class CourseMinimapController : MonoBehaviour
         Transform canvasTrans = transform.Find("Minimap_UICanvas");
         if (canvasTrans == null)
         {
-            GameObject canvasObj = new GameObject("Minimap_UICanvas");
+            GameObject canvasObj = new GameObject("Minimap_UICanvas")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             canvasObj.transform.SetParent(transform, false);
             _uiCanvas = canvasObj.AddComponent<Canvas>();
             _uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -849,10 +877,20 @@ public class CourseMinimapController : MonoBehaviour
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
 
-            GameObject rawImgObj = new GameObject("Minimap_RawImage");
+            GameObject rawImgObj = new GameObject("Minimap_RawImage")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             rawImgObj.transform.SetParent(canvasObj.transform, false);
             _uiRawImage = rawImgObj.AddComponent<RawImage>();
             _uiRawImage.raycastTarget = false;
+
+            RectTransform rt = _uiRawImage.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.zero;
+            rt.pivot = Vector2.zero;
+            rt.anchoredPosition = _uiMargin;
+            rt.sizeDelta = _uiSize;
         }
         else
         {
@@ -894,9 +932,17 @@ public class CourseMinimapController : MonoBehaviour
 
         bool isModeA = (_displayMode == MinimapDisplayMode.ModeA_RenderTexture);
 
-        if (_subCamera != null && _subCamera.gameObject.activeSelf != isModeA)
+        if (_subCamera != null)
         {
-            _subCamera.gameObject.SetActive(isModeA);
+            bool needActive = isModeA && enabled;
+            if (_subCamera.gameObject.activeSelf != needActive)
+            {
+                _subCamera.gameObject.SetActive(needActive);
+            }
+            if (_subCamera.enabled != needActive)
+            {
+                _subCamera.enabled = needActive;
+            }
         }
         if (_uiCanvas != null && _uiCanvas.gameObject.activeSelf != isModeA)
         {
