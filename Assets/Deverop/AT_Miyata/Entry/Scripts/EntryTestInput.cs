@@ -13,13 +13,12 @@ public class EntryTestInput : MonoBehaviour {
 	void Update() {
 		// テスト用の入力(新しいInputSystemを使用)
 		if (UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame) {
-			_entryEffectsController.StartReveal(true);
+			_entryEffectsController.StartAnimation();
 		}
 
 		// リセット
 		if (UnityEngine.InputSystem.Keyboard.current.rKey.wasPressedThisFrame) {
-			_entryEffectsController.StartReveal(false);
-			_entryEffectsController.RevealHeight = -3.0f;
+			_entryEffectsController.ResetAnimation();
 
 		}
 
