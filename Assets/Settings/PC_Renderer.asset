@@ -78,6 +78,21 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+--- !u!114 &914200015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 619df128327b43488c56a4c59e0fa9f2, type: 3}
+  m_Name: CloudVolume
+  m_EditorClassIdentifier: Assembly-CSharp::Minakuchi.Sky.CloudVolumeFeature
+  m_Active: 1
+  cloudShader: {fileID: 4800000, guid: a09bfe76fd2f4331a820d16168f38aad, type: 3}
+  cloudNoiseData: {fileID: 4900000, guid: 94c7e974af3248a9b0a5c1ac290e4714, type: 3}
 --- !u!114 &237692135761671700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,18 +178,3 @@ MonoBehaviour:
   _injectionPoint: 600
   _strengthProperty: _RadialBlurStrength
   _threshold: 0.001
---- !u!114 &914200015
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 619df128327b43488c56a4c59e0fa9f2, type: 3}
-  m_Name: CloudVolume
-  m_EditorClassIdentifier: Assembly-CSharp::Minakuchi.Sky.CloudVolumeFeature
-  m_Active: 1
-  cloudShader: {fileID: 4800000, guid: a09bfe76fd2f4331a820d16168f38aad, type: 3}
-  cloudNoiseData: {fileID: 4900000, guid: 94c7e974af3248a9b0a5c1ac290e4714, type: 3}
