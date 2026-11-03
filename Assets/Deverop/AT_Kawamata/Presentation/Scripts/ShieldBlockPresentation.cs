@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// シールドで防いだ・防がれたときの演出の窓口。レーサーのShieldBlocked（自分が防いだ）と、
+// シールドで防いだ・防がれたときの演出の窓口。レーサーのShieldBlockPushStarted（自分が防いで押し出された）と、
 // BoostHitLanded（Blocked＝自分のブーストが防がれた）を購読し、各演出を呼ぶ。
 // ・防いだとき：FOVを一瞬広げる、押し出されている間だけ集中線・ラジアルブラー（ブーストと同じもの）。FOVの広げる量は押し出しの初速で決める
 // ・防がれたとき：ヒットストップとカメラの揺れ（横揺れ＋横の傾き。強さは一定）
@@ -44,7 +44,7 @@ public class ShieldBlockPresentation : MonoBehaviour
             return;
         }
 
-        _playerManager.ShieldBlocked += PlayBlockEffect;
+        _playerManager.ShieldBlockPushStarted += PlayBlockEffect;
         _playerManager.BoostHitLanded += PlayBlockedEffect;
     }
 
@@ -55,7 +55,7 @@ public class ShieldBlockPresentation : MonoBehaviour
             return;
         }
 
-        _playerManager.ShieldBlocked -= PlayBlockEffect;
+        _playerManager.ShieldBlockPushStarted -= PlayBlockEffect;
         _playerManager.BoostHitLanded -= PlayBlockedEffect;
     }
 

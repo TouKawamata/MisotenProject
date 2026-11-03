@@ -58,7 +58,7 @@ public class ShieldPresentation : MonoBehaviour
     }
 
     // シールドでブースト接触を防いだ瞬間（この後StopShieldEffectも呼ばれる）。押し出しに合わせた演出はShieldBlockPresentationが行う。
-    private void PlayBlockEffect(float pushSpeed, float pushDuration)
+    private void PlayBlockEffect()
     {
         if (_backShellView != null)
         {

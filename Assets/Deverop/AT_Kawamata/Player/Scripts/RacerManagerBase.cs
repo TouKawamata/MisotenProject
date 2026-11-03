@@ -70,8 +70,11 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     public event Action ShieldEnded;
 
     // シールドでブースト接触を防いだ瞬間（この後、シールドが消えるのでShieldEndedも出る）。
-    // 引数は前への押し出しの初速（m/s）と、押し出す秒数。演出の強さ・長さを押し出しに合わせるのに使う。
-    public event Action<float, float> ShieldBlocked;
+    public event Action ShieldBlocked;
+
+    // シールドで防いで、前へ押し出し始めた瞬間（ShieldBlockedと同じタイミング）。
+    // 引数は押し出しの初速（m/s）と、押し出す秒数。演出の強さ・長さを押し出しに合わせるのに使う。
+    public event Action<float, float> ShieldBlockPushStarted;
 
     // 自分のブーストを相手に当てて、効果があった瞬間（はじいた／シールドで防がれた／スタンさせた）。
     // タックル成功はEBoostHitResult.Stunned。バックミラーの表示条件・当てたときの演出に使う。
@@ -336,7 +339,8 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
             float blockPushDistance = LateralPush.GetDistanceForInitialSpeed(blockPushSpeed, blockPushDuration);
             _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
             _flightController.ApplyForwardPush(blockPushDistance, blockPushDuration);
-            ShieldBlocked?.Invoke(blockPushSpeed, blockPushDuration);
+            ShieldBlocked?.Invoke();
+            ShieldBlockPushStarted?.Invoke(blockPushSpeed, blockPushDuration);
             Log($"シールドでブースト接触を防いだ 初速 {blockPushSpeed:F1}m/s 前へ {blockPushDistance:F1}m（ぶつかってきた速さ {relativeSpeed:F1}m/s）");
             return EBoostHitResult.Blocked;
         }
