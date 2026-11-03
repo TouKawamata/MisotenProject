@@ -22,7 +22,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     [SerializeField] private FlightTuningProfile _shortcutProfile;
 
     [Header("ブースト接触")]
-    [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。DummyRacerと同じアセットを使う")]
+    [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。PlayerとCPUで同じアセットを使う")]
     [SerializeField] private BoostHitProfile _boostHitProfile;
 
     [Tooltip("自分のブーストが相手に当たったことを受け取るBoostHitDetector（前方のshild_01の当たり判定に付ける）。未設定なら、自分か子から探す")]
@@ -52,6 +52,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
+    // 横入力を受け付けない残りの秒数（シールドで防がれてブーストを解除されたとき。検証用）。
+    private float _steeringLockTimer;
+
     // 直近に通知したブースト・シールド・スタンの状態。変化したときだけイベントを出すために持つ。
     private bool _wasBoosting;
     private bool _wasShielding;
@@ -68,6 +71,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
     // シールドでブースト接触を防いだ瞬間（この後、シールドが消えるのでShieldEndedも出る）。
     public event Action ShieldBlocked;
+
+    // シールドで防いで、前へ押し出し始めた瞬間（ShieldBlockedと同じタイミング）。
+    // 引数は押し出しの初速（m/s）と、押し出す秒数。演出の強さ・長さを押し出しに合わせるのに使う。
+    public event Action<float, float> ShieldBlockPushStarted;
 
     // 自分のブーストを相手に当てて、効果があった瞬間（はじいた／シールドで防がれた／スタンさせた）。
     // タックル成功はEBoostHitResult.Stunned。バックミラーの表示条件・当てたときの演出に使う。
@@ -183,6 +190,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
         InitializeInput();
         _stun.Reset();
+        _steeringLockTimer = 0f;
         _flightController.Initialize(_defaultProfile);
         _isInitialized = true;
     }
@@ -199,6 +207,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         _boost.Initialize();
         _shield.Initialize();
         _stun.Reset();
+        _steeringLockTimer = 0f;
         // 発動エリアに居るかどうか（_currentShortcutZone）はShortcutZone側のトリガー通知に任せ、吸着状態だけ解除する。
         _isShortcutProfileActive = false;
         _wasHorizontalAboveThreshold = false;
@@ -225,6 +234,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     private void TickCore(float deltaTime, IReadOnlyRacerData data)
     {
         _stun.Tick(deltaTime);
+        _steeringLockTimer = Mathf.Max(0f, _steeringLockTimer - deltaTime);
         _isFinished = data.IsFinished;
 
         // ゴール後は入力を無視し、ブースト・シールドを解除して、通常のProfileでまっすぐ飛ばす。
@@ -262,8 +272,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         }
 
         // スタン中は入力を受け付けない（左右・ブースト・シールド・ショートカットのすべて）。
+        // シールドで防がれてブーストを解除された後（検証用の切り替えがONのとき）は、横入力だけを受け付けない。
         bool canControl = !_stun.IsStunned;
-        float horizontal = canControl ? input.Horizontal : 0f;
+        float horizontal = canControl && _steeringLockTimer <= 0f ? input.Horizontal : 0f;
 
         if (canControl)
         {
@@ -291,7 +302,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
-    // シールド中 → 後方のshild_01に当たったら防いでシールドが消え、前へ少し押し出される（加速）。体に当たっただけなら無視
+    // シールド中 → 後方のshild_01に当たったら防いでシールドが消え、前へ押し出される（加速。初速はBoostHitProfileの設定で、一定かぶつかってきた速さ次第）。体に当たっただけなら無視
     // （シールド中はshild_01同士で判定する）、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
     // BoostHitDetector専用の入口なので、IBoostHitReceiverとしてだけ呼べるよう明示的に実装する。
     EBoostHitResult IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
@@ -321,10 +332,16 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
                 return EBoostHitResult.Ignored;
             }
 
+            // 押し出しを始める前の速さで差を取る（ビリヤード方式のとき、ぶつかってきた速さで初速が変わる）。
+            float relativeSpeed = hit.AttackerForwardSpeed - _flightController.ForwardSpeed;
+            float blockPushSpeed = _boostHitProfile.EvaluateBlockPushSpeed(relativeSpeed);
+            float blockPushDuration = _boostHitProfile.BlockPushDuration;
+            float blockPushDistance = LateralPush.GetDistanceForInitialSpeed(blockPushSpeed, blockPushDuration);
             _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
-            _flightController.ApplyForwardPush(_boostHitProfile.BlockPushDistance, _boostHitProfile.BlockPushDuration);
+            _flightController.ApplyForwardPush(blockPushDistance, blockPushDuration);
             ShieldBlocked?.Invoke();
-            Log($"シールドでブースト接触を防いだ 前へ {_boostHitProfile.BlockPushDistance:F1}m");
+            ShieldBlockPushStarted?.Invoke(blockPushSpeed, blockPushDuration);
+            Log($"シールドでブースト接触を防いだ 初速 {blockPushSpeed:F1}m/s 前へ {blockPushDistance:F1}m（ぶつかってきた速さ {relativeSpeed:F1}m/s）");
             return EBoostHitResult.Blocked;
         }
 
@@ -337,9 +354,23 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     }
 
     // 自分のブーストが相手に効果を与えたとき（BoostHitDetectorから）。演出・UI向けにそのまま通知する。
+    // シールドで防がれたときは、BoostHitProfileの設定がONならブーストを解除する（押し続けていても、しばらく再発動しない）。
     private void OnBoostHitLanded(EBoostHitResult result)
     {
         Log($"ブーストを当てた（{result}）");
+
+        if (result == EBoostHitResult.Blocked && _boostHitProfile.CancelAttackerBoostOnBlock)
+        {
+            _boost.ForceStop(_boostHitProfile.AttackerBoostLockDuration);
+            Log($"シールドで防がれたため、ブーストを解除した（{_boostHitProfile.AttackerBoostLockDuration:F1}秒は再発動しない）");
+
+            if (_boostHitProfile.LockAttackerSteeringOnCancel)
+            {
+                _steeringLockTimer = Mathf.Max(_steeringLockTimer, _boostHitProfile.AttackerBoostLockDuration);
+                Log($"シールドで防がれたため、{_boostHitProfile.AttackerBoostLockDuration:F1}秒は横入力を受け付けない");
+            }
+        }
+
         BoostHitLanded?.Invoke(result);
     }
 
@@ -361,10 +392,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     }
 
     // ブーストとシールドは同時に使えない。片方を使っている間は、もう片方の「押した」入力を受け付けない（先に押した方を優先）。
-    // 開始には「押した瞬間」が必要なため、押しっぱなしのままGO・スタン明け・シールドの消失を迎えても自動では始まらない。
+    // ブーストは押しっぱなしのままでも、GO・オーバーヒート明け・スタン明け・シールドの解除の後に、ゲージが十分（CanRestartWhileHeld）なら再発動する。
+    // シールドは引き続き「押した瞬間」が必要。
     private void HandleBoostAndShieldInput(IRaceInput input, float rankRatio)
     {
-        if (input.BoostPressed && !_shield.IsActive && _boost.TryActivate(rankRatio))
+        bool wantsBoost = input.BoostPressed || (input.BoostHeld && _boost.CanRestartWhileHeld);
+        if (wantsBoost && !_shield.IsActive && _boost.TryActivate(rankRatio))
         {
             Log($"ブースト発動 順位の割合 {rankRatio:F2} 消費 {_boost.ConsumptionPerSecond:F1}/秒 ゲージ {_boost.Gauge:F1}");
         }
