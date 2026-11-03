@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // プレイヤーカメラの制御。Playerの子オブジェクトとして置き、向き（LookAhead方向へのブレンド・遅延・コースの上方向への追従・
-// 左右入力による傾き）と、1人称／3人称の位置の補間を扱う。上方向の基準はワールドの真上ではなくPlayerのReferenceUp（コースの上方向）。3人称の度合いは演出側（BoostCameraEffect）がIThirdPersonView経由で、
+// 左右入力による傾き・視線の振り）と、1人称／3人称の位置の補間を扱う。上方向の基準はワールドの真上ではなくPlayerのReferenceUp（コースの上方向）。3人称の度合いは演出側（BoostCameraEffect）がIThirdPersonView経由で、
 // 揺れ（位置のずれと横の傾き）は演出側（CameraShakeEffect）がICameraShakeView経由で変えるだけで、カメラのTransformを書き換えるのはこのスクリプトだけにする。
 // Splineへは直接問い合わせず、PlayerFlightControllerが公開する値だけを参照する
 // （二重に最近傍探索を行うと計算コストが倍増し、Playerと異なる最近傍点を拾って向きがズレる恐れがあるため）。
@@ -25,6 +25,13 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
     [Tooltip("左右入力による傾きの追従の遅れ（秒）。0なら遅れなし")]
     [SerializeField] private float steeringTiltSmoothTime = 0.25f;
 
+    [Header("視線の振り")]
+    [Tooltip("左右入力いっぱいのときに、入力の方向へ視線を振る角度（度）。右入力で右を向く。0なら振らない")]
+    [SerializeField] private float steeringLookAngle = 5f;
+
+    [Tooltip("左右入力による視線の振りの追従の遅れ（秒）。0なら遅れなし")]
+    [SerializeField] private float steeringLookSmoothTime = 0.3f;
+
     [Header("3人称")]
     [Tooltip("3人称のときのカメラの位置。カメラの向き（ロールなし）を基準にした、Playerからのオフセット（x=右、y=上、z=前）")]
     [SerializeField] private Vector3 _thirdPersonOffset = new Vector3(0f, 3f, -8f);
@@ -39,6 +46,8 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
     private Vector3 _smoothedUp;
     private float _steeringTilt;
     private float _steeringTiltVelocity;
+    private float _steeringLook;
+    private float _steeringLookVelocity;
 
     // 1人称の位置。プレハブで置いたローカル位置（Playerから見た目の位置）をそのまま使う。
     private Vector3 _firstPersonLocalOffset;
@@ -119,12 +128,22 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
             ? Mathf.SmoothDamp(_steeringTilt, targetTilt, ref _steeringTiltVelocity, steeringTiltSmoothTime, Mathf.Infinity, deltaTime)
             : targetTilt;
 
+        // 右入力（＋）で右を向く（ローカルの上方向まわりの＋で右を向く）。
+        // 3人称の位置の基準（_smoothedForward）には入れないので、カメラは後ろに残ったまま視線だけが振れる。
+        float targetLook = player.Steering * steeringLookAngle;
+        _steeringLook = steeringLookSmoothTime > 0f
+            ? Mathf.SmoothDamp(_steeringLook, targetLook, ref _steeringLookVelocity, steeringLookSmoothTime, Mathf.Infinity, deltaTime)
+            : targetLook;
+
         // 揺れている間は、左右入力による傾きの代わりに揺れの傾きを使う（両方を足して傾き過ぎないように）。
         // 左右入力による傾きは裏で追従し続けるので、揺れが終わればそのまま戻る。揺れの傾きも＋で右なので、符号を逆にする。
         float tilt = Mathf.Lerp(_steeringTilt, -_shakeTilt, _shakeTiltWeight);
 
         Quaternion thirdPersonRotation = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(_thirdPersonRotationOffset), _thirdPersonWeight);
-        transform.rotation = Quaternion.LookRotation(_smoothedForward, _smoothedUp) * thirdPersonRotation * Quaternion.AngleAxis(tilt, Vector3.forward);
+        transform.rotation = Quaternion.LookRotation(_smoothedForward, _smoothedUp)
+            * Quaternion.AngleAxis(_steeringLook, Vector3.up)
+            * thirdPersonRotation
+            * Quaternion.AngleAxis(tilt, Vector3.forward);
 
         // 揺れは最後に足す（位置は毎フレームUpdatePositionで決め直すので、揺れが積み重ならない）。
         transform.position += transform.rotation * _shakeOffset;
@@ -182,6 +201,8 @@ public class CameraController : MonoBehaviour, IThirdPersonView, ICameraShakeVie
         UpdateSmoothedUp(0f);
         _steeringTilt = 0f;
         _steeringTiltVelocity = 0f;
+        _steeringLook = 0f;
+        _steeringLookVelocity = 0f;
         _smoothedThirdPersonOffset = Quaternion.LookRotation(_smoothedForward, _smoothedUp) * _thirdPersonOffset;
         _thirdPersonOffsetVelocity = Vector3.zero;
     }

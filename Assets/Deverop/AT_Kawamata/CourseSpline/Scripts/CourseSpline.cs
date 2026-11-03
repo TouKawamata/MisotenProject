@@ -301,9 +301,18 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         // カメラが常に中心方向へ引っ張られる向きになってしまう。
         // worldPositionの「中心からのズレ」を先読み点にも同じだけ足すことで、
         // 中心線と平行にオフセットした先読み点（＝実際の進行方向に近い狙い先）にする。
+        // ズレはワールド座標のまま足すと、カーブの先では向きが回って前後のズレになってしまう
+        // （90度カーブでは、内側へのズレが前へ、外側へのズレが後ろへのズレになる）。
+        // そのため今の位置の左右・上下の量に分け、先読み点の左右・上下で組み立て直す。
         float distance = FindNearestDistance(worldPosition);
         Vector3 offsetFromCenter = worldPosition - EvaluatePositionByDistance(distance);
-        return EvaluateLookAhead(distance, lookAheadDistance) + offsetFromCenter;
+        float lateralOffset = Vector3.Dot(offsetFromCenter, EvaluateRightByDistance(distance));
+        float verticalOffset = Vector3.Dot(offsetFromCenter, EvaluateUpByDistance(distance));
+
+        float lookAheadDistanceOnCourse = distance + lookAheadDistance;
+        return EvaluateLookAhead(distance, lookAheadDistance)
+            + EvaluateRightByDistance(lookAheadDistanceOnCourse) * lateralOffset
+            + EvaluateUpByDistance(lookAheadDistanceOnCourse) * verticalOffset;
     }
 
     public float GetTunnelRadius(Vector3 worldPosition)
@@ -416,6 +425,185 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
         }
 
         return nearestIndex;
+    }
+
+    // 中心線の曲率半径が、その場所のトンネル半径より小さい区間を探してConsoleに出す。
+    // そういう区間では、カーブの内側を通ると最寄り点が入口側から出口側へ飛び、向き（Forward/Right）が1フレームで大きく回る。
+    // 曲率半径は、前後のサンプルのForwardの角度の変化と、その間の距離から出す。
+    [ContextMenu("曲率半径を検証")]
+    private void VerifyCurvatureRadius()
+    {
+        RebuildSamplesAndCacheHash();
+        if (_samples.Count < 3)
+        {
+            Debug.LogWarning("CourseSpline: サンプルが足りないため検証できません", this);
+            return;
+        }
+
+        List<CourseSplinePoint> points = GetPoints();
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+        int rangeCount = 0;
+        int rangeStartIndex = -1;
+        int rangeEndIndex = -1;
+        float rangeMinRadius = float.MaxValue;
+        float rangeTunnelRadius = 0f;
+
+        for (int i = 1; i < _samples.Count - 1; i++)
+        {
+            float arcLength = _samples[i + 1].Distance - _samples[i - 1].Distance;
+            float angle = Vector3.Angle(_samples[i - 1].Forward, _samples[i + 1].Forward) * Mathf.Deg2Rad;
+            float curvatureRadius = angle > 0.0001f ? arcLength / angle : float.MaxValue;
+            float localTunnelRadius = tunnelRadius * _samples[i].RadiusScale;
+            bool isTooSharp = curvatureRadius < localTunnelRadius;
+
+            if (isTooSharp)
+            {
+                if (rangeStartIndex < 0)
+                {
+                    rangeStartIndex = i;
+                    rangeMinRadius = float.MaxValue;
+                }
+
+                rangeEndIndex = i;
+                if (curvatureRadius < rangeMinRadius)
+                {
+                    rangeMinRadius = curvatureRadius;
+                    rangeTunnelRadius = localTunnelRadius;
+                }
+            }
+
+            bool isLast = i == _samples.Count - 2;
+            if (rangeStartIndex >= 0 && (!isTooSharp || isLast))
+            {
+                rangeCount++;
+                builder.AppendLine($"  {DescribeSampleRange(points, rangeStartIndex, rangeEndIndex)}：最小の曲率半径 {rangeMinRadius:F1}m（トンネル半径 {rangeTunnelRadius:F1}m）");
+                rangeStartIndex = -1;
+            }
+        }
+
+        if (rangeCount == 0)
+        {
+            Debug.Log($"CourseSpline 曲率半径の検証：トンネル半径より急なカーブはありません（全長 {TotalLength:F1}m）", this);
+        }
+        else
+        {
+            Debug.LogWarning($"CourseSpline 曲率半径の検証：トンネル半径より急なカーブが {rangeCount} か所あります（内側を通ると最寄り点が飛びます）\n{builder}", this);
+        }
+    }
+
+    // コースの別の区間どうしが近すぎて、トンネルが重なっている場所を探してConsoleに出す（ヘアピンの行きと帰り、立体交差、隣り合うS字など）。
+    // 重なっていると、最寄り点が別の区間へ飛び、向き・コースの進み具合（順位）が狂う。
+    // 中心線どうしの距離が、両方のトンネル半径の合計より小さければ重なっているとみなす。
+    // 同じカーブの前後（コースに沿った距離が近い）を数えないよう、コースに沿って「半径の合計 × π/2」以上離れた組だけを比べる
+    // （曲率半径がトンネル半径以上のカーブなら、その範囲の前後は重ならない。急すぎるカーブは「曲率半径を検証」で見る）。
+    [ContextMenu("別の区間との近さを検証")]
+    private void VerifySectionClearance()
+    {
+        RebuildSamplesAndCacheHash();
+        int count = _samples.Count;
+        if (count < 2)
+        {
+            Debug.LogWarning("CourseSpline: サンプルが足りないため検証できません", this);
+            return;
+        }
+
+        // サンプルごとに、後ろ（番号の大きいほう）の別の区間の中で一番重なっている相手と、その近さ（中心線どうしの距離 ÷ 半径の合計。1未満で重なり）。
+        float[] worstRatios = new float[count];
+        int[] partners = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            worstRatios[i] = float.MaxValue;
+            partners[i] = -1;
+
+            float radiusI = tunnelRadius * _samples[i].RadiusScale;
+            for (int j = i + 1; j < count; j++)
+            {
+                float requiredDistance = radiusI + tunnelRadius * _samples[j].RadiusScale;
+                if (GetCourseGap(_sampleDistances[i], _sampleDistances[j]) <= requiredDistance * Mathf.PI * 0.5f)
+                {
+                    continue;
+                }
+
+                float sqrDistance = (_samplePositions[i] - _samplePositions[j]).sqrMagnitude;
+                if (sqrDistance >= requiredDistance * requiredDistance)
+                {
+                    continue;
+                }
+
+                float ratio = Mathf.Sqrt(sqrDistance) / requiredDistance;
+                if (ratio < worstRatios[i])
+                {
+                    worstRatios[i] = ratio;
+                    partners[i] = j;
+                }
+            }
+        }
+
+        List<CourseSplinePoint> points = GetPoints();
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+        int rangeCount = 0;
+        int rangeStartIndex = -1;
+        int rangeWorstIndex = -1;
+
+        for (int i = 0; i < count; i++)
+        {
+            bool isOverlapping = partners[i] >= 0;
+            if (isOverlapping)
+            {
+                if (rangeStartIndex < 0)
+                {
+                    rangeStartIndex = i;
+                    rangeWorstIndex = i;
+                }
+                else if (worstRatios[i] < worstRatios[rangeWorstIndex])
+                {
+                    rangeWorstIndex = i;
+                }
+            }
+
+            bool isLast = i == count - 1;
+            if (rangeStartIndex >= 0 && (!isOverlapping || isLast))
+            {
+                int rangeEndIndex = isOverlapping ? i : i - 1;
+                int partner = partners[rangeWorstIndex];
+                float requiredDistance = tunnelRadius * (_samples[rangeWorstIndex].RadiusScale + _samples[partner].RadiusScale);
+
+                rangeCount++;
+                builder.AppendLine($"  {DescribeSampleRange(points, rangeStartIndex, rangeEndIndex)} と {DescribeSampleRange(points, partner, partner)}：" +
+                                   $"中心線どうしの距離 {worstRatios[rangeWorstIndex] * requiredDistance:F1}m（必要な距離 {requiredDistance:F1}m）");
+                rangeStartIndex = -1;
+            }
+        }
+
+        if (rangeCount == 0)
+        {
+            Debug.Log($"CourseSpline 別の区間との近さの検証：トンネルが重なっている場所はありません（全長 {TotalLength:F1}m）", this);
+        }
+        else
+        {
+            Debug.LogWarning($"CourseSpline 別の区間との近さの検証：トンネルが重なっている場所が {rangeCount} か所あります（最寄り点が別の区間へ飛びます）\n{builder}", this);
+        }
+    }
+
+    // 2つの距離のコースに沿った間隔。ループコースなら、始点をまたいだほうが短ければそちらを使う。
+    private float GetCourseGap(float distanceA, float distanceB)
+    {
+        float gap = Mathf.Abs(distanceA - distanceB);
+        return isLoop ? Mathf.Min(gap, TotalLength - gap) : gap;
+    }
+
+    // サンプルの範囲を「距離 a～bm（制御点 X ～ Y）」の形で表す。制御点は範囲を挟む前後の点（範囲がちょうど制御点の上なら、その点だけ）。
+    private string DescribeSampleRange(List<CourseSplinePoint> points, int startIndex, int endIndex)
+    {
+        int clampedSamplesPerSegment = Mathf.Max(4, samplesPerSegment);
+        CourseSplinePoint firstPoint = GetPoint(points, startIndex / clampedSamplesPerSegment);
+        CourseSplinePoint lastPoint = GetPoint(points, (endIndex + clampedSamplesPerSegment - 1) / clampedSamplesPerSegment);
+        string pointText = firstPoint == lastPoint ? firstPoint.name : $"{firstPoint.name} ～ {lastPoint.name}";
+
+        string distanceText = startIndex == endIndex
+            ? $"距離 {_samples[startIndex].Distance:F1}m"
+            : $"距離 {_samples[startIndex].Distance:F1}m ～ {_samples[endIndex].Distance:F1}m";
+        return $"{distanceText}（制御点 {pointText}）";
     }
 #endif
 
