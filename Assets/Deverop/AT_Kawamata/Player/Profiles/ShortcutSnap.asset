@@ -18,6 +18,7 @@ MonoBehaviour:
   _maxCorrectionAccel: 20
   _verticalCorrectionGain: 85
   _maxVerticalCorrectionAccel: 100
+  _verticalCorrectionDamping: 1
   _rollMaxAngle: 25
   _rollSmoothTime: 0.6
   _lookAheadDistance: 30

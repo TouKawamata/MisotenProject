@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Model_03_WireframeGrid
+  m_Shader: {fileID: 4800000, guid: 66ae4e5cf22699a44a1a3aee191e83e2, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _USEWORLDSPACE_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CenterAlpha: 0.12
+    - _ContourInterval: 0.5
+    - _ContourLineWidth: 0.04
+    - _Cull: 0
+    - _DstBlend: 1
+    - _FresnelPower: 2.4
+    - _ScanSliceRange: 3
+    - _ScanSliceSpeed: 1.2
+    - _ScanSliceThickness: 0.12
+    - _SrcBlend: 5
+    - _UseTexColor: 0
+    - _UseWorldSpace: 1
+    - _VerticalGridDensity: 18
+    - _VerticalGridIntensity: 0.65
+    - _ZWrite: 0
+    m_Colors:
+    - _GridColor: {r: 0.2, g: 3.5, b: 4.5, a: 0.95}
+    - _MainColor: {r: 0, g: 1.2, b: 2.2, a: 0.25}
+    - _RimColor: {r: 0.4, g: 2.8, b: 4, a: 0.9}
+    - _ScanPlaneColor: {r: 0.2, g: 3.5, b: 4.5, a: 0.95}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

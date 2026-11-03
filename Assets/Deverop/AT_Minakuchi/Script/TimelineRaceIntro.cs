@@ -14,7 +14,7 @@ using UnityEngine.Timeline;
 public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
 {
     // 既存の Timeline の Player 用 Animation Track 名に合わせる。
-    private const string PlayerTrackName = "Animation Track";
+    private const string PlayerTrackName = "Player Animation";
 
     [Header("必須参照")]
     [SerializeField] private PlayableDirector director;

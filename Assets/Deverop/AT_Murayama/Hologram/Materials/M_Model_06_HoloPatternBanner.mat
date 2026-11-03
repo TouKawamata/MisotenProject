@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Model_06_HoloPatternBanner
+  m_Shader: {fileID: 4800000, guid: 0c37b5f94e5ffd24ba87c1de89c7b31e, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _PATTERNMODE_CYBERARROWS
+  - _USEWORLDSPACESCAN_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CenterAlpha: 0.2
+    - _Cull: 2
+    - _DstBlend: 1
+    - _EdgeFrameWidth: 0.04
+    - _FresnelPower: 2.4
+    - _PatternMode: 2
+    - _PatternScrollSpeed: 1.8
+    - _ScanlineDensity: 26
+    - _ScanlineIntensity: 0.5
+    - _ScanlineSpeed: 2
+    - _SrcBlend: 5
+    - _UseTexColor: 0
+    - _UseWorldSpaceScan: 1
+    - _ZWrite: 0
+    m_Colors:
+    - _EdgeFrameColor: {r: 0.6, g: 4, b: 4.2, a: 1}
+    - _MainColor: {r: 0, g: 2.2, b: 3.2, a: 0.75}
+    - _PatternScale: {r: 6, g: 3, b: 0, a: 0}
+    - _RimColor: {r: 0.5, g: 3.8, b: 4.5, a: 0.95}
+    - _SubColor: {r: 0, g: 0.4, b: 1.2, a: 0.25}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

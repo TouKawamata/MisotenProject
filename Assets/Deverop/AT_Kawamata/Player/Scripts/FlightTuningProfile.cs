@@ -24,6 +24,9 @@ public class FlightTuningProfile : ScriptableObject
     [Header("コース中央への補正（上下）")]
     [SerializeField] private float _verticalCorrectionGain = 0.5f;
     [SerializeField] private float _maxVerticalCorrectionAccel = 20f;
+    [Tooltip("上下の補正の減衰（上下の速さにかけるブレーキ）。1でコースの高さを行き過ぎずに最短で収まる、0ならブレーキなし（ばねのように行き過ぎて揺れる）。1より大きいと、ゆっくり近づく")]
+    [Min(0f)]
+    [SerializeField] private float _verticalCorrectionDamping = 0f;
 
     [Header("カメラ用先読み")]
     [SerializeField] private float _lookAheadDistance = 40f;
@@ -51,6 +54,8 @@ public class FlightTuningProfile : ScriptableObject
     public float VerticalCorrectionGain => _verticalCorrectionGain;
 
     public float MaxVerticalCorrectionAccel => _maxVerticalCorrectionAccel;
+
+    public float VerticalCorrectionDamping => Mathf.Max(0f, _verticalCorrectionDamping);
 
     public float LookAheadDistance => _lookAheadDistance;
 

@@ -32,10 +32,20 @@ namespace Minakuchi.Sky.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("雲と大気圏", EditorStyles.boldLabel);
+            Draw("useMeshClouds", "立体メッシュの雲を使う（開始時）", "再生開始時に生成します。変更後は再生し直してください。OFFでボリューム方式に戻ります。");
+            Draw("cloudMeshShader", "立体雲のシェーダー", "ビルドにも含めるためのシェーダー参照。");
             Draw("upperAtmosphere", "大気圏への移行度", "0で地上の空、1で大気圏付近の空。");
             using (new EditorGUI.DisabledScope(Application.isPlaying))
-                Draw("cloudHeight", Application.isPlaying ? "現在の雲の高さ" : "開始時の雲の高さ", "再生中の上下移動はTriggerの「移動先の雲の高さ」で指定します。");
+                Draw("cloudHeight", Application.isPlaying ? "現在の雲の高さ" : "開始時の雲の高さ", "雲の中心のワールド座標Y。カメラが雲より上へ移動すると下側に見えます。再生中の雲の移動はTriggerで指定します。");
             Draw("cloudScale", "雲の模様の大きさ", "大きくすると雲の模様が広がります。");
+            Draw("cloudThickness", "雲の厚み", "雲の高さを中心とする層の厚さ。初期値400。大きくすると上下にふくらみます。");
+            Draw("cloudDensity", "雲の濃さ", "光の通りにくさ。大きいほど濃く、内部の陰影が強くなります。");
+            Draw("cloudSteps", "立体雲の描画品質", "16〜64。初期値40。大きいほど雲の境界が滑らかになりますが、GPU負荷が増えます。");
+            Draw("cloudShadowStrength", "雲の影の強さ", "太陽方向の雲の厚さによる陰影。0で自己遮光なし。初期値1.3。");
+            Draw("cloudTopContrast", "上から見た雲の陰影", "雲の上から見た凹凸の陰影。初期値1。");
+            Draw("cloudTopBlueTint", "上から見た雲の青み", "雲海に青みを加えます。0で無効、初期値0.65。");
+            Draw("cloudMorningShadow", "朝の影の濃さ", "朝〜10時の陰影の倍率。初期値0.35。10〜14時に通常の強さへ滑らかに戻ります。");
+            Draw("cloudPassageStrength", "雲へ突入・離脱するときの演出", "雲の層の内部で、近くを流れる白い雲に包まれる強さ。上下どちらの通過にも対応。0で無効、初期値1。");
             Draw("enableCloudFlow", "雲を流す", "横方向へ雲を流します。OFFで現在位置に停止し、ONでその位置から再開します。");
             Draw("wind", "雲の流れる方向と速さ", "横方向2軸の移動速度。両方0にすると流れません。");
             Draw("cloudFlowSpeed", "雲の流れる速さの倍率", "初期値は4倍。動きを速くしたい場合は大きくしてください。");
