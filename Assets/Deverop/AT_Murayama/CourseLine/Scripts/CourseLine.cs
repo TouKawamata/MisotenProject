@@ -52,6 +52,8 @@ public class CourseLine : MonoBehaviour
     private readonly List<MeshRenderer> _renderers = new List<MeshRenderer>();
     private readonly Vector4[] _hitSlots = new Vector4[MaxHitSlots];
     private MaterialPropertyBlock _mpb;
+    private bool _renderersCacheChecked;
+    private bool _isPropertyBlockDirty = true;
 
     private static readonly int[] HitDataIds = new int[MaxHitSlots]
     {
@@ -72,10 +74,22 @@ public class CourseLine : MonoBehaviour
     // ライフサイクル
     // ──────────────────────────────────────────────
 
+    private void OnEnable()
+    {
+        _renderersCacheChecked = false;
+        _isPropertyBlockDirty = true;
+    }
+
+    private void OnDestroy()
+    {
+        DestroyGeneratedMeshesOnly();
+    }
+
     private void OnValidate()
     {
         _sampleInterval = Mathf.Max(0.1f, _sampleInterval);
         _height = Mathf.Max(0.01f, _height);
+        _isPropertyBlockDirty = true;
 
         // ExecuteAlways 環境で OnValidate から直接 Rebuild すると
         // DestroyImmediate が呼べないフレームがあるため、遅延実行する。
@@ -92,8 +106,12 @@ public class CourseLine : MonoBehaviour
 
     private void Start()
     {
-        _mpb = new MaterialPropertyBlock();
+        if (_mpb == null)
+        {
+            _mpb = new MaterialPropertyBlock();
+        }
         EnsureRenderersCached();
+        _isPropertyBlockDirty = true;
     }
 
     private void Update()
@@ -109,8 +127,12 @@ public class CourseLine : MonoBehaviour
             _mpb = new MaterialPropertyBlock();
         }
 
-        UpdatePreviewTargets();
-        ApplyPropertyBlock();
+        bool hasPreviewTarget = UpdatePreviewTargets();
+        if (hasPreviewTarget || _isPropertyBlockDirty)
+        {
+            ApplyPropertyBlock();
+            _isPropertyBlockDirty = false;
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -131,6 +153,7 @@ public class CourseLine : MonoBehaviour
         }
 
         _hitSlots[slotIndex] = new Vector4(worldPosition.x, worldPosition.y, worldPosition.z, Mathf.Clamp01(intensity));
+        _isPropertyBlockDirty = true;
     }
 
     /// <summary>
@@ -146,6 +169,7 @@ public class CourseLine : MonoBehaviour
         Vector4 current = _hitSlots[slotIndex];
         current.w = Mathf.Clamp01(intensity);
         _hitSlots[slotIndex] = current;
+        _isPropertyBlockDirty = true;
     }
 
     /// <summary>
@@ -159,6 +183,7 @@ public class CourseLine : MonoBehaviour
         }
 
         _hitSlots[slotIndex] = Vector4.zero;
+        _isPropertyBlockDirty = true;
     }
 
     /// <summary>
@@ -170,10 +195,12 @@ public class CourseLine : MonoBehaviour
         {
             _hitSlots[i] = Vector4.zero;
         }
+        _isPropertyBlockDirty = true;
     }
 
-    private void UpdatePreviewTargets()
+    private bool UpdatePreviewTargets()
     {
+        bool anyUpdated = false;
         for (int i = 0; i < MaxHitSlots; i++)
         {
             Transform target = (i == 0 && _glowTarget != null)
@@ -184,8 +211,10 @@ public class CourseLine : MonoBehaviour
             {
                 Vector3 pos = target.position;
                 _hitSlots[i] = new Vector4(pos.x, pos.y, pos.z, 1f);
+                anyUpdated = true;
             }
         }
+        return anyUpdated;
     }
 
     private void ApplyPropertyBlock()
@@ -209,11 +238,12 @@ public class CourseLine : MonoBehaviour
 
     private void EnsureRenderersCached()
     {
-        if (_renderers.Count > 0)
+        if (_renderers.Count > 0 || _renderersCacheChecked)
         {
             return;
         }
 
+        _renderersCacheChecked = true;
         GetComponentsInChildren(true, _renderers);
         _renderers.RemoveAll(r => r == null || r.gameObject == gameObject);
     }
@@ -229,6 +259,8 @@ public class CourseLine : MonoBehaviour
     {
         ClearChildren();
         _renderers.Clear();
+        _renderersCacheChecked = true;
+        _isPropertyBlockDirty = true;
 
         if (_courseSpline == null || _courseSpline.TotalLength <= 0f)
         {
@@ -379,7 +411,7 @@ public class CourseLine : MonoBehaviour
     }
 
     /// <summary>
-    /// 生成済みの子オブジェクトをすべて削除する。
+    /// 生成済みの子オブジェクトとプロシージャルメッシュをすべて安全に削除する。
     /// </summary>
     private void ClearChildren()
     {
@@ -387,6 +419,20 @@ public class CourseLine : MonoBehaviour
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             GameObject child = transform.GetChild(i).gameObject;
+            MeshFilter mf = child.GetComponent<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null)
+            {
+                Mesh meshToDestroy = mf.sharedMesh;
+                mf.sharedMesh = null;
+                if (Application.isPlaying)
+                {
+                    Destroy(meshToDestroy);
+                }
+                else
+                {
+                    DestroyImmediate(meshToDestroy);
+                }
+            }
 
             if (Application.isPlaying)
             {
@@ -395,6 +441,29 @@ public class CourseLine : MonoBehaviour
             else
             {
                 DestroyImmediate(child);
+            }
+        }
+    }
+
+    private void DestroyGeneratedMeshesOnly()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            Transform child = transform.GetChild(i);
+            if (child == null) continue;
+            MeshFilter mf = child.GetComponent<MeshFilter>();
+            if (mf != null && mf.sharedMesh != null)
+            {
+                Mesh meshToDestroy = mf.sharedMesh;
+                mf.sharedMesh = null;
+                if (Application.isPlaying)
+                {
+                    Destroy(meshToDestroy);
+                }
+                else
+                {
+                    DestroyImmediate(meshToDestroy);
+                }
             }
         }
     }

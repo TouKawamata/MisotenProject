@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// 任意の3Dモデル（機体・障害物・建物・リング・トロフィー等）にアタッチして、
-/// 4種類のホログラムスタイル（王道スキャンライン / 六角形ヘックスシールド / 3D等高線ワイヤーフレーム / サイバーRGBグリッチ）
-/// をワンクリックで切り替えて比較・適用できるコンポーネント。
+/// 任意の3Dモデル（機体・キャラクター・障害物・建物・リング・トロフィー等）にアタッチして、
+/// 7種類のホログラムスタイルをワンクリックで切り替えて比較・適用できるコンポーネント。
+/// ・子階層の複数Renderer（MeshRenderer / SkinnedMeshRenderer）および複数マテリアルスロットにも完全対応。
 /// </summary>
 [ExecuteAlways]
 public class ModelHologramController : MonoBehaviour
@@ -36,6 +37,13 @@ public class ModelHologramController : MonoBehaviour
     [Header("ホログラムスタイル切り替え")]
     [Tooltip("適用する3Dモデルホログラムの種類")]
     [SerializeField] private ModelHologramStyle _hologramStyle = ModelHologramStyle.ClassicScanline;
+
+    [Header("適用範囲・空間基準設定")]
+    [Tooltip("子階層のすべてのRenderer（SkinnedMeshRenderer / MeshRenderer）と全マテリアルスロットに一括適用するか（FBXモデルや複数パーツの機体に推奨）")]
+    [SerializeField] private bool _includeChildRenderers = true;
+
+    [Tooltip("スキャンラインをローカル座標基準にするか（ON: 高速移動する機体・キャラでも走査線がストロボ点滅せず安定します / OFF: ワールド座標基準）")]
+    [SerializeField] private bool _useLocalSpaceScanline = false;
 
     [Header("テクスチャ・カラー設定")]
     [Tooltip("モデルの元テクスチャ（未指定でもホログラム発光します）")]
@@ -78,28 +86,34 @@ public class ModelHologramController : MonoBehaviour
         }
     }
 
-    private Renderer _targetRenderer;
+    private readonly List<Renderer> _targetRenderers = new List<Renderer>();
     private Material _runtimeMaterial;
     private ModelHologramStyle _lastStyle = (ModelHologramStyle)(-1);
 
-    private static readonly int MainTexId          = Shader.PropertyToID("_MainTex");
-    private static readonly int UseTexColorId      = Shader.PropertyToID("_UseTexColor");
-    private static readonly int MainColorId        = Shader.PropertyToID("_MainColor");
-    private static readonly int RimColorId         = Shader.PropertyToID("_RimColor");
-    private static readonly int HexWireColorId     = Shader.PropertyToID("_HexWireColor");
-    private static readonly int GridColorId        = Shader.PropertyToID("_GridColor");
-    private static readonly int ScanPlaneColorId   = Shader.PropertyToID("_ScanPlaneColor");
-    private static readonly int GlitchGlowColorId  = Shader.PropertyToID("_GlitchGlowColor");
-    private static readonly int SubColorId         = Shader.PropertyToID("_SubColor");
-    private static readonly int EmitterColorId     = Shader.PropertyToID("_EmitterColor");
+    private static readonly int MainTexId           = Shader.PropertyToID("_MainTex");
+    private static readonly int UseTexColorId       = Shader.PropertyToID("_UseTexColor");
+    private static readonly int MainColorId         = Shader.PropertyToID("_MainColor");
+    private static readonly int RimColorId          = Shader.PropertyToID("_RimColor");
+    private static readonly int HexWireColorId      = Shader.PropertyToID("_HexWireColor");
+    private static readonly int GridColorId         = Shader.PropertyToID("_GridColor");
+    private static readonly int ScanPlaneColorId    = Shader.PropertyToID("_ScanPlaneColor");
+    private static readonly int GlitchGlowColorId   = Shader.PropertyToID("_GlitchGlowColor");
+    private static readonly int SubColorId          = Shader.PropertyToID("_SubColor");
+    private static readonly int EmitterColorId      = Shader.PropertyToID("_EmitterColor");
+    private static readonly int UseWorldSpaceScanId = Shader.PropertyToID("_UseWorldSpaceScan");
 
     private void OnEnable()
     {
-        EnsureTargetRenderer();
+        RefreshTargetRenderers();
         UpdateMaterial();
     }
 
     private void OnDisable()
+    {
+        CleanupRuntimeMaterial();
+    }
+
+    private void OnDestroy()
     {
         CleanupRuntimeMaterial();
     }
@@ -111,7 +125,7 @@ public class ModelHologramController : MonoBehaviour
         {
             if (this != null)
             {
-                EnsureTargetRenderer();
+                RefreshTargetRenderers();
                 UpdateMaterial();
             }
         };
@@ -135,11 +149,29 @@ public class ModelHologramController : MonoBehaviour
         UpdateMaterial();
     }
 
-    private void EnsureTargetRenderer()
+    private void RefreshTargetRenderers()
     {
-        if (_targetRenderer == null)
+        _targetRenderers.Clear();
+
+        if (_includeChildRenderers)
         {
-            _targetRenderer = GetComponent<Renderer>();
+            Renderer[] found = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < found.Length; i++)
+            {
+                Renderer r = found[i];
+                if (r is MeshRenderer || r is SkinnedMeshRenderer)
+                {
+                    _targetRenderers.Add(r);
+                }
+            }
+        }
+        else
+        {
+            Renderer selfRenderer = GetComponent<Renderer>();
+            if (selfRenderer != null)
+            {
+                _targetRenderers.Add(selfRenderer);
+            }
         }
     }
 
@@ -173,12 +205,15 @@ public class ModelHologramController : MonoBehaviour
 
     public void UpdateMaterial()
     {
-        EnsureTargetRenderer();
-        if (_targetRenderer == null) return;
+        if (_targetRenderers.Count == 0)
+        {
+            RefreshTargetRenderers();
+        }
+        if (_targetRenderers.Count == 0) return;
 
         if (_customMaterial != null)
         {
-            _targetRenderer.sharedMaterial = _customMaterial;
+            AssignMaterialToAllRenderers(_customMaterial);
             return;
         }
 
@@ -198,9 +233,51 @@ public class ModelHologramController : MonoBehaviour
         }
 
         ApplyProperties(_runtimeMaterial);
-        _targetRenderer.sharedMaterial = _runtimeMaterial;
-        _targetRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        _targetRenderer.receiveShadows = false;
+        AssignMaterialToAllRenderers(_runtimeMaterial);
+    }
+
+    private void AssignMaterialToAllRenderers(Material mat)
+    {
+        if (mat == null) return;
+
+        for (int i = 0; i < _targetRenderers.Count; i++)
+        {
+            Renderer r = _targetRenderers[i];
+            if (r == null) continue;
+
+            Material[] currentMats = r.sharedMaterials;
+            int slotCount = (currentMats != null && currentMats.Length > 0) ? currentMats.Length : 1;
+
+            if (slotCount == 1)
+            {
+                r.sharedMaterial = mat;
+            }
+            else
+            {
+                bool allMatch = true;
+                for (int s = 0; s < slotCount; s++)
+                {
+                    if (currentMats[s] != mat)
+                    {
+                        allMatch = false;
+                        break;
+                    }
+                }
+
+                if (!allMatch)
+                {
+                    Material[] newMats = new Material[slotCount];
+                    for (int s = 0; s < slotCount; s++)
+                    {
+                        newMats[s] = mat;
+                    }
+                    r.sharedMaterials = newMats;
+                }
+            }
+
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+        }
     }
 
     private void ApplyProperties(Material mat)
@@ -247,6 +324,10 @@ public class ModelHologramController : MonoBehaviour
         {
             mat.SetColor(EmitterColorId, _accentFeatureColor);
         }
+        if (mat.HasProperty(UseWorldSpaceScanId))
+        {
+            mat.SetFloat(UseWorldSpaceScanId, _useLocalSpaceScanline ? 0f : 1f);
+        }
     }
 
     public static string GetShaderPath(ModelHologramStyle style)
@@ -282,4 +363,3 @@ public class ModelHologramController : MonoBehaviour
         }
     }
 }
-

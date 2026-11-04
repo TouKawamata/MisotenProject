@@ -31,6 +31,7 @@ Shader "Custom/Hologram/ModelHologram"
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend (1=One/Additive, 10=OneMinusSrcAlpha)", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull Mode (2=Back, 0=Off/Both)", Float) = 2
         [Toggle] _ZWrite ("ZWrite (ON for solid silhouette)", Float) = 0
+        [Enum(UnityEngine.Rendering.CompareFunction)] _ZTest ("ZTest (4=LessEqual, 8=Always)", Float) = 4
     }
 
     SubShader
@@ -50,6 +51,7 @@ Shader "Custom/Hologram/ModelHologram"
 
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
+            ZTest [_ZTest]
             Cull [_Cull]
 
             HLSLPROGRAM
@@ -181,4 +183,3 @@ Shader "Custom/Hologram/ModelHologram"
         }
     }
 }
-

@@ -116,6 +116,7 @@ public class HologramFlagMesh : MonoBehaviour
     private MeshFilter _meshFilter;
     private MeshRenderer _meshRenderer;
     private Material _runtimeMaterial;
+    private Mesh _runtimeMesh;
     private HologramShaderType _lastShaderType = (HologramShaderType)(-1);
 
     private static readonly int MainTexId       = Shader.PropertyToID("_MainTex");
@@ -134,6 +135,12 @@ public class HologramFlagMesh : MonoBehaviour
 
     private void OnDisable()
     {
+        CleanupRuntimeMaterial();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupRuntimeMesh();
         CleanupRuntimeMaterial();
     }
 
@@ -214,7 +221,10 @@ public class HologramFlagMesh : MonoBehaviour
 
         if (_generateSubdividedFlagMesh && _meshFilter != null)
         {
-            _meshFilter.sharedMesh = CreateFlagMesh(_meshShape, _flagWidth, _flagHeight, _segmentsX, _segmentsY);
+            CleanupRuntimeMesh();
+            _runtimeMesh = CreateFlagMesh(_meshShape, _flagWidth, _flagHeight, _segmentsX, _segmentsY);
+            _runtimeMesh.hideFlags = HideFlags.DontSave;
+            _meshFilter.sharedMesh = _runtimeMesh;
         }
 
         EnsureMaterial();
@@ -456,6 +466,20 @@ public class HologramFlagMesh : MonoBehaviour
                 return "Custom/Hologram/StandardWavingFlag";
             default:
                 return "Custom/Hologram/HologramFlag_Scanline";
+        }
+    }
+
+    private void CleanupRuntimeMesh()
+    {
+        if (_runtimeMesh != null)
+        {
+            if (_meshFilter != null && _meshFilter.sharedMesh == _runtimeMesh)
+            {
+                _meshFilter.sharedMesh = null;
+            }
+            if (Application.isPlaying) Destroy(_runtimeMesh);
+            else DestroyImmediate(_runtimeMesh);
+            _runtimeMesh = null;
         }
     }
 

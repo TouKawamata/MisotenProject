@@ -17,6 +17,7 @@ namespace AT_Murayama.PlayerStatusUI
     /// ・トラッキングや PlayerManager / PlayerFlightController 側の既存コードを一切変更せず、外部から読み取るだけで安全に動作します。
     /// </summary>
     [ExecuteAlways]
+    [DefaultExecutionOrder(1000)]
     [DisallowMultipleComponent]
     public class PlayerPoseStatusUIController : MonoBehaviour
     {
@@ -211,6 +212,9 @@ namespace AT_Murayama.PlayerStatusUI
         [Range(0.02f, 0.3f)]
         [SerializeField] private float _modeBMiniatureScale = 0.08f;
 
+        [Tooltip("【方式B】トンネルの壁や地形に近づいてもUIモデルが壁に埋もれないよう最前面描画（ZTest Always）を適用するか")]
+        [SerializeField] private bool _alwaysOnTopInModeB = true;
+
         [Header("8. デバッグ・手動テストモード（トラッキング無しで確認用）")]
         [Tooltip("ONにすると PlayerManager の状態に関わらず、下の『手動テスト状態』と『手動Steering』でUIを自由にテストできます")]
         [SerializeField] private bool _useManualTestMode = false;
@@ -241,9 +245,9 @@ namespace AT_Murayama.PlayerStatusUI
         private RawImage _uiRawImage;
         private Text _uiStateLabelText;
 
-        private Camera _cachedMainCamera;
-        private int _savedMainCameraCullingMask;
-        private bool _hasModifiedMainCameraMask;
+        private Camera _modifiedMainCamera;
+        private int _lastExcludedLayer = -1;
+        private bool _hasExcludedLayer;
 
         private readonly List<Renderer> _cachedRenderers = new List<Renderer>();
         private readonly Dictionary<Renderer, Material[]> _originalMaterialsMap = new Dictionary<Renderer, Material[]>();
@@ -259,6 +263,7 @@ namespace AT_Murayama.PlayerStatusUI
         private PlayerUIState _currentState = PlayerUIState.Normal;
         private PlayerUIState _pendingNormalSubState = PlayerUIState.Normal;
         private float _lastNormalSubStateSwitchTime = -10f;
+        private float _nextAutoFindTime = 0f;
 
         private Color _currentMainColor = new Color(0.0f, 2.2f, 3.2f, 0.80f);
         private Color _currentRimColor = new Color(0.4f, 4.0f, 4.8f, 0.95f);
@@ -278,17 +283,19 @@ namespace AT_Murayama.PlayerStatusUI
         private float _editorTransitionRemainingTime = 0f;
 
         // シェーダープロパティIDキャッシュ
-        private static readonly int ShaderProp_BaseColor       = Shader.PropertyToID("_BaseColor");
-        private static readonly int ShaderProp_Color           = Shader.PropertyToID("_Color");
-        private static readonly int ShaderProp_EmissionColor   = Shader.PropertyToID("_EmissionColor");
-        private static readonly int ShaderProp_MainColor       = Shader.PropertyToID("_MainColor");
-        private static readonly int ShaderProp_RimColor        = Shader.PropertyToID("_RimColor");
-        private static readonly int ShaderProp_HexWireColor    = Shader.PropertyToID("_HexWireColor");
-        private static readonly int ShaderProp_GridColor       = Shader.PropertyToID("_GridColor");
-        private static readonly int ShaderProp_ScanPlaneColor  = Shader.PropertyToID("_ScanPlaneColor");
-        private static readonly int ShaderProp_GlitchGlowColor = Shader.PropertyToID("_GlitchGlowColor");
-        private static readonly int ShaderProp_SubColor        = Shader.PropertyToID("_SubColor");
-        private static readonly int ShaderProp_EmitterColor    = Shader.PropertyToID("_EmitterColor");
+        private static readonly int ShaderProp_BaseColor        = Shader.PropertyToID("_BaseColor");
+        private static readonly int ShaderProp_Color            = Shader.PropertyToID("_Color");
+        private static readonly int ShaderProp_EmissionColor    = Shader.PropertyToID("_EmissionColor");
+        private static readonly int ShaderProp_MainColor        = Shader.PropertyToID("_MainColor");
+        private static readonly int ShaderProp_RimColor         = Shader.PropertyToID("_RimColor");
+        private static readonly int ShaderProp_HexWireColor     = Shader.PropertyToID("_HexWireColor");
+        private static readonly int ShaderProp_GridColor        = Shader.PropertyToID("_GridColor");
+        private static readonly int ShaderProp_ScanPlaneColor   = Shader.PropertyToID("_ScanPlaneColor");
+        private static readonly int ShaderProp_GlitchGlowColor  = Shader.PropertyToID("_GlitchGlowColor");
+        private static readonly int ShaderProp_SubColor         = Shader.PropertyToID("_SubColor");
+        private static readonly int ShaderProp_EmitterColor     = Shader.PropertyToID("_EmitterColor");
+        private static readonly int ShaderProp_ZTest            = Shader.PropertyToID("_ZTest");
+        private static readonly int ShaderProp_UseWorldSpaceScan = Shader.PropertyToID("_UseWorldSpaceScan");
 
         // ──────────────────────────────────────────────
         // 公開プロパティ
@@ -319,6 +326,20 @@ namespace AT_Murayama.PlayerStatusUI
         {
             get => _selectedEditState;
             set => _selectedEditState = value;
+        }
+
+        public int UIModelLayer
+        {
+            get => _uiModelLayer;
+            set
+            {
+                int clamped = Mathf.Clamp(value, 0, 31);
+                if (_uiModelLayer != clamped)
+                {
+                    _uiModelLayer = clamped;
+                    UpdateUILayoutAndCamera();
+                }
+            }
         }
 
         public bool EnableEventFlash
@@ -439,6 +460,11 @@ namespace AT_Murayama.PlayerStatusUI
 
         private void OnEnable()
         {
+#if UNITY_EDITOR
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += RestoreMainCameraCullingMask;
+#endif
+            _nextAutoFindTime = 0f;
             AutoFindReferencesIfNeeded();
             SubscribePlayerEvents();
             EnsureStageAndUIReady();
@@ -446,6 +472,19 @@ namespace AT_Murayama.PlayerStatusUI
 
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+#endif
+            UnsubscribePlayerEvents();
+            RestoreMainCameraCullingMask();
+            CleanupGeneratedObjects();
+        }
+
+        private void OnDestroy()
+        {
+#if UNITY_EDITOR
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+#endif
             UnsubscribePlayerEvents();
             RestoreMainCameraCullingMask();
             CleanupGeneratedObjects();
@@ -454,6 +493,8 @@ namespace AT_Murayama.PlayerStatusUI
         private void OnValidate()
         {
             if (this == null) return;
+
+            _uiModelLayer = Mathf.Clamp(_uiModelLayer, 0, 31);
 
             // インスペクター変更時に即座にUIレイアウト・カメラ・マテリアル・色を更新
             if (_stageRoot != null && _modelInstance != null)
@@ -503,6 +544,17 @@ namespace AT_Murayama.PlayerStatusUI
                 if (_stageRoot == null) return;
             }
 
+            // レース開始時にプレイヤー機が後から動的生成（Instantiate）された場合でも自動的に検知・接続する
+            if (Application.isPlaying && !_useManualTestMode && (_playerManager == null || _flightController == null))
+            {
+                float now = Time.unscaledTime;
+                if (now >= _nextAutoFindTime)
+                {
+                    _nextAutoFindTime = now + 0.5f;
+                    AutoFindReferencesIfNeeded();
+                }
+            }
+
             PlayerUIState targetState;
             float steering;
 
@@ -520,6 +572,16 @@ namespace AT_Murayama.PlayerStatusUI
 
             UpdatePoseAndColors(targetState, steering, dt);
             UpdateUILayoutAndCamera();
+        }
+
+        private void LateUpdate()
+        {
+            // 方式B（メインカメラ前3Dミニチュア）のとき、CameraController（LateUpdate）の移動が完了した後に
+            // ステージ位置を再同期することで、カメラ移動に対する1フレーム遅延のガタつき（ジッター）を完全に防止する
+            if (_displayMode == UIDisplayMode.ModeB_CameraForeground3D && _stageRoot != null && _modelInstance != null)
+            {
+                UpdateUILayoutAndCamera();
+            }
         }
 
 #if UNITY_EDITOR
@@ -1100,6 +1162,20 @@ namespace AT_Murayama.PlayerStatusUI
             if (mat.HasProperty(ShaderProp_GlitchGlowColor)) mat.SetColor(ShaderProp_GlitchGlowColor, accentCol);
             if (mat.HasProperty(ShaderProp_SubColor)) mat.SetColor(ShaderProp_SubColor, accentCol * 0.35f);
             if (mat.HasProperty(ShaderProp_EmitterColor)) mat.SetColor(ShaderProp_EmitterColor, accentCol);
+
+            // 方式Bでカメラと一緒に高速移動してもスキャンラインがストロボ点滅しないようローカル空間基準にする
+            if (mat.HasProperty(ShaderProp_UseWorldSpaceScan))
+            {
+                mat.SetFloat(ShaderProp_UseWorldSpaceScan, 0f);
+            }
+
+            // 方式Bにおける壁・地形めり込み防止用の ZTest Always 切り替え
+            bool useAlwaysZ = (_displayMode == UIDisplayMode.ModeB_CameraForeground3D && _alwaysOnTopInModeB);
+            if (mat.HasProperty(ShaderProp_ZTest))
+            {
+                mat.SetFloat(ShaderProp_ZTest, useAlwaysZ ? (float)CompareFunction.Always : (float)CompareFunction.LessEqual);
+            }
+            mat.renderQueue = useAlwaysZ ? 3990 : -1;
         }
 
         // ──────────────────────────────────────────────
@@ -1439,34 +1515,52 @@ namespace AT_Murayama.PlayerStatusUI
             rect.sizeDelta = _uiSize;
         }
 
+        /// <summary>
+        /// 方式AでメインカメラからポーズUIモデル専用レイヤーを除外する。
+        /// 元々ONだった場合のみ自身が除外したフラグを記録し、復元時にピンポイントで戻す。
+        /// </summary>
         private void ApplyMainCameraCullingMaskExclusion()
         {
             Camera mainCam = Camera.main;
             if (mainCam == null) return;
 
-            if (_cachedMainCamera != mainCam)
+            if (_uiModelLayer < 0 || _uiModelLayer >= 32)
             {
                 RestoreMainCameraCullingMask();
-                _cachedMainCamera = mainCam;
-                _savedMainCameraCullingMask = mainCam.cullingMask;
-                _hasModifiedMainCameraMask = true;
+                return;
+            }
+
+            // カメラ参照や除外対象レイヤーが変更された場合は、以前除外していた旧カメラ/旧レイヤーを先に復元
+            if (_modifiedMainCamera != mainCam || _lastExcludedLayer != _uiModelLayer)
+            {
+                RestoreMainCameraCullingMask();
+
+                _modifiedMainCamera = mainCam;
+                _lastExcludedLayer = _uiModelLayer;
+                _hasExcludedLayer = false;
             }
 
             int layerBit = 1 << _uiModelLayer;
             if ((mainCam.cullingMask & layerBit) != 0)
             {
                 mainCam.cullingMask &= ~layerBit;
+                _hasExcludedLayer = true;
             }
         }
 
+        /// <summary>
+        /// 方式Aでメインカメラから除外したポーズUIモデル専用レイヤー（CullingMask）を安全に元通り復元する。
+        /// 自身が除外したレイヤーのみピンポイントで元に戻し、他のレイヤー状態には影響を与えない。
+        /// </summary>
         private void RestoreMainCameraCullingMask()
         {
-            if (_hasModifiedMainCameraMask && _cachedMainCamera != null)
+            if (_hasExcludedLayer && _modifiedMainCamera != null && _lastExcludedLayer >= 0 && _lastExcludedLayer < 32)
             {
-                _cachedMainCamera.cullingMask = _savedMainCameraCullingMask;
+                _modifiedMainCamera.cullingMask |= (1 << _lastExcludedLayer);
             }
-            _hasModifiedMainCameraMask = false;
-            _cachedMainCamera = null;
+            _hasExcludedLayer = false;
+            _lastExcludedLayer = -1;
+            _modifiedMainCamera = null;
         }
 
         private static void SetLayerRecursively(GameObject root, int layer)
