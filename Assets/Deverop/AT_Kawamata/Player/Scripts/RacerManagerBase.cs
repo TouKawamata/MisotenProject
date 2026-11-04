@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // レーサー（Player／CPU）に関する機能の窓口の共通部分。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
@@ -10,7 +11,8 @@ using UnityEngine;
 // shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
-public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
+// 妨害弾は当てられる側（IJammerHitReceiver）だけを持つ。撃つ側はキャラのタイプのプロトタイプ（CharacterPrototypeManager）にある。
+public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, IJammerHitReceiver
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -136,11 +138,49 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     // 発動エリアに入っているShortcutZone（トリガーの方式・閾値を読むため）。入っていなければnull。
     public ShortcutZone CurrentShortcutZone => _currentShortcutZone;
 
+    // 参加者全員（自分も含む）のRacerData。周りのレーサーを見るのに使う。RaceManagerがInitializeの前に渡す。
+    public IReadOnlyList<IReadOnlyRacerData> Racers { get; private set; } = Array.Empty<IReadOnlyRacerData>();
+
+    public void SetRacers(IReadOnlyList<IReadOnlyRacerData> racers)
+    {
+        Racers = racers ?? Array.Empty<IReadOnlyRacerData>();
+    }
+
     // 入力元の初期化（Initializeの中で呼ぶ）。
     protected abstract void InitializeInput();
 
     // このTickで使う入力。ゴール前のTickごとに1回だけ呼ぶ。nullなら、このTickは飛行の計算をしない。
     protected abstract IRaceInput GetInput(float deltaTime, IReadOnlyRacerData data);
+
+    // シールドの設定を差し替える（キャラのタイプの切り替え用）。
+    protected void SetShieldProfile(ShieldProfile profile)
+    {
+        _shield.SetProfile(profile);
+    }
+
+    // ブースト中に使う前方の当たり判定を差し替える（キャラのタイプの切り替え用）。ブースト中に呼んでも、すぐ新しい判定に変わる。
+    protected void SetFrontShield(ShieldShellHitbox frontShell, BoostHitDetector boostHitDetector)
+    {
+        if (_frontShell != null && _frontShell != frontShell)
+        {
+            _frontShell.SetActive(false);
+        }
+
+        if (_boostHitDetector != null)
+        {
+            _boostHitDetector.HitLanded -= OnBoostHitLanded;
+        }
+
+        _frontShell = frontShell;
+        _boostHitDetector = boostHitDetector;
+
+        if (_boostHitDetector != null)
+        {
+            _boostHitDetector.HitLanded += OnBoostHitLanded;
+        }
+
+        UpdateShellHitboxes(IsBoosting, IsShielding);
+    }
 
     public void Initialize()
     {
@@ -350,6 +390,31 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         float pushDistance = _boostHitProfile.EvaluatePushDistance(hit.Closeness);
         _flightController.ApplyLateralPush(hit.PushDirection, pushDistance, _boostHitProfile.PushDuration);
         Log($"ブーストを当てられた（スタン） 近さ {hit.Closeness:F2} 横ずれ {pushDistance:F1}m{(hit.HasPushDirection ? "" : "（向き未確定→コース中央側）")}");
+        return EBoostHitResult.Stunned;
+    }
+
+    // 妨害弾が当たったとき、JammerProjectileから呼ばれる。ゴール後・無敵中 → 無視、
+    // シールド中 → 防いでシールドが消える（向きは問わない。ブースト接触と違い、前へ押し出さないので加速しない）、
+    // それ以外 → ブースト中でもブーストを止めてスタン（ブースト接触と同じスタンだが、横ずれはしない）。
+    // JammerProjectile専用の入口なので、IJammerHitReceiverとしてだけ呼べるよう明示的に実装する。
+    EBoostHitResult IJammerHitReceiver.ReceiveJammerHit()
+    {
+        if (!_isInitialized || _isFinished || _stun.IsInvincible)
+        {
+            return EBoostHitResult.Ignored;
+        }
+
+        if (_shield.TryBlock())
+        {
+            _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
+            ShieldBlocked?.Invoke();
+            Log("シールドで妨害弾を防いだ");
+            return EBoostHitResult.Blocked;
+        }
+
+        _boost.ForceStop();
+        _stun.BeginStun(_boostHitProfile.StunDuration, _boostHitProfile.InvincibleDuration);
+        Log("妨害弾を当てられた（スタン）");
         return EBoostHitResult.Stunned;
     }
 

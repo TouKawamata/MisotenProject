@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 // CPUの窓口。処理の中身はRacerManagerBase（PlayerManagerと共通）で、入力をCPUの入力（判断）から受け取るところだけが違う。
@@ -16,18 +14,10 @@ public class CPUManager : RacerManagerBase
 
     private IRaceInput _input;
 
-    // 参加者全員（自分も含む）のRacerData。CPUの入力が周りのレーサーを見るのに使う。RaceManagerがInitializeの前に渡す。
-    public IReadOnlyList<IReadOnlyRacerData> Racers { get; private set; } = Array.Empty<IReadOnlyRacerData>();
-
     // コードから入力を渡す（MonoBehaviourでない入力の場合）。Inspectorの設定より優先する。いつ呼んでも、次のTickから使う。
     public void SetInputSource(IRaceInput input)
     {
         _input = input;
-    }
-
-    public void SetRacers(IReadOnlyList<IReadOnlyRacerData> racers)
-    {
-        Racers = racers ?? Array.Empty<IReadOnlyRacerData>();
     }
 
     protected override void InitializeInput()

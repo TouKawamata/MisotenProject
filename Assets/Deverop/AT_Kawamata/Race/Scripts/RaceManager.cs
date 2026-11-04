@@ -79,6 +79,8 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
             return;
         }
 
+        // 同じリストを渡すので、この後に加わる参加者も見える。
+        _playerManager.SetRacers(_racerDataList);
         _playerManager.Initialize();
 
         _entries.Clear();

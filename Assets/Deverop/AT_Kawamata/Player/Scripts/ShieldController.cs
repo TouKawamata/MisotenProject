@@ -34,6 +34,12 @@ public class ShieldController : MonoBehaviour
     // 最高速度に掛ける倍率。シールドを張っていなければ1。
     public float MaxSpeedMultiplier => _state == EState.Active ? _profile.MaxSpeedMultiplier : 1f;
 
+    // 使う設定を差し替える（キャラのタイプの切り替え用）。今の状態はそのままで、次に読むときから新しい設定になる。
+    public void SetProfile(ShieldProfile profile)
+    {
+        _profile = profile;
+    }
+
     public bool Initialize()
     {
         if (_profile == null)
