@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Gantry_CleanWhite
+  m_Shader: {fileID: 4800000, guid: 9c2f3001bc5f492098d1a100ca000010, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _GratingBarThickness: 0.18
+    - _GratingEnable: 0
+    - _GratingTiling: 24
+    - _HazardEnable: 1
+    - _HazardTiling: 24
+    - _HazardWidth: 0.08
+    - _Metallic: 0.3
+    - _Smoothness: 0.65
+    - _TreadEnable: 1
+    - _TreadTiling: 36
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.92, g: 0.94, b: 0.96, a: 1}
+    - _DarkAccentColor: {r: 0.16, g: 0.18, b: 0.22, a: 1}
+    - _HazardColorA: {r: 0.98, g: 0.82, b: 0.05, a: 1}
+    - _HazardColorB: {r: 0.12, g: 0.12, b: 0.14, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
