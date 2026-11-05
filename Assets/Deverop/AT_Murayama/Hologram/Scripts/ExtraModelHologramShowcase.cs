@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
 /// 追加の汎用3Dモデル用ホログラム4種（⑧GhostRim / ⑨Dissolve / ⑩TriplanarDots / ⑪GradientEnergy）を
 /// インスペクター上のボタンからワンクリックで切り替えたり、4種横並び比較サンプルを生成できるコンポーネント。
+/// ・子階層の複数Renderer（MeshRenderer / SkinnedMeshRenderer）および複数マテリアルスロットにも完全対応。
 /// （上部 Tools メニューには一切項目を追加せず、すべてインスペクター内で完結します）
 /// </summary>
 [ExecuteAlways]
@@ -25,8 +27,11 @@ public class ExtraModelHologramShowcase : MonoBehaviour
     }
 
     [Header("単体モデル用：スタイル切り替え")]
-    [Tooltip("このオブジェクト自身の Renderer に適用する汎用ホログラムスタイル")]
+    [Tooltip("このオブジェクト（および子階層）の Renderer に適用する汎用ホログラムスタイル")]
     [SerializeField] private ExtraHologramStyle _style = ExtraHologramStyle.GhostRim;
+
+    [Tooltip("子階層のすべてのRenderer（SkinnedMeshRenderer / MeshRenderer）と全マテリアルスロットに一括適用するか")]
+    [SerializeField] private bool _includeChildRenderers = true;
 
     [Tooltip("⑨ Dissolve 選択時の消滅進行度（0 = 完全表示, 1 = 完全消滅）")]
     [Range(0f, 1f)]
@@ -51,7 +56,7 @@ public class ExtraModelHologramShowcase : MonoBehaviour
     [Tooltip("一括生成する比較サンプル同士の間隔（m）")]
     [SerializeField] private float _spacing = 3.2f;
 
-    private Renderer _targetRenderer;
+    private readonly List<Renderer> _targetRenderers = new List<Renderer>();
     private Material _runtimeMaterial;
     private ExtraHologramStyle _lastStyle = (ExtraHologramStyle)(-1);
 
@@ -79,10 +84,16 @@ public class ExtraModelHologramShowcase : MonoBehaviour
 
     private void OnEnable()
     {
+        RefreshTargetRenderers();
         UpdateSingleModelMaterial();
     }
 
     private void OnDisable()
+    {
+        CleanupRuntimeMaterial();
+    }
+
+    private void OnDestroy()
     {
         CleanupRuntimeMaterial();
     }
@@ -94,6 +105,7 @@ public class ExtraModelHologramShowcase : MonoBehaviour
         {
             if (this != null)
             {
+                RefreshTargetRenderers();
                 UpdateSingleModelMaterial();
             }
         };
@@ -107,6 +119,40 @@ public class ExtraModelHologramShowcase : MonoBehaviour
     }
 
     public ExtraHologramStyle GetStyle() => _style;
+
+    private void RefreshTargetRenderers()
+    {
+        _targetRenderers.Clear();
+
+        if (_includeChildRenderers)
+        {
+            Renderer[] found = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < found.Length; i++)
+            {
+                Renderer r = found[i];
+                if (r == null) continue;
+
+                // 比較サンプル一括生成で作られた子オブジェクト（M_Model_08〜11）は個別マテリアルを維持するため除外
+                if (r.gameObject != gameObject && r.gameObject.name.StartsWith("M_Model_"))
+                {
+                    continue;
+                }
+
+                if (r is MeshRenderer || r is SkinnedMeshRenderer)
+                {
+                    _targetRenderers.Add(r);
+                }
+            }
+        }
+        else
+        {
+            Renderer selfRenderer = GetComponent<Renderer>();
+            if (selfRenderer != null)
+            {
+                _targetRenderers.Add(selfRenderer);
+            }
+        }
+    }
 
     /// <summary>
     /// 現在のインスペクター設定（スタイル・各種パラメータ）を反映した独立マテリアルインスタンスを新規生成
@@ -145,17 +191,15 @@ public class ExtraModelHologramShowcase : MonoBehaviour
 
     public void UpdateSingleModelMaterial()
     {
-        if (_targetRenderer == null)
+        if (_targetRenderers.Count == 0)
         {
-            _targetRenderer = GetComponent<Renderer>();
+            RefreshTargetRenderers();
         }
-        if (_targetRenderer == null) return;
+        if (_targetRenderers.Count == 0) return;
 
         if (_customMaterial != null)
         {
-            _targetRenderer.sharedMaterial = _customMaterial;
-            _targetRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _targetRenderer.receiveShadows = false;
+            AssignMaterialToAllRenderers(_customMaterial);
             return;
         }
 
@@ -183,9 +227,51 @@ public class ExtraModelHologramShowcase : MonoBehaviour
             _runtimeMaterial.SetFloat(AutoLoopSpeedId, _dissolveAutoLoopSpeed);
         }
 
-        _targetRenderer.sharedMaterial = _runtimeMaterial;
-        _targetRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        _targetRenderer.receiveShadows = false;
+        AssignMaterialToAllRenderers(_runtimeMaterial);
+    }
+
+    private void AssignMaterialToAllRenderers(Material mat)
+    {
+        if (mat == null) return;
+
+        for (int i = 0; i < _targetRenderers.Count; i++)
+        {
+            Renderer r = _targetRenderers[i];
+            if (r == null) continue;
+
+            Material[] currentMats = r.sharedMaterials;
+            int slotCount = (currentMats != null && currentMats.Length > 0) ? currentMats.Length : 1;
+
+            if (slotCount == 1)
+            {
+                r.sharedMaterial = mat;
+            }
+            else
+            {
+                bool allMatch = true;
+                for (int s = 0; s < slotCount; s++)
+                {
+                    if (currentMats[s] != mat)
+                    {
+                        allMatch = false;
+                        break;
+                    }
+                }
+
+                if (!allMatch)
+                {
+                    Material[] newMats = new Material[slotCount];
+                    for (int s = 0; s < slotCount; s++)
+                    {
+                        newMats[s] = mat;
+                    }
+                    r.sharedMaterials = newMats;
+                }
+            }
+
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+        }
     }
 
     public static string GetShaderName(ExtraHologramStyle style)

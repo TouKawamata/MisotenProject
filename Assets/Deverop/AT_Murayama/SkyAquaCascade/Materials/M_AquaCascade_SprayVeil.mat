@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_AquaCascade_SprayVeil
+  m_Shader: {fileID: 4800000, guid: a7c45001bc5f492098d1a100ca000010, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2995
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _FlowDistortionTex:
+        m_Texture: {fileID: 2800000, guid: a7c45001bc5f492098d1a100ca000016, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FluidNoiseTex:
+        m_Texture: {fileID: 2800000, guid: a7c45001bc5f492098d1a100ca000015, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CameraFadeEnd: 4.5
+    - _CameraFadeStart: 1.2
+    - _Cull: 0
+    - _DstBlend: 10
+    - _EdgeFadePower: 2.0
+    - _EvaporationStart: 0.65
+    - _FlowSpeed: 1.6
+    - _LayerMode: 1
+    - _MistBlurRadius: 0.012
+    - _RefractionStrength: 0.035
+    - _SoftDepthDistance: 2.2
+    - _SpecularIntensity: 2.4
+    - _SpecularSmoothness: 48
+    - _SrcBlend: 5
+    - _StreamTilingX: 3.0
+    - _StreamTilingY: 5.0
+    - _Turbulence: 0.45
+    - _ZTest: 4
+    - _ZWrite: 0
+    m_Colors:
+    - _DeepCascadeColor: {r: 0.18, g: 0.68, b: 0.92, a: 0.82}
+    - _FoamColor: {r: 1.15, g: 1.22, b: 1.28, a: 0.95}
+    - _ShallowAquaColor: {r: 0.55, g: 0.9, b: 1, a: 0.65}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

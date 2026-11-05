@@ -102,6 +102,8 @@ public class DummyRacer : MonoBehaviour, IBoostHitReceiver, IRacer, IBoostAttack
 
     public bool IsBoosting => _isBoosting;
 
+    public float ForwardSpeed => GetCurrentSpeed();
+
     // DummyRacerはシールドを使わない
     public bool IsShielding => false;
 

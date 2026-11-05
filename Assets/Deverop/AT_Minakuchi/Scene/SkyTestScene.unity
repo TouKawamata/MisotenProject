@@ -3006,6 +3006,143 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3990475265187503500, guid: ab137c1a93c6a724f95ea6151001adc5, type: 3}
   m_PrefabInstance: {fileID: 267621220}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &271623141
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 271623145}
+  - component: {fileID: 271623144}
+  - component: {fileID: 271623143}
+  - component: {fileID: 271623142}
+  m_Layer: 0
+  m_Name: Camera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &271623142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271623141}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!81 &271623143
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271623141}
+  m_Enabled: 1
+--- !u!20 &271623144
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271623141}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 1
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!4 &271623145
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271623141}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.10717021, y: 0.78529066, z: -0.14194363, w: 0.5930306}
+  m_LocalPosition: {x: -403.9522, y: 242.6211, z: 676.63086}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &287492949
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7399,6 +7536,108 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
+--- !u!1001 &677372365
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: sky
+      value: 
+      objectReference: {fileID: 1654811840}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: targetActor
+      value: 
+      objectReference: {fileID: 659967152165127085}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationHour
+      value: 11.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: atmosphereEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: overrideTimeOfDay
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: transitionSeconds
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: overrideCloudHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationCloudHeight
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationCloudCoverage
+      value: 0.783
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -251.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 572.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.9932345
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.11612609
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 13.337
+      objectReference: {fileID: 0}
+    - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6401365679133084884, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Size.x
+      value: 80
+      objectReference: {fileID: 0}
+    - target: {fileID: 6401365679133084884, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Size.y
+      value: 20000
+      objectReference: {fileID: 0}
+    - target: {fileID: 7154881459192135128, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: m_Name
+      value: "02 \u5927\u6C17\u570F\u4ED8\u8FD1\u3078\uFF0815\u79D2\u30FB\u663C\u9593\uFF09
+        (1)"
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
 --- !u!1001 &678224709
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7938,7 +8177,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudHeight
-      value: 300
+      value: 1200
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
@@ -8385,6 +8624,40 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 746480275}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &755325136 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+  m_PrefabInstance: {fileID: 1654811839}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &755325139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755325136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1001 &770558468
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9154,7 +9427,7 @@ PrefabInstance:
       objectReference: {fileID: 659967152165127085}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: atmosphereEnabled
@@ -9166,7 +9439,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: transitionSeconds
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: overrideCloudHeight
@@ -9174,11 +9447,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudHeight
-      value: -100
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
-      value: 1
+      value: 0.783
       objectReference: {fileID: 0}
     - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -16425,9 +16698,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: timeOfDay
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudHeight
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: skyTemplate
+      value: 
+      objectReference: {fileID: 2100000, guid: cdc7b40c5e5b4ee7b665dad3c037a55d, type: 2}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetSpread
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudCoverage
+      value: 0.392
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetColor.b
@@ -16450,6 +16743,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: cloudShadowStrength
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: enableDemoCameraControl
       value: 0
       objectReference: {fileID: 0}
@@ -16460,6 +16757,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9839215780587951, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1841003561}
+    - targetCorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 755325139}
   m_SourcePrefab: {fileID: 100100000, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
 --- !u!114 &1654811840 stripped
 MonoBehaviour:
@@ -19644,12 +19944,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 659967152165127085}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
+      propertyPath: destinationHour
+      value: 17.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: overrideTimeOfDay
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationCloudCoverage
-      value: 0.14
+      value: 0.536
       objectReference: {fileID: 0}
     - target: {fileID: 5587574794579189680, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -22121,4 +22425,6 @@ SceneRoots:
   - {fileID: 1654811839}
   - {fileID: 1903181123}
   - {fileID: 844331273}
+  - {fileID: 677372365}
   - {fileID: 720496362}
+  - {fileID: 271623145}

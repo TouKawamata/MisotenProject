@@ -1,10 +1,11 @@
 using UnityEngine;
 
-// ブースト接触を受けたときの効果の設定の塊。PlayerとDummyRacer（CPU）で同じアセットを使う。
+// ブースト接触を受けたときの効果の設定の塊。PlayerとCPUで同じアセットを使う。
 // ・ブースト中でない相手に当たった → 当てられた側がスタン（入力不可・減速）＋横ずれし、その後しばらく無敵
 //   横ずれの距離は、当てた側の左右方向で見た中心どうしの近さ（BoostHitInfo.Closeness）で変わる
 // ・お互いにブースト中 → お互いを少しはじくだけ（ブーストは解除しない）
 // ・シールド中の相手の後方のshild_01に当たった → 防がれる。防いだ側は少し前へ押し出される（加速）
+//   押し出しは初速で決める。検証用の切り替えで、初速をぶつかってきた速さで変えたり（ビリヤードの玉突きのイメージ）、当てた側のブーストを解除したりできる
 [CreateAssetMenu(fileName = "BoostHitProfile", menuName = "Race/BoostHitProfile")]
 public class BoostHitProfile : ScriptableObject
 {
@@ -34,10 +35,27 @@ public class BoostHitProfile : ScriptableObject
     [SerializeField] private float _bounceInterval = 0.5f;
 
     [Header("シールドで防いだとき")]
-    [Tooltip("ブースト中の相手を後方のshild_01で防いだとき、防いだ側を前へ押し出す距離（m）。最高速度に関係なく押し出す")]
-    [SerializeField] private float _blockPushDistance = 6f;
+    [Tooltip("ブースト中の相手を後方のshild_01で防いだとき、防いだ側を前へ押し出す初速（m/s）。押し出しは最初が一番速く、Block Push Durationの秒数で0まで落ちる"
+        + "（進む距離＝初速×秒数÷2）。速度ではなく位置に足すので、最高速度に関係なく押し出す")]
+    [SerializeField] private float _blockPushSpeed = 12f;
     [Tooltip("前へ押し出し切るまでの秒数（最初に大きく動き、だんだん止まる）")]
     [SerializeField] private float _blockPushDuration = 0.5f;
+
+    [Header("シールドで防いだとき（検証用）")]
+    [Tooltip("ON：ぶつかってきた速さ（当てた側の前進の速さ − 防いだ側の前進の速さ）の一部を、防いだ側の押し出しの初速として受け取る（ビリヤードの玉突きのイメージ）。OFF：Block Push Speedで一定")]
+    [SerializeField] private bool _useBilliardBlockPush;
+    [Tooltip("ぶつかってきた速さのうち、押し出しの初速として受け取る割合（1＝速さの差をまるごと受け取る）")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _billiardSpeedTransferRate = 0.3f;
+    [Tooltip("ビリヤード方式のときの、押し出しの初速の上限（m/s）")]
+    [SerializeField] private float _billiardMaxPushSpeed = 60f;
+    [Tooltip("ON：防がれた側（当てた側）のブーストを解除する。OFF：解除しない")]
+    [SerializeField] private bool _cancelAttackerBoostOnBlock;
+    [Tooltip("ブーストを解除されてから、再び発動できるようになるまでの秒数（押し続けていても、押し直しても発動しない）。"
+        + "Lock Attacker Steering On CancelがONなら、この秒数だけ横入力も受け付けない")]
+    [SerializeField] private float _attackerBoostLockDuration = 1f;
+    [Tooltip("ON：ブーストを解除されたとき、Attacker Boost Lock Durationの秒数だけ横入力も受け付けない（Cancel Attacker Boost On BlockがONのときだけ）。OFF：横入力は受け付ける")]
+    [SerializeField] private bool _lockAttackerSteeringOnCancel;
 
     public float StunDuration => Mathf.Max(0f, _stunDuration);
 
@@ -51,9 +69,29 @@ public class BoostHitProfile : ScriptableObject
 
     public float BounceInterval => Mathf.Max(0f, _bounceInterval);
 
-    public float BlockPushDistance => Mathf.Max(0f, _blockPushDistance);
+    public float BlockPushSpeed => Mathf.Max(0f, _blockPushSpeed);
 
     public float BlockPushDuration => Mathf.Max(0f, _blockPushDuration);
+
+    public bool UseBilliardBlockPush => _useBilliardBlockPush;
+
+    public bool CancelAttackerBoostOnBlock => _cancelAttackerBoostOnBlock;
+
+    public float AttackerBoostLockDuration => Mathf.Max(0f, _attackerBoostLockDuration);
+
+    public bool LockAttackerSteeringOnCancel => _lockAttackerSteeringOnCancel;
+
+    // シールドで防いだ側を前へ押し出す初速（m/s）。relativeSpeed：当てた側の前進の速さ − 防いだ側の前進の速さ（m/s）。
+    // ビリヤード方式がOFFならBlockPushSpeedで一定。
+    public float EvaluateBlockPushSpeed(float relativeSpeed)
+    {
+        if (!_useBilliardBlockPush)
+        {
+            return BlockPushSpeed;
+        }
+
+        return Mathf.Clamp(relativeSpeed * _billiardSpeedTransferRate, 0f, Mathf.Max(0f, _billiardMaxPushSpeed));
+    }
 
     // closeness：0＝端をかすめた、1＝中心どうしが一致。
     public float EvaluatePushDistance(float closeness)

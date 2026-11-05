@@ -12,6 +12,7 @@ using UnityEngine.UI;
 /// さらに【平らな帯（Ribbon）】と【円柱トンネル（CylinderTube）】をリアルタイムに切り替えて比較・検証できるコンポーネント。
 /// </summary>
 [ExecuteAlways]
+[DefaultExecutionOrder(1000)]
 public class CourseMinimapController : MonoBehaviour
 {
     public enum MinimapDisplayMode
@@ -183,6 +184,7 @@ public class CourseMinimapController : MonoBehaviour
     private bool _yawInitialized;
     private MinimapMeshShape _lastBuiltShape = (MinimapMeshShape)(-1);
     private int _lastBuiltSegments = -1;
+    private float _nextAutoFindTime = 0f;
 
     private static readonly int PlayerLocalPosId    = Shader.PropertyToID("_PlayerLocalPos");
     private static readonly int VisibleRadiusId     = Shader.PropertyToID("_VisibleRadius");
@@ -195,6 +197,7 @@ public class CourseMinimapController : MonoBehaviour
 
     private Camera _modifiedMainCamera;
     private int _lastExcludedLayer = -1;
+    private bool _hasExcludedLayer;
 
     // ──────────────────────────────────────────────
     // ライフサイクル
@@ -202,32 +205,83 @@ public class CourseMinimapController : MonoBehaviour
 
     private void OnEnable()
     {
-        AutoFindReferences();
+#if UNITY_EDITOR
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += RestoreMainCameraCullingMask;
+#endif
+        _nextAutoFindTime = 0f;
+        AutoFindReferences(forceImmediate: true);
         EnsureHierarchyAndRebuild();
+        UpdateModeStateAndTransforms();
+        UpdateIconsAndShaderProperties();
     }
 
     private void OnDisable()
     {
+#if UNITY_EDITOR
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+#endif
         RestoreMainCameraCullingMask();
         ReleaseRenderTextureSafely();
+        CleanupRuntimeMaterials();
     }
 
     private void OnDestroy()
     {
+#if UNITY_EDITOR
+        UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
+#endif
         RestoreMainCameraCullingMask();
         ReleaseRenderTextureSafely();
+        ClearGeneratedChildren();
+        CleanupRuntimeMaterials();
     }
 
     /// <summary>
     /// 方式Aでメインカメラから除外したミニマップ専用レイヤー（CullingMask）を安全に元通り復元する。
+    /// 自身が除外したレイヤーのみピンポイントで元に戻し、他のレイヤー状態には影響を与えない。
     /// </summary>
     private void RestoreMainCameraCullingMask()
     {
-        if (_modifiedMainCamera != null && _lastExcludedLayer >= 0)
+        if (_hasExcludedLayer && _modifiedMainCamera != null && _lastExcludedLayer >= 0 && _lastExcludedLayer < 32)
         {
             _modifiedMainCamera.cullingMask |= (1 << _lastExcludedLayer);
-            _lastExcludedLayer = -1;
-            _modifiedMainCamera = null;
+        }
+        _hasExcludedLayer = false;
+        _lastExcludedLayer = -1;
+        _modifiedMainCamera = null;
+    }
+
+    /// <summary>
+    /// 方式Aでメインカメラからミニマップ専用レイヤーを除外する。
+    /// 元々ONだった場合のみ自身が除外したフラグを記録し、復元時にピンポイントで戻す。
+    /// </summary>
+    private void ApplyMainCameraCullingMaskExclusion()
+    {
+        Camera mainCam = Camera.main;
+        if (mainCam == null) return;
+
+        if (_minimapLayer < 0 || _minimapLayer >= 32)
+        {
+            RestoreMainCameraCullingMask();
+            return;
+        }
+
+        // カメラ参照やレイヤー番号が変わった場合は、以前除外していた旧カメラ/旧レイヤーを先に復元
+        if (_modifiedMainCamera != mainCam || _lastExcludedLayer != _minimapLayer)
+        {
+            RestoreMainCameraCullingMask();
+
+            _modifiedMainCamera = mainCam;
+            _lastExcludedLayer = _minimapLayer;
+            _hasExcludedLayer = false;
+        }
+
+        int layerBit = 1 << _minimapLayer;
+        if ((mainCam.cullingMask & layerBit) != 0)
+        {
+            mainCam.cullingMask &= ~layerBit;
+            _hasExcludedLayer = true;
         }
     }
 
@@ -241,6 +295,7 @@ public class CourseMinimapController : MonoBehaviour
         if (_subCamera != null)
         {
             _subCamera.targetTexture = null;
+            _subCamera.enabled = false;
         }
         else
         {
@@ -248,7 +303,11 @@ public class CourseMinimapController : MonoBehaviour
             if (camTrans != null)
             {
                 Camera cam = camTrans.GetComponent<Camera>();
-                if (cam != null) cam.targetTexture = null;
+                if (cam != null)
+                {
+                    cam.targetTexture = null;
+                    cam.enabled = false;
+                }
             }
         }
 
@@ -257,17 +316,50 @@ public class CourseMinimapController : MonoBehaviour
             _uiRawImage.texture = null;
         }
 
+        if (_uiCanvas != null)
+        {
+            _uiCanvas.enabled = false;
+        }
+
         if (_renderTexture != null)
         {
             _renderTexture.Release();
-            if (Application.isPlaying) Destroy(_renderTexture);
-            else DestroyImmediate(_renderTexture);
+            DestroyObjectSafely(_renderTexture);
             _renderTexture = null;
         }
     }
 
+    private void CleanupRuntimeMaterials()
+    {
+        if (_runtimeRoadMat != null && _runtimeRoadMat != _roadMaterial)
+        {
+            DestroyObjectSafely(_runtimeRoadMat);
+        }
+        _runtimeRoadMat = null;
+
+        if (_runtimePlayerIconMat != null)
+        {
+            DestroyObjectSafely(_runtimePlayerIconMat);
+            _runtimePlayerIconMat = null;
+        }
+
+        if (_runtimeRacerIconMat != null)
+        {
+            DestroyObjectSafely(_runtimeRacerIconMat);
+            _runtimeRacerIconMat = null;
+        }
+    }
+
+    private static void DestroyObjectSafely(Object obj)
+    {
+        if (obj == null) return;
+        if (Application.isPlaying) Destroy(obj);
+        else DestroyImmediate(obj);
+    }
+
     private void OnValidate()
     {
+        _minimapLayer = Mathf.Clamp(_minimapLayer, 0, 31);
         _sampleInterval = Mathf.Max(0.5f, _sampleInterval);
         _roadWidthScale = Mathf.Max(0.1f, _roadWidthScale);
         _cylinderRadialSegments = Mathf.Clamp(_cylinderRadialSegments, 4, 32);
@@ -278,11 +370,17 @@ public class CourseMinimapController : MonoBehaviour
         _miniatureScale = Mathf.Clamp(_miniatureScale, 0.00005f, 0.05f);
         _wholeCourseMiniatureApparentSize = Mathf.Clamp(_wholeCourseMiniatureApparentSize, 0.05f, 1.5f);
         _wholeCourseIconScaleMultiplier = Mathf.Max(0.5f, _wholeCourseIconScaleMultiplier);
+
+        if (_hologramPivot != null && _meshRoot != null)
+        {
+            UpdateModeStateAndTransforms();
+            UpdateIconsAndShaderProperties();
+        }
     }
 
     private void LateUpdate()
     {
-        AutoFindReferences();
+        AutoFindReferences(forceImmediate: false);
         if (_courseSpline == null) return;
 
         bool shapeChanged = (_lastBuiltShape != _meshShape) ||
@@ -334,9 +432,23 @@ public class CourseMinimapController : MonoBehaviour
 
     public MinimapMeshShape GetMeshShape() => _meshShape;
 
+    public int MinimapLayer
+    {
+        get => _minimapLayer;
+        set
+        {
+            int clamped = Mathf.Clamp(value, 0, 31);
+            if (_minimapLayer != clamped)
+            {
+                _minimapLayer = clamped;
+                UpdateModeStateAndTransforms();
+            }
+        }
+    }
+
     public void Rebuild()
     {
-        AutoFindReferences();
+        AutoFindReferences(forceImmediate: true);
         ClearGeneratedChildren();
         EnsureHierarchyAndRebuild();
         UpdateModeStateAndTransforms();
@@ -347,8 +459,23 @@ public class CourseMinimapController : MonoBehaviour
     // 自動参照検索・階層構築
     // ──────────────────────────────────────────────
 
-    private void AutoFindReferences()
+    private void AutoFindReferences(bool forceImmediate)
     {
+        if (_courseSpline != null && _playerTarget != null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying && !forceImmediate)
+        {
+            float now = Time.unscaledTime;
+            if (now < _nextAutoFindTime)
+            {
+                return;
+            }
+            _nextAutoFindTime = now + 0.5f;
+        }
+
         if (_courseSpline == null)
         {
             _courseSpline = FindFirstObjectByType<CourseSpline>();
@@ -382,7 +509,10 @@ public class CourseMinimapController : MonoBehaviour
         }
         else
         {
-            GameObject pivotObj = new GameObject("Minimap_HologramPivot");
+            GameObject pivotObj = new GameObject("Minimap_HologramPivot")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             pivotObj.transform.SetParent(transform, false);
             _hologramPivot = pivotObj.transform;
         }
@@ -394,7 +524,10 @@ public class CourseMinimapController : MonoBehaviour
         }
         else
         {
-            GameObject rootObj = new GameObject("Minimap_MeshRoot");
+            GameObject rootObj = new GameObject("Minimap_MeshRoot")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             rootObj.transform.SetParent(_hologramPivot, false);
             _meshRoot = rootObj.transform;
         }
@@ -416,6 +549,10 @@ public class CourseMinimapController : MonoBehaviour
 
         if (_roadMaterial != null)
         {
+            if (_runtimeRoadMat != null && _runtimeRoadMat != _roadMaterial)
+            {
+                DestroyObjectSafely(_runtimeRoadMat);
+            }
             _runtimeRoadMat = _roadMaterial;
         }
         else if (_runtimeRoadMat == null)
@@ -463,11 +600,19 @@ public class CourseMinimapController : MonoBehaviour
     {
         if (_meshRoot == null || _courseSpline == null || _courseSpline.TotalLength <= 0f) return;
 
+        EnsureMaterials();
+
         Transform oldRoad = _meshRoot.Find("Minimap_Road");
         if (oldRoad != null)
         {
-            if (Application.isPlaying) Destroy(oldRoad.gameObject);
-            else DestroyImmediate(oldRoad.gameObject);
+            MeshFilter oldMf = oldRoad.GetComponent<MeshFilter>();
+            if (oldMf != null && oldMf.sharedMesh != null)
+            {
+                Mesh meshToDestroy = oldMf.sharedMesh;
+                oldMf.sharedMesh = null;
+                DestroyObjectSafely(meshToDestroy);
+            }
+            DestroyObjectSafely(oldRoad.gameObject);
         }
 
         float totalLength = _courseSpline.TotalLength;
@@ -704,14 +849,26 @@ public class CourseMinimapController : MonoBehaviour
 
     private void BuildIcons()
     {
+        HashSet<Mesh> meshesToDestroy = new HashSet<Mesh>();
+
         for (int i = _meshRoot.childCount - 1; i >= 0; i--)
         {
             Transform child = _meshRoot.GetChild(i);
             if (child.name.StartsWith("Minimap_PlayerIcon") || child.name.StartsWith("Minimap_RacerIcon"))
             {
-                if (Application.isPlaying) Destroy(child.gameObject);
-                else DestroyImmediate(child.gameObject);
+                MeshFilter mf = child.GetComponent<MeshFilter>();
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    meshesToDestroy.Add(mf.sharedMesh);
+                    mf.sharedMesh = null;
+                }
+                DestroyObjectSafely(child.gameObject);
             }
+        }
+
+        foreach (Mesh m in meshesToDestroy)
+        {
+            DestroyObjectSafely(m);
         }
 
         // 自機矢印アイコン
@@ -726,18 +883,21 @@ public class CourseMinimapController : MonoBehaviour
 
         // 他機ダイヤモンドアイコン
         _racerIconRenderers.Clear();
-        Mesh diamondMesh = CreateDiamondIconMesh();
-        for (int i = 0; i < _racerTargets.Count; i++)
+        if (_racerTargets.Count > 0)
         {
-            GameObject racerObj = new GameObject($"Minimap_RacerIcon_{i}");
-            racerObj.transform.SetParent(_meshRoot, false);
-            MeshFilter rmf = racerObj.AddComponent<MeshFilter>();
-            rmf.sharedMesh = diamondMesh;
-            MeshRenderer rmr = racerObj.AddComponent<MeshRenderer>();
-            rmr.sharedMaterial = _runtimeRacerIconMat;
-            rmr.shadowCastingMode = ShadowCastingMode.Off;
-            rmr.receiveShadows = false;
-            _racerIconRenderers.Add(rmr);
+            Mesh diamondMesh = CreateDiamondIconMesh();
+            for (int i = 0; i < _racerTargets.Count; i++)
+            {
+                GameObject racerObj = new GameObject($"Minimap_RacerIcon_{i}");
+                racerObj.transform.SetParent(_meshRoot, false);
+                MeshFilter rmf = racerObj.AddComponent<MeshFilter>();
+                rmf.sharedMesh = diamondMesh;
+                MeshRenderer rmr = racerObj.AddComponent<MeshRenderer>();
+                rmr.sharedMaterial = _runtimeRacerIconMat;
+                rmr.shadowCastingMode = ShadowCastingMode.Off;
+                rmr.receiveShadows = false;
+                _racerIconRenderers.Add(rmr);
+            }
         }
     }
 
@@ -811,7 +971,10 @@ public class CourseMinimapController : MonoBehaviour
         Transform camTrans = transform.Find("Minimap_SubCamera");
         if (camTrans == null)
         {
-            GameObject camObj = new GameObject("Minimap_SubCamera");
+            GameObject camObj = new GameObject("Minimap_SubCamera")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             camObj.transform.SetParent(transform, false);
             _subCamera = camObj.AddComponent<Camera>();
         }
@@ -839,7 +1002,10 @@ public class CourseMinimapController : MonoBehaviour
         Transform canvasTrans = transform.Find("Minimap_UICanvas");
         if (canvasTrans == null)
         {
-            GameObject canvasObj = new GameObject("Minimap_UICanvas");
+            GameObject canvasObj = new GameObject("Minimap_UICanvas")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             canvasObj.transform.SetParent(transform, false);
             _uiCanvas = canvasObj.AddComponent<Canvas>();
             _uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -849,10 +1015,20 @@ public class CourseMinimapController : MonoBehaviour
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
 
-            GameObject rawImgObj = new GameObject("Minimap_RawImage");
+            GameObject rawImgObj = new GameObject("Minimap_RawImage")
+            {
+                hideFlags = HideFlags.DontSave
+            };
             rawImgObj.transform.SetParent(canvasObj.transform, false);
             _uiRawImage = rawImgObj.AddComponent<RawImage>();
             _uiRawImage.raycastTarget = false;
+
+            RectTransform rt = _uiRawImage.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.zero;
+            rt.pivot = Vector2.zero;
+            rt.anchoredPosition = _uiMargin;
+            rt.sizeDelta = _uiSize;
         }
         else
         {
@@ -878,7 +1054,11 @@ public class CourseMinimapController : MonoBehaviour
 
     private void UpdateModeStateAndTransforms()
     {
-        Vector3 playerPos = _playerTarget != null ? _playerTarget.position : _courseSpline.EvaluatePositionByDistance(0f);
+        if (_hologramPivot == null || _meshRoot == null) return;
+
+        Vector3 playerPos = _playerTarget != null
+            ? _playerTarget.position
+            : (_courseSpline != null ? _courseSpline.EvaluatePositionByDistance(0f) : Vector3.zero);
         bool isWholeCourse = (_scopeMode == MinimapScopeMode.WholeCourse);
         float targetYaw = GetTargetMapYaw(isWholeCourse);
 
@@ -894,9 +1074,17 @@ public class CourseMinimapController : MonoBehaviour
 
         bool isModeA = (_displayMode == MinimapDisplayMode.ModeA_RenderTexture);
 
-        if (_subCamera != null && _subCamera.gameObject.activeSelf != isModeA)
+        if (_subCamera != null)
         {
-            _subCamera.gameObject.SetActive(isModeA);
+            bool needActive = isModeA && enabled;
+            if (_subCamera.gameObject.activeSelf != needActive)
+            {
+                _subCamera.gameObject.SetActive(needActive);
+            }
+            if (_subCamera.enabled != needActive)
+            {
+                _subCamera.enabled = needActive;
+            }
         }
         if (_uiCanvas != null && _uiCanvas.gameObject.activeSelf != isModeA)
         {
@@ -909,18 +1097,7 @@ public class CourseMinimapController : MonoBehaviour
         Camera mainCam = Camera.main;
         if (isModeA)
         {
-            if (mainCam != null)
-            {
-                // レイヤー番号が変更された場合は前のレイヤーを復元してから新しいレイヤーを除外
-                if (_lastExcludedLayer >= 0 && _lastExcludedLayer != _minimapLayer && _modifiedMainCamera != null)
-                {
-                    _modifiedMainCamera.cullingMask |= (1 << _lastExcludedLayer);
-                }
-
-                mainCam.cullingMask &= ~(1 << _minimapLayer);
-                _modifiedMainCamera = mainCam;
-                _lastExcludedLayer = _minimapLayer;
-            }
+            ApplyMainCameraCullingMaskExclusion();
         }
         else
         {
@@ -1000,7 +1177,11 @@ public class CourseMinimapController : MonoBehaviour
 
     private void UpdateIconsAndShaderProperties()
     {
-        Vector3 playerPos = _playerTarget != null ? _playerTarget.position : _courseSpline.EvaluatePositionByDistance(0f);
+        if (_hologramPivot == null || _meshRoot == null) return;
+
+        Vector3 playerPos = _playerTarget != null
+            ? _playerTarget.position
+            : (_courseSpline != null ? _courseSpline.EvaluatePositionByDistance(0f) : Vector3.zero);
         bool isWholeCourse = (_scopeMode == MinimapScopeMode.WholeCourse);
         bool isCylinder = (_meshShape == MinimapMeshShape.CylinderTube);
         float iconScaleMul = isWholeCourse ? _wholeCourseIconScaleMultiplier : 1f;
@@ -1110,12 +1291,29 @@ public class CourseMinimapController : MonoBehaviour
         if (_subCamera != null) _subCamera.targetTexture = null;
         if (_uiRawImage != null) _uiRawImage.texture = null;
 
+        // 子階層の動的生成された Mesh インスタンスを重複なく安全に破棄する
+        HashSet<Mesh> meshesToDestroy = new HashSet<Mesh>();
+        MeshFilter[] filters = GetComponentsInChildren<MeshFilter>(true);
+        for (int i = 0; i < filters.Length; i++)
+        {
+            MeshFilter mf = filters[i];
+            if (mf != null && mf.gameObject != gameObject && mf.sharedMesh != null)
+            {
+                meshesToDestroy.Add(mf.sharedMesh);
+                mf.sharedMesh = null;
+            }
+        }
+        foreach (Mesh m in meshesToDestroy)
+        {
+            DestroyObjectSafely(m);
+        }
+
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             GameObject child = transform.GetChild(i).gameObject;
-            if (Application.isPlaying) Destroy(child);
-            else DestroyImmediate(child);
+            DestroyObjectSafely(child);
         }
+
         _hologramPivot = null;
         _meshRoot = null;
         _roadRenderer = null;

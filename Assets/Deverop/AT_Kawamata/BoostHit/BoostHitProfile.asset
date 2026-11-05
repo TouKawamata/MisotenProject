@@ -44,5 +44,10 @@ MonoBehaviour:
   _pushDuration: 0.4
   _bounceDistance: 2
   _bounceInterval: 0.5
-  _blockPushDistance: 6
+  _blockPushSpeed: 12
   _blockPushDuration: 1
+  _useBilliardBlockPush: 1
+  _billiardSpeedTransferRate: 0.9
+  _billiardMaxPushSpeed: 100
+  _cancelAttackerBoostOnBlock: 1
+  _attackerBoostLockDuration: 1

@@ -9,12 +9,15 @@ Shader "Minakuchi/TransitionSky"
         _SunsetIntensity ("夕焼けの強さ", Range(0,1)) = 0.85
         _SunsetSpread ("夕焼けの広がり", Range(0.05,1)) = 0.85
         _Space ("大気圏への移行度", Range(0,1)) = 0
-        _Clouds ("雲の量", Range(0,1)) = 0.65
-        _CloudHeight ("雲の高さ", Float) = 1200
-        _CloudScale ("雲の模様の大きさ", Float) = 1800
+        _Clouds ("雲の量", Range(0,1)) = 1
+        _CloudHeight ("雲の高さ", Float) = -400
+        _CloudScale ("雲の模様の大きさ", Float) = 1200
+        _CloudThickness ("雲の厚み", Float) = 400
+        _CloudDensity ("雲の濃さ", Range(0.1,5)) = 2
         _Clock ("アニメーション時間", Float) = 0
         _SunDir ("太陽の方向", Vector) = (0,0.6,0.8,0)
         _MoonDir ("月の方向", Vector) = (0,0.4,-0.8,0)
+        [Toggle] _ShowMoon ("月を表示", Float) = 1
         _Wind ("雲の流れ", Vector) = (0.015,0.008,0,0)
         _CloudOffset ("雲の流れの移動量", Vector) = (0,0,0,0)
     }
@@ -27,6 +30,7 @@ Shader "Minakuchi/TransitionSky"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.5
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -36,6 +40,8 @@ Shader "Minakuchi/TransitionSky"
             float4 _SunsetColor;
             float _Night, _Space, _Clouds, _CloudHeight, _CloudScale, _Clock;
             float _Twilight;
+            float _ShowMoon;
+            float _CloudThickness, _CloudDensity;
             float4 _SunDir, _MoonDir, _Wind, _CloudOffset;
             CBUFFER_END
             Varyings vert(Attributes i)
@@ -53,12 +59,6 @@ Shader "Minakuchi/TransitionSky"
                 float2 a=floor(p), f=frac(p); f=f*f*(3-2*f);
                 return lerp(lerp(hash(float3(a,0)),hash(float3(a+float2(1,0),0)),f.x),
                     lerp(hash(float3(a+float2(0,1),0)),hash(float3(a+1,0)),f.x),f.y);
-            }
-            float cloudNoise(float2 p)
-            {
-                float n=0, w=0.55;
-                for(int k=0;k<5;k++) { n+=noise(p)*w; p=p*2.03+7.1; w*=0.5; }
-                return n;
             }
             float stars(float3 d)
             {
@@ -90,18 +90,8 @@ Shader "Minakuchi/TransitionSky"
                 col+=float3(1,0.84,0.55)*(smoothstep(0.99975,0.9999,s)*5+pow(saturate(s),180)*0.3)*sunVisible;
                 float m=dot(d,normalize(_MoonDir.xyz));
                 float moon=smoothstep(0.99935,0.99955,m);
-                col=lerp(col,float3(0.72,0.79,0.94)*(0.8+0.2*noise(d.xz*600)),moon*_Night);
-                // Cloud placement comes only from the height specified by the controller/trigger.
-                float delta=_CloudHeight;
-                float t=delta/(abs(d.y)>0.002?d.y:(d.y<0?-0.002:0.002));
-                float2 p=d.xz*t/max(_CloudScale,1)-_CloudOffset.xy;
-                float n=cloudNoise(p);
-                float threshold=lerp(1.05,0.12,_Clouds);
-                float alpha=smoothstep(threshold,threshold+0.17,n)*step(0,t);
-                alpha*=1-smoothstep(18000,45000,abs(t));
-                float3 cloud=lerp(float3(0.48,0.54,0.62),float3(1,0.98,0.92),saturate(n*1.5));
-                cloud=lerp(cloud*lerp(1,0.45,_Twilight),float3(0.045,0.055,0.095),localNight*0.94);
-                col=lerp(col,cloud,alpha);
+                col=lerp(col,float3(0.72,0.79,0.94)*(0.8+0.2*noise(d.xz*600)),moon*_Night*saturate(_ShowMoon));
+                // CloudVolumeFeature composites clouds against scene depth after the sky.
                 float sunsetBand=1-smoothstep(0,max(0.01,_SunsetSpread),abs(d.y));
                 float2 sunHorizontal=_SunDir.xz/max(length(_SunDir.xz),0.001);
                 float sunsetFacing=pow(saturate(dot(d.xz,sunHorizontal)),2);
