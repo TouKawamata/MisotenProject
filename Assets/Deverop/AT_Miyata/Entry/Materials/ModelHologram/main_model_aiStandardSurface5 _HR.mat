@@ -41,6 +41,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DisolveTexture:
+        m_Texture: {fileID: 2800000, guid: 0f8465150928e7143910c8bf06b9abcb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EMISSION_COLOR_MAP:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -113,7 +117,7 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RevealHeight: 2.6
+    - _RevealHeight: -2.6
     - _SPECULAR_IOR: 1.5
     - _SPECULAR_ROUGHNESS: 0.2
     - _Smoothness: 0
@@ -130,7 +134,7 @@ Material:
     - _BASE_COLOR: {r: 0.4107, g: 0.4107, b: 0.4107, a: 1}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EMISSION_COLOR: {r: 0, g: 6.730942, b: 8, a: 0}
+    - _EMISSION_COLOR: {r: 0, g: 2, b: 8, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SPECULAR_COLOR: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
