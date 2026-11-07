@@ -10,7 +10,7 @@ public class BoostPresentation : MonoBehaviour
     [SerializeField] private RacerManagerBase _playerManager;
 
     [Header("演出")]
-    [Tooltip("1人称→3人称の切り替えとFOV")]
+    [Tooltip("ブースト中のFOV")]
     [SerializeField] private BoostCameraEffect _cameraEffect;
 
     [Tooltip("ラジアルブラー")]

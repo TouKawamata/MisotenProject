@@ -24,9 +24,6 @@ public class PlayerFlightController : MonoBehaviour
 
     // 上下左右の速さ（m/s）。x＝コースの右方向、y＝コースの上方向。
     private Vector2 _planarSpeed;
-
-    // 直近のTickの上下左右の速さの目標（m/s。入力＋中央への戻り）。カメラの予測位置に使う。
-    private Vector2 _planarTarget;
     private Vector3 _steerRight = Vector3.right;
     private Vector3 _steerUp = Vector3.up;
     private readonly LateralPush _lateralPush = new LateralPush();
@@ -81,7 +78,6 @@ public class PlayerFlightController : MonoBehaviour
         _playerForward = transform.forward;
         _velocity = Vector3.zero;
         _planarSpeed = Vector2.zero;
-        _planarTarget = Vector2.zero;
         _steerRight = transform.right;
         _steerUp = transform.up;
         ReferenceUp = transform.up;
@@ -163,7 +159,6 @@ public class PlayerFlightController : MonoBehaviour
     {
         _velocity = Vector3.zero;
         _planarSpeed = Vector2.zero;
-        _planarTarget = Vector2.zero;
         _lateralPush.Stop();
         _forwardPush.Stop();
         MoveInput = Vector2.zero;
@@ -182,7 +177,6 @@ public class PlayerFlightController : MonoBehaviour
         float stopStep = profile.LateralStopDeceleration * deltaTime;
         Vector2 correction = Vector2.ClampMagnitude(offsetToCenter * profile.CenterCorrectionGain, profile.MaxCorrectionSpeed);
         Vector2 target = MoveInput * maxLateralSpeed + (1f - MoveInput.magnitude) * correction;
-        _planarTarget = target;
         float targetSpeed = target.magnitude;
 
         if (targetSpeed < 0.0001f)
@@ -232,7 +226,8 @@ public class PlayerFlightController : MonoBehaviour
 
     // カメラの狙い先を、今の移動の入力をCameraPredictionTime秒続けたときの位置として予測する。
     // 前進：コースに沿って「前進の速さ×予測時間」先（最低でもLookAheadDistance先）の中心。カーブでもコースの先を向く。
-    // 上下左右：今の中心からのずれに「目標の速さ（入力＋中央への戻り）×予測時間」を足し、その地点のトンネル半径に収める（壁の外は狙わない）。
+    // 上下左右：今の中心からのずれに「今の上下左右の速さ×予測時間」を足し、その地点のトンネル半径に収める（壁の外は狙わない）。
+    // 入力の目標ではなく実際の速さを使う（実際の速さは加速度でだんだん変わるので、押した・離した瞬間に狙い先が跳ばず、カメラが急に振られない）。
     // 上下左右の移動とカメラの旋回は別の処理で、カメラ側（CameraController）はこの位置へ向くだけ。
     private Vector3 PredictPosition(Vector3 position, Vector3 center, Vector3 right, Vector3 up, FlightTuningProfile profile)
     {
@@ -244,7 +239,7 @@ public class PlayerFlightController : MonoBehaviour
 
         Vector3 offset = position - center;
         Vector2 planarOffset = new Vector2(Vector3.Dot(offset, right), Vector3.Dot(offset, up))
-            + _planarTarget * predictionTime;
+            + _planarSpeed * predictionTime;
 
         float futureRadius = _guide.GetTunnelRadius(futureCenter);
         if (futureRadius > 0f)

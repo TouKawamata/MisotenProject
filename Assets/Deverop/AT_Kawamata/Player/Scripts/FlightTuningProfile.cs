@@ -28,7 +28,7 @@ public class FlightTuningProfile : ScriptableObject
     [SerializeField] private float _maxCorrectionSpeed = 20f;
 
     [Header("カメラ用の予測位置")]
-    [Tooltip("今の移動の入力を何秒続けたときの位置を、カメラの狙い先にするか（秒）")]
+    [Tooltip("今の速さ（前進・上下左右）のまま何秒進んだときの位置を、カメラの狙い先にするか（秒）")]
     [Min(0f)]
     [SerializeField] private float _cameraPredictionTime = 0.5f;
 
