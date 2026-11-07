@@ -1,7 +1,9 @@
 using UnityEngine;
 
 // PoseLandmarkReceiverが受信した姿勢（MediaPipe Pose準拠の33点）からレース入力を作るIRaceInput実装。
-// Horizontalは上半身の左右の傾き角度から連続値を作る。
+// Horizontalは上半身の左右の傾き角度から連続値を作る。IRaceInput.Moveは、そのHorizontalをxに入れたもの（上下のyは未対応で0）。
+// （2026-11-07 川又：IRaceInputがHorizontal（float）からMove（Vector2、大きさ0～1）に変わったため、Moveを追加。
+//   上下の身体動作の割り当てはトラッキング担当で検討予定。ショートカットは仕様から廃止になったため、関連処理をコメントアウトしている）
 // BoostPressed/ShieldPressed/ShortcutPressedは「ポーズが成立したフレームで1回だけtrue」になる
 // トリガー（KeyboardRaceInputのwasPressedThisFrameと同じ扱い）。
 // BoostHeld/ShieldHeldはポーズを取り続けている間ずっとtrueになる「プレス（継続状態）」。
@@ -39,17 +41,17 @@ public class TrackingRaceInput : IRaceInput {
 	// 各ポーズの「前フレームでの継続状態」。今フレームの状態と比較してPressed（トリガー）の立ち上がりを検出するために使う。
 	private bool _previousBoostActive;
 	private bool _previousShieldActive;
-	private bool _previousShortcutActive;
+	// [ショートカット廃止] private bool _previousShortcutActive;
 
 	// 各ポーズが成立した瞬間だけtrueになる値（トリガー）。IRaceInputのBoostPressed等が返す。
 	private bool _cachedBoostPressed;
 	private bool _cachedShieldPressed;
-	private bool _cachedShortcutPressed;
+	// [ショートカット廃止] private bool _cachedShortcutPressed;
 
 	// 各ポーズを取り続けている間ずっとtrueになる値（プレス）。BoostHeld等が返す。
 	private bool _cachedBoostHeld;
 	private bool _cachedShieldHeld;
-	private bool _cachedShortcutHeld;
+	// [ショートカット廃止] private bool _cachedShortcutHeld;
 
 	// receiver: 姿勢データの取得元。settings: 判定用パラメータ（nullならデフォルト値で生成する）。
 	public TrackingRaceInput(PoseLandmarkReceiver receiver, TrackingRaceInputSettings settings) {
@@ -62,6 +64,14 @@ public class TrackingRaceInput : IRaceInput {
 		get {
 			EnsureUpdatedForCurrentFrame();
 			return _cachedHorizontal;
+		}
+	}
+
+	// IRaceInputの移動入力。xは左右の傾き（Horizontal）、yは上下（未対応のため0）。大きさは0～1に制限する。
+	public Vector2 Move {
+		get {
+			EnsureUpdatedForCurrentFrame();
+			return Vector2.ClampMagnitude(new Vector2(_cachedHorizontal, 0f), 1f);
 		}
 	}
 
@@ -81,13 +91,13 @@ public class TrackingRaceInput : IRaceInput {
 		}
 	}
 
-	// ショートカットのポーズ（バンザイ）が成立した瞬間だけtrue。
-	public bool ShortcutPressed {
-		get {
-			EnsureUpdatedForCurrentFrame();
-			return _cachedShortcutPressed;
-		}
-	}
+	// [ショートカット廃止] ショートカットのポーズ（バンザイ）が成立した瞬間だけtrue。
+	// public bool ShortcutPressed {
+	// 	get {
+	// 		EnsureUpdatedForCurrentFrame();
+	// 		return _cachedShortcutPressed;
+	// 	}
+	// }
 
 	// ブーストのポーズを取り続けている間ずっとtrue（プレス）。ポーズを解くとfalseになりブーストが終了する。
 	public bool BoostHeld {
@@ -105,13 +115,13 @@ public class TrackingRaceInput : IRaceInput {
 		}
 	}
 
-	// ショートカット（バンザイ）のポーズを取り続けている間ずっとtrue（プレス）。IRaceInputには無い独自の拡張。
-	public bool IsShortcutPoseActive {
-		get {
-			EnsureUpdatedForCurrentFrame();
-			return _cachedShortcutHeld;
-		}
-	}
+	// [ショートカット廃止] ショートカット（バンザイ）のポーズを取り続けている間ずっとtrue（プレス）。IRaceInputには無い独自の拡張。
+	// public bool IsShortcutPoseActive {
+	// 	get {
+	// 		EnsureUpdatedForCurrentFrame();
+	// 		return _cachedShortcutHeld;
+	// 	}
+	// }
 
 	// 1フレームにつき1回だけ全ポーズ・Horizontalを評価し、結果をキャッシュする。
 	// 同じフレーム内で複数回プロパティを参照しても、判定結果が変わらないようにするための仕組み。
@@ -139,11 +149,11 @@ public class TrackingRaceInput : IRaceInput {
 		_cachedShieldHeld = shieldActive;
 		_previousShieldActive = shieldActive;
 
-		// ショートカット：ブーストと同様の手順
-		bool shortcutActive = EvaluateShortcut();
-		_cachedShortcutPressed = shortcutActive && !_previousShortcutActive;
-		_cachedShortcutHeld = shortcutActive;
-		_previousShortcutActive = shortcutActive;
+		// [ショートカット廃止] ショートカット：ブーストと同様の手順
+		// bool shortcutActive = EvaluateShortcut();
+		// _cachedShortcutPressed = shortcutActive && !_previousShortcutActive;
+		// _cachedShortcutHeld = shortcutActive;
+		// _previousShortcutActive = shortcutActive;
 	}
 
 	// 上半身の左右の傾き角度から、Horizontal（-1～1）を計算する。
@@ -283,31 +293,31 @@ public class TrackingRaceInput : IRaceInput {
 		return atChestHeight && forearmLevel && isInwardOfElbow;
 	}
 
-	// ショートカット（バンザイ：両手首を頭より高く上げる）が成立しているかどうかを判定する。
-	private bool EvaluateShortcut() {
-		// 判定：鼻・手首・肩・腰のランドマークが揃っているか（欠けていれば未成立扱い）
-		if (_receiver == null
-			|| !IsVisible(Nose) || !IsVisible(LeftWrist) || !IsVisible(RightWrist)
-			|| !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
-			|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
-			return false;
-		}
-
-		// しきい値の基準となる胴の長さ
-		float torsoLength = GetTorsoLength();
-		// 判定：胴の長さが極端に小さい（＝検出が不安定）場合は未成立扱いにする
-		if (torsoLength <= 0.0001f) {
-			return false;
-		}
-
-		// 鼻の高さと、そこからどれだけ上なら「上げている」とみなすかのマージン
-		float noseY = GetLandmark(Nose).y;
-		float margin = torsoLength * _settings.shortcutRaiseMarginRatio;
-
-		// 判定：両方の手首が「鼻の高さ＋マージン」より高い位置にあるか（両手とも満たして初めて成立）
-		return GetLandmark(LeftWrist).y >= noseY + margin
-			&& GetLandmark(RightWrist).y >= noseY + margin;
-	}
+	// [ショートカット廃止] ショートカット（バンザイ：両手首を頭より高く上げる）が成立しているかどうかを判定する。
+	// private bool EvaluateShortcut() {
+	// 	// 判定：鼻・手首・肩・腰のランドマークが揃っているか（欠けていれば未成立扱い）
+	// 	if (_receiver == null
+	// 		|| !IsVisible(Nose) || !IsVisible(LeftWrist) || !IsVisible(RightWrist)
+	// 		|| !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
+	// 		|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
+	// 		return false;
+	// 	}
+	//
+	// 	// しきい値の基準となる胴の長さ
+	// 	float torsoLength = GetTorsoLength();
+	// 	// 判定：胴の長さが極端に小さい（＝検出が不安定）場合は未成立扱いにする
+	// 	if (torsoLength <= 0.0001f) {
+	// 		return false;
+	// 	}
+	//
+	// 	// 鼻の高さと、そこからどれだけ上なら「上げている」とみなすかのマージン
+	// 	float noseY = GetLandmark(Nose).y;
+	// 	float margin = torsoLength * _settings.shortcutRaiseMarginRatio;
+	//
+	// 	// 判定：両方の手首が「鼻の高さ＋マージン」より高い位置にあるか（両手とも満たして初めて成立）
+	// 	return GetLandmark(LeftWrist).y >= noseY + margin
+	// 		&& GetLandmark(RightWrist).y >= noseY + margin;
+	// }
 
 	// 左肩・右肩の中点座標を返す。
 	private Vector3 GetMidShoulder() {

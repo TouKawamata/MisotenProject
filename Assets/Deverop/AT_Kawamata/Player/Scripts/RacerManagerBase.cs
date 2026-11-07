@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
 
-// レーサー（Player／CPU）に関する機能の窓口の共通部分。入力を1回だけ読み、Boost/Shield/Shortcutの入力をハンドリングし、
-// 現在有効なFlightTuningProfile（通常／ショートカット吸着）を選んでPlayerFlightControllerへ渡す。
+// レーサー（Player／CPU）に関する機能の窓口の共通部分。入力を1回だけ読み、Boost/Shieldの入力をハンドリングし、
+// 移動の入力（IRaceInput.Move）とFlightTuningProfileをPlayerFlightControllerへ渡す。
 // 入力をどこから受け取るかだけを派生クラスが決める（PlayerManager：RaceInputProvider、CPUManager：CPUの入力）。
 // レースの参加者（IRacer）として、Initialize/PlaceAt/TickはRaceManagerから呼び出される。
 // ゴール後は入力を無視し、RaceSettingsの秒数が経ったらその場で停止させる（Tickは呼ばれ続ける）。
@@ -10,7 +10,7 @@ using UnityEngine;
 // shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
-public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
+public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -18,8 +18,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
     [Header("慣性設定")]
     [SerializeField] private FlightTuningProfile _defaultProfile;
-    [Tooltip("ShortcutZoneの発動エリア内でトリガーが成立したときに切り替えるProfile（Splineの高さへ強く吸着する設定）")]
-    [SerializeField] private FlightTuningProfile _shortcutProfile;
 
     [Header("ブースト接触")]
     [Tooltip("ブーストを当てられたときの効果（スタン・横ずれ・無敵など）。PlayerとCPUで同じアセットを使う")]
@@ -44,15 +42,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
     private readonly StunController _stun = new StunController();
 
-    private ShortcutZone _currentShortcutZone;
-    private bool _isShortcutProfileActive;
-    private bool _wasHorizontalAboveThreshold;
     private bool _isInitialized;
     private bool _isFinished;
     private bool _hasCapturedFinishSpeed;
     private float _speedAtFinish;
 
-    // 横入力を受け付けない残りの秒数（シールドで防がれてブーストを解除されたとき。検証用）。
+    // 移動の入力を受け付けない残りの秒数（シールドで防がれてブーストを解除されたとき。検証用）。
     private float _steeringLockTimer;
 
     // 直近に通知したブースト・シールド・スタンの状態。変化したときだけイベントを出すために持つ。
@@ -84,10 +79,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     public event Action StunStarted;
 
     public event Action StunEnded;
-
-    public bool IsInShortcutZone => _currentShortcutZone != null;
-
-    public bool IsShortcutProfileActive => _isShortcutProfileActive;
 
     // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
     public FlightTuningProfile CurrentProfile { get; private set; }
@@ -133,9 +124,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     // 防いだ後、シールドが再び使えるようになるまでの残り秒数。使えない間でなければ0。
     public float ShieldBrokenRemainingTime => _shield.BrokenRemainingTime;
 
-    // 発動エリアに入っているShortcutZone（トリガーの方式・閾値を読むため）。入っていなければnull。
-    public ShortcutZone CurrentShortcutZone => _currentShortcutZone;
-
     // 入力元の初期化（Initializeの中で呼ぶ）。
     protected abstract void InitializeInput();
 
@@ -144,9 +132,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
 
     public void Initialize()
     {
-        if (_defaultProfile == null || _shortcutProfile == null)
+        if (_defaultProfile == null)
         {
-            Debug.LogError($"{GetType().Name}: Default Profile / Shortcut Profile が未設定です", this);
+            Debug.LogError($"{GetType().Name}: Default Profile が未設定です", this);
             return;
         }
 
@@ -195,7 +183,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         _isInitialized = true;
     }
 
-    // 配置してから、ブースト・シールド・スタン・ショートカット・飛行の内部状態をリセットする（飛行の向きはtransformから取るため、この順番）。
+    // 配置してから、ブースト・シールド・スタン・飛行の内部状態をリセットする（飛行の向きはtransformから取るため、この順番）。
     public void PlaceAt(Vector3 position, Quaternion rotation)
     {
         if (!_isInitialized)
@@ -208,9 +196,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         _shield.Initialize();
         _stun.Reset();
         _steeringLockTimer = 0f;
-        // 発動エリアに居るかどうか（_currentShortcutZone）はShortcutZone側のトリガー通知に任せ、吸着状態だけ解除する。
-        _isShortcutProfileActive = false;
-        _wasHorizontalAboveThreshold = false;
         _isFinished = false;
         _hasCapturedFinishSpeed = false;
         CurrentProfile = _defaultProfile;
@@ -261,7 +246,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
                 return;
             }
 
-            _flightController.Tick(0f, _speedAtFinish, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
+            _flightController.Tick(Vector2.zero, _speedAtFinish, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
             return;
         }
 
@@ -271,10 +256,11 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
             return;
         }
 
-        // スタン中は入力を受け付けない（左右・ブースト・シールド・ショートカットのすべて）。
-        // シールドで防がれてブーストを解除された後（検証用の切り替えがONのとき）は、横入力だけを受け付けない。
+        // スタン中は入力を受け付けない（移動・ブースト・シールドのすべて）。
+        // シールドで防がれてブーストを解除された後（検証用の切り替えがONのとき）は、移動の入力だけを受け付けない。
+        // Moveは入力側で大きさ0～1に制限済み（IRaceInputの約束）なので、ここでは正規化し直さない。
         bool canControl = !_stun.IsStunned;
-        float horizontal = canControl && _steeringLockTimer <= 0f ? input.Horizontal : 0f;
+        Vector2 move = canControl && _steeringLockTimer <= 0f ? input.Move : Vector2.zero;
 
         if (canControl)
         {
@@ -284,20 +270,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
         _boost.Tick(deltaTime, canControl && input.BoostHeld);
         _shield.Tick(deltaTime, canControl && input.ShieldHeld);
 
-        // ショートカットキー入力自体は常にログを出す（デバッグ用。トラッキング入力側の動作確認にも使う）。
-        if (input.ShortcutPressed)
-        {
-            Log("ショートカットした");
-        }
-
-        if (canControl)
-        {
-            UpdateShortcutTrigger(input, horizontal);
-        }
-
-        CurrentProfile = _isShortcutProfileActive ? _shortcutProfile : _defaultProfile;
+        CurrentProfile = _defaultProfile;
         float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier();
-        _flightController.Tick(horizontal, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
+        _flightController.Tick(move, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
     }
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
@@ -367,7 +342,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
             if (_boostHitProfile.LockAttackerSteeringOnCancel)
             {
                 _steeringLockTimer = Mathf.Max(_steeringLockTimer, _boostHitProfile.AttackerBoostLockDuration);
-                Log($"シールドで防がれたため、{_boostHitProfile.AttackerBoostLockDuration:F1}秒は横入力を受け付けない");
+                Log($"シールドで防がれたため、{_boostHitProfile.AttackerBoostLockDuration:F1}秒は移動の入力を受け付けない");
             }
         }
 
@@ -379,16 +354,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     void IRacerContactBody.ApplyContactCorrection(Vector3 offset, Vector3 blockNormal)
     {
         _flightController.ApplyContactCorrection(offset, blockNormal);
-    }
-
-    // ShortcutZone（発動エリア）からの通知。エリアを離れたら吸着も強制的に解除する。
-    public void SetInShortcutZone(ShortcutZone zone)
-    {
-        _currentShortcutZone = zone;
-        if (zone == null)
-        {
-            _isShortcutProfileActive = false;
-        }
     }
 
     // ブーストとシールドは同時に使えない。片方を使っている間は、もう片方の「押した」入力を受け付けない（先に押した方を優先）。
@@ -473,33 +438,6 @@ public abstract class RacerManagerBase : MonoBehaviour, IShortcutZoneReceiver, I
     private float GetStunSpeedMultiplier()
     {
         return _stun.IsStunned ? _boostHitProfile.StunSpeedMultiplier : 1f;
-    }
-
-    // 実際の吸着発動は「発動エリア内であること」＋「そのエリアが指定するトリガー方式で入力があったこと」が条件。
-    // どちらを使うか（Eキー／Horizontal閾値）はエリアごとにShortcutZone側で設定する。
-    private void UpdateShortcutTrigger(IRaceInput input, float horizontal)
-    {
-        if (_currentShortcutZone == null)
-        {
-            return;
-        }
-
-        bool zoneTriggered;
-        if (_currentShortcutZone.TriggerMethod == EShortcutTriggerMethod.HorizontalThreshold)
-        {
-            bool isAboveThreshold = Mathf.Abs(horizontal) >= _currentShortcutZone.HorizontalThreshold;
-            zoneTriggered = isAboveThreshold && !_wasHorizontalAboveThreshold;
-            _wasHorizontalAboveThreshold = isAboveThreshold;
-        }
-        else
-        {
-            zoneTriggered = input.ShortcutPressed;
-        }
-
-        if (zoneTriggered)
-        {
-            _isShortcutProfileActive = true;
-        }
     }
 
     protected void Log(string message)

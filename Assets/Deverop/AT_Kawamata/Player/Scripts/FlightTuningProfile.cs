@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.Serialization;
 
-// 飛行の慣性・横移動・補正・壁系のチューニング値の塊。PlayerFlightControllerはこの値を引数で受け取って計算するだけで、
-// どのProfileを使うか（通常／ショートカット吸着など）はPlayerManagerが判断して差し替える。
+// 飛行の慣性・上下左右の移動・中央への戻り・壁・カメラ用の予測のチューニング値の塊。PlayerFlightControllerはこの値を引数で受け取って計算するだけ。
+// PlayerとCPUで同じアセットを使う想定（移動の方向の方式の切り替えも、ここを1か所変えれば両方に効く）。
+// コースの中央へは、移動の入力がニュートラルに近いときだけ、だんだん戻る（入力中は入力を優先する）。
 [CreateAssetMenu(fileName = "FlightTuningProfile", menuName = "Player/FlightTuningProfile")]
 public class FlightTuningProfile : ScriptableObject
 {
@@ -10,29 +11,32 @@ public class FlightTuningProfile : ScriptableObject
     [SerializeField] private float _headingTurnRate = 1.5f;
     [SerializeField] private float _velocityTurnRate = 2.0f;
 
-    [Header("横移動")]
-    [Tooltip("左右の入力を離した・弱めた・逆へ切り返したときに、横の速さを落とす加速度（m/s²）。大きいほどすぐ止まる。速くするときの加速度はBoostProfileのSteering Power")]
+    [Header("上下左右の移動")]
+    [Tooltip("移動の方向の決め方。EightWay：45度刻みの8方向、FreeAngle：入力の角度そのまま（比較検証用）")]
+    [SerializeField] private EMoveDirectionMode _moveDirectionMode = EMoveDirectionMode.FreeAngle;
+
+    [Tooltip("移動の入力を離した・弱めた・別の向きへ切り替えたときに、上下左右の速さを落とす加速度（m/s²）。大きいほどすぐ止まる。速くするときの加速度はBoostProfileのSteering Power")]
     [SerializeField] private float _lateralStopDeceleration = 200f;
 
-    [Header("コース中央への補正（左右）")]
-    [Tooltip("中央からのずれ1mあたり、中央へ戻る横の速さ（m/s）。左右の入力が小さいほど強くかかる")]
+    [Header("コース中央への戻り（ニュートラル時）")]
+    [Tooltip("中央からのずれ1mあたり、中央へ戻る速さ（m/s）。上下左右とも同じ。入力が小さいほど強くかかり、入力いっぱいなら0。0なら戻らない")]
+    [Min(0f)]
     [SerializeField] private float _centerCorrectionGain = 0.5f;
-    [Tooltip("中央へ戻る横の速さの上限（m/s）")]
+
+    [Tooltip("中央へ戻る速さの上限（m/s）")]
     [FormerlySerializedAs("_maxCorrectionAccel")]
     [SerializeField] private float _maxCorrectionSpeed = 20f;
 
-    [Header("コース中央への補正（上下）")]
-    [SerializeField] private float _verticalCorrectionGain = 0.5f;
-    [SerializeField] private float _maxVerticalCorrectionAccel = 20f;
-    [Tooltip("上下の補正の減衰（上下の速さにかけるブレーキ）。1でコースの高さを行き過ぎずに最短で収まる、0ならブレーキなし（ばねのように行き過ぎて揺れる）。1より大きいと、ゆっくり近づく")]
+    [Header("カメラ用の予測位置")]
+    [Tooltip("今の移動の入力を何秒続けたときの位置を、カメラの狙い先にするか（秒）")]
     [Min(0f)]
-    [SerializeField] private float _verticalCorrectionDamping = 0f;
+    [SerializeField] private float _cameraPredictionTime = 0.5f;
 
-    [Header("カメラ用先読み")]
+    [Tooltip("カメラの狙い先を、コースに沿って最低何m先にするか（遅いときに、狙い先が近づきすぎないように）")]
     [SerializeField] private float _lookAheadDistance = 40f;
 
     [Header("最高速度")]
-    [Tooltip("横の速さのうち、最高速度に含める割合。前進の上限 ＝ 最高速度 − この値 × 横の速さ。0なら横に動いても前進の速さは落ちない")]
+    [Tooltip("上下左右の速さのうち、最高速度に含める割合。前進の上限 ＝ 最高速度 − この値 × 上下左右の速さ。0なら動いても前進の速さは落ちない")]
     [Range(0f, 1f)]
     [SerializeField] private float _lateralSpeedLimitRate = 0.25f;
 
@@ -45,17 +49,15 @@ public class FlightTuningProfile : ScriptableObject
 
     public float VelocityTurnRate => _velocityTurnRate;
 
+    public EMoveDirectionMode MoveDirectionMode => _moveDirectionMode;
+
     public float LateralStopDeceleration => Mathf.Max(0f, _lateralStopDeceleration);
 
-    public float CenterCorrectionGain => _centerCorrectionGain;
+    public float CenterCorrectionGain => Mathf.Max(0f, _centerCorrectionGain);
 
     public float MaxCorrectionSpeed => Mathf.Max(0f, _maxCorrectionSpeed);
 
-    public float VerticalCorrectionGain => _verticalCorrectionGain;
-
-    public float MaxVerticalCorrectionAccel => _maxVerticalCorrectionAccel;
-
-    public float VerticalCorrectionDamping => Mathf.Max(0f, _verticalCorrectionDamping);
+    public float CameraPredictionTime => Mathf.Max(0f, _cameraPredictionTime);
 
     public float LookAheadDistance => _lookAheadDistance;
 

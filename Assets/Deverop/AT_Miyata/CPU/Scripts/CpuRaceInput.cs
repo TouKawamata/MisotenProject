@@ -6,7 +6,9 @@ using UnityEngine;
 //   2. CpuTargetSelector：狙う相手（PlayerもCPUも同じ扱い）
 //      CpuShieldBrain：シールドを張りたいか（毎Tick。反応時間を秒で数えるため）
 //      CpuBoostBrain／CpuSteeringBrainの目標：考え直すTick（難易度のThinkInterval）だけ
-//      CpuSteeringBrainのHorizontal・CpuShortcutBrain：毎Tick
+//      CpuSteeringBrainのHorizontal：毎Tick
+//      （2026-11-07 川又：ショートカット廃止のため、CpuShortcutBrainはコメントアウト。
+//        IRaceInputがMove（Vector2、大きさ0～1）になったため、HorizontalをxにしたMoveを追加。上下（y）の判断は未対応で0）
 //   3. CpuButtonLatch：「押し続けたいか」からPressed/Heldを作る
 // ブーストとシールドは同時に使えないため、シールドを優先する（後ろからのブーストを防ぐ方が、損を避けられるため）。
 // 難易度は、CpuDifficultyControllerがシーンにあり、Follow Global DifficultyがONならそちらを、それ以外は自分の難易度を使う。
@@ -45,7 +47,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     private readonly CpuShieldBrain _shieldBrain = new CpuShieldBrain();
     private readonly CpuBoostBrain _boostBrain = new CpuBoostBrain();
     private readonly CpuSteeringBrain _steeringBrain = new CpuSteeringBrain();
-    private readonly CpuShortcutBrain _shortcutBrain = new CpuShortcutBrain();
+    // [ショートカット廃止] private readonly CpuShortcutBrain _shortcutBrain = new CpuShortcutBrain();
     private readonly CpuButtonLatch _boostLatch = new CpuButtonLatch();
     private readonly CpuButtonLatch _shieldLatch = new CpuButtonLatch();
 
@@ -60,6 +62,9 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
     public float Horizontal { get; private set; }
 
+    // IRaceInputの移動入力。xは左右（Horizontal）、yは上下（未対応のため0）。大きさは0～1に制限する。
+    public Vector2 Move => Vector2.ClampMagnitude(new Vector2(Horizontal, 0f), 1f);
+
     public bool BoostPressed => _boostLatch.Pressed;
 
     public bool BoostHeld => _boostLatch.Held;
@@ -68,7 +73,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
     public bool ShieldHeld => _shieldLatch.Held;
 
-    public bool ShortcutPressed { get; private set; }
+    // [ショートカット廃止] public bool ShortcutPressed { get; private set; }
 
     // 今使っている難易度（一括の設定を反映したもの）。
     public CpuDifficultyProfile CurrentDifficulty
@@ -111,13 +116,13 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         _shieldBrain.Reset();
         _boostBrain.Reset();
         _steeringBrain.Reset();
-        _shortcutBrain.Reset();
+        // [ショートカット廃止] _shortcutBrain.Reset();
         _boostLatch.Reset();
         _shieldLatch.Reset();
         _thinkTimer = 0f;
         _loggedTargetId = -1;
         Horizontal = 0f;
-        ShortcutPressed = false;
+        // [ショートカット廃止] ShortcutPressed = false;
     }
 
     public void UpdateInput(CPUManager owner, float deltaTime, IReadOnlyRacerData data)
@@ -164,9 +169,10 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         }
 
         float horizontal = _steeringBrain.Evaluate(_situation, difficulty, _personality, _random, _elapsedTime);
-        _shortcutBrain.Update(_situation, difficulty, _personality, _random, horizontal);
-        Horizontal = _shortcutBrain.OverridesHorizontal ? _shortcutBrain.HorizontalOverride : horizontal;
-        ShortcutPressed = _shortcutBrain.ShortcutPressed;
+        // [ショートカット廃止] _shortcutBrain.Update(_situation, difficulty, _personality, _random, horizontal);
+        // Horizontal = _shortcutBrain.OverridesHorizontal ? _shortcutBrain.HorizontalOverride : horizontal;
+        // ShortcutPressed = _shortcutBrain.ShortcutPressed;
+        Horizontal = horizontal;
 
         // スタン中は入力が無視されるので、押していない扱いにする（スタン明けに押し直せるように）。
         bool canControl = !owner.IsStunned;
@@ -192,7 +198,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     private void ClearOutputs()
     {
         Horizontal = 0f;
-        ShortcutPressed = false;
+        // [ショートカット廃止] ShortcutPressed = false;
         _boostLatch.Reset();
         _shieldLatch.Reset();
     }
@@ -247,10 +253,11 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
             Debug.Log($"CpuRaceInput: {name} がシールドを押した（脅威：{(_shieldBrain.HasThreat ? _shieldBrain.Threat.Data.DisplayName : "なし")}）", this);
         }
 
-        if (ShortcutPressed || _shortcutBrain.OverridesHorizontal && _shortcutBrain.HorizontalOverride != 0f)
-        {
-            Debug.Log($"CpuRaceInput: {name} がショートカットの入力をした", this);
-        }
+        // [ショートカット廃止]
+        // if (ShortcutPressed || _shortcutBrain.OverridesHorizontal && _shortcutBrain.HorizontalOverride != 0f)
+        // {
+        //     Debug.Log($"CpuRaceInput: {name} がショートカットの入力をした", this);
+        // }
     }
 
     private void OnGUI()
