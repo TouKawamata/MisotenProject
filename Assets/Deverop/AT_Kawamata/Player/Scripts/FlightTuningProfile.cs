@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -7,9 +8,40 @@ using UnityEngine.Serialization;
 [CreateAssetMenu(fileName = "FlightTuningProfile", menuName = "Player/FlightTuningProfile")]
 public class FlightTuningProfile : ScriptableObject
 {
-    [Header("速度の追従（慣性の強さ）")]
-    [SerializeField] private float _headingTurnRate = 1.5f;
-    [SerializeField] private float _velocityTurnRate = 2.0f;
+    // 「ほぼ（約95%）追いつく」までに、時定数（1 ÷ 1mあたりの割合）の何倍かかるか（e^-3 ≒ 5%残り）。
+    private const float FollowDistanceTimeConstants = 3f;
+
+    [Header("速度の追従（慣性の強さ）。時間ではなく、コースの中心線に沿って進んだ距離で追いつく")]
+    [Tooltip("機首がコースの向き（接線）へ、ほぼ（約95%）向き直るまでに、コースの中心線に沿って進む距離（m）。大きいほどゆっくり向き直る。" +
+             "コースに沿って進んだ距離で決めるので、インコース・アウトコース・速さによらず、角を抜けるときの遅れ方がそろう。0なら遅れなし。" +
+             "下の「入力中の追従」がONなら、入力していないときの値")]
+    [Min(0f)]
+    [SerializeField] private float _headingFollowDistance = 112.5f;
+
+    [Tooltip("速度の向きが機首の向きへ、ほぼ（約95%）向き直るまでに、コースの中心線に沿って進む距離（m）。大きいほどカーブで外へ膨らむ（滑る）。0なら遅れなし。" +
+             "下の「入力中の追従」がONなら、入力していないときの値")]
+    [Min(0f)]
+    [SerializeField] private float _velocityFollowDistance = 67.5f;
+
+    [Header("入力中の追従（検証用）。入力している間だけ、上の2つの距離を別の値にする")]
+    [Tooltip("ONなら、移動の入力がある間は下の2つの距離を使う（操作すればコースに沿って曲がりやすく、操作しなければ外へ膨らむ）。" +
+             "OFFなら、入力に関係なく上の2つの距離を使う")]
+    [SerializeField] private bool _useInputFollowDistance = true;
+
+    [Tooltip("入力中の、機首がコースの向きへほぼ向き直るまでの距離（m）。0なら遅れなし")]
+    [Min(0f)]
+    [SerializeField] private float _inputHeadingFollowDistance = 0f;
+
+    [Tooltip("入力中の、速度の向きが機首の向きへほぼ向き直るまでの距離（m）。0なら遅れなし")]
+    [Min(0f)]
+    [SerializeField] private float _inputVelocityFollowDistance = 30f;
+
+    [Tooltip("入力をやめてから、入力中の距離から通常の距離へ戻し切るまでの秒数（入力し始めたときは、すぐに入力中の距離にする）。0なら一瞬で戻る")]
+    [Min(0f)]
+    [SerializeField] private float _inputFollowReturnDuration = 0.5f;
+
+    [Tooltip("入力中の距離から通常の距離へ戻すときのイージング")]
+    [SerializeField] private Ease _inputFollowReturnEase = Ease.InOutSine;
 
     [Header("上下左右の移動")]
     [Tooltip("移動の方向の決め方。EightWay：45度刻みの8方向、FreeAngle：入力の角度そのまま（比較検証用）")]
@@ -45,9 +77,27 @@ public class FlightTuningProfile : ScriptableObject
     [Range(0f, 1f)]
     [SerializeField] private float _wallHitSpeedLossRate = 0.5f;
 
-    public float HeadingTurnRate => _headingTurnRate;
+    // 入力していないとき（「入力中の追従」がOFFなら常に）の、機首・速度の向きの追従の距離（m）。
+    public float HeadingFollowDistance => Mathf.Max(0f, _headingFollowDistance);
 
-    public float VelocityTurnRate => _velocityTurnRate;
+    public float VelocityFollowDistance => Mathf.Max(0f, _velocityFollowDistance);
+
+    public bool UseInputFollowDistance => _useInputFollowDistance;
+
+    // 入力中の、機首・速度の向きの追従の距離（m）。
+    public float InputHeadingFollowDistance => Mathf.Max(0f, _inputHeadingFollowDistance);
+
+    public float InputVelocityFollowDistance => Mathf.Max(0f, _inputVelocityFollowDistance);
+
+    public float InputFollowReturnDuration => Mathf.Max(0f, _inputFollowReturnDuration);
+
+    public Ease InputFollowReturnEase => _inputFollowReturnEase;
+
+    // 追従の距離（m）から、コースの中心線に沿って1m進むごとに近づく割合（1/m）を求める（3 ÷ 距離で約95%）。距離が0なら無限大（遅れなし）。
+    public static float ToFollowRatePerMeter(float followDistance)
+    {
+        return followDistance > 0f ? FollowDistanceTimeConstants / followDistance : float.PositiveInfinity;
+    }
 
     public EMoveDirectionMode MoveDirectionMode => _moveDirectionMode;
 

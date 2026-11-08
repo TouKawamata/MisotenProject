@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening.Core.Easing;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -24,6 +25,16 @@ public class PlayerFlightController : MonoBehaviour
 
     // 上下左右の速さ（m/s）。x＝コースの右方向、y＝コースの上方向。
     private Vector2 _planarSpeed;
+
+    // 前のTickの、コースの中心線上の最寄り点。コースに沿って進んだ距離（向きの追従に使う）を測るために持つ。
+    private Vector3 _previousCenterPosition;
+    private bool _hasPreviousCenterPosition;
+
+    // 入力中の追従の距離をどれだけ使うか（0＝通常の距離～1＝入力中の距離）。入力中は1、入力をやめるとイージングで0へ戻す。
+    private float _inputFollowWeight;
+
+    // 入力をやめてからの秒数（イージングで戻すのに使う）。
+    private float _inputFollowReleaseTime;
     private Vector3 _steerRight = Vector3.right;
     private Vector3 _steerUp = Vector3.up;
     private readonly LateralPush _lateralPush = new LateralPush();
@@ -78,6 +89,9 @@ public class PlayerFlightController : MonoBehaviour
         _playerForward = transform.forward;
         _velocity = Vector3.zero;
         _planarSpeed = Vector2.zero;
+        _hasPreviousCenterPosition = false;
+        _inputFollowWeight = 0f;
+        _inputFollowReleaseTime = 0f;
         _steerRight = transform.right;
         _steerUp = transform.up;
         ReferenceUp = transform.up;
@@ -111,8 +125,21 @@ public class PlayerFlightController : MonoBehaviour
         MoveInput = MoveDirectionResolver.Resolve(move, profile.MoveDirectionMode);
         Steering = MoveInput.x;
 
+        // 前のTickからコースの中心線に沿って進んだ距離（m）。向きの追従は時間ではなく、この距離で進める。
+        // 時間で追従させると、回転半径の小さいインコースほどコースの向きが速く変わるのに追いつけず、
+        // 機首と速度が曲がる前の向き（新しい区間から見て真横）へ残って、前へ進んでいないように見えていた。
+        // 中心線に沿った距離なら、コースの向きの変わり方（1mあたり何度）はどこを走っても同じなので、遅れ方がそろう。
+        float courseProgress = _hasPreviousCenterPosition ? Vector3.Distance(centerPosition, _previousCenterPosition) : 0f;
+        _previousCenterPosition = centerPosition;
+        _hasPreviousCenterPosition = true;
+
+        // 入力中かどうかで、向きの追従の距離を切り替える（「入力中の追従」がONのときだけ）。
+        UpdateInputFollowWeight(profile, deltaTime);
+        float headingFollowDistance = Mathf.Lerp(profile.HeadingFollowDistance, profile.InputHeadingFollowDistance, _inputFollowWeight);
+        float velocityFollowDistance = Mathf.Lerp(profile.VelocityFollowDistance, profile.InputVelocityFollowDistance, _inputFollowWeight);
+
         // 2. 見出し方向の遅延追従（第1段階）。前進方向はSplineの接線を基準にする。垂直成分も含むためPitchも兼ねる。
-        _playerForward = Vector3.Slerp(_playerForward, splineForward, 1f - Mathf.Exp(-profile.HeadingTurnRate * deltaTime));
+        _playerForward = Vector3.Slerp(_playerForward, splineForward, GetFollowFactor(headingFollowDistance, courseProgress));
         if (_playerForward.sqrMagnitude < 0.0001f)
         {
             _playerForward = splineForward;
@@ -125,7 +152,7 @@ public class PlayerFlightController : MonoBehaviour
         float speed = _velocity.magnitude;
         if (speed > 0.0001f)
         {
-            Vector3 velocityDirection = Vector3.Slerp(_velocity / speed, _playerForward, 1f - Mathf.Exp(-profile.VelocityTurnRate * deltaTime));
+            Vector3 velocityDirection = Vector3.Slerp(_velocity / speed, _playerForward, GetFollowFactor(velocityFollowDistance, courseProgress));
             _velocity = velocityDirection.normalized * speed;
         }
 
@@ -163,6 +190,57 @@ public class PlayerFlightController : MonoBehaviour
         _forwardPush.Stop();
         MoveInput = Vector2.zero;
         Steering = 0f;
+    }
+
+    // コースの中心線に沿ってprogress（m）進んだときに、目標の向きへ近づける割合（0～1）。
+    // 追従の距離が0（1mあたりの割合が無限大）なら、すぐに合わせる（無限大×0でNaNにならないよう、先に分ける）。
+    private static float GetFollowFactor(float followDistance, float progress)
+    {
+        float ratePerMeter = FlightTuningProfile.ToFollowRatePerMeter(followDistance);
+        if (float.IsPositiveInfinity(ratePerMeter))
+        {
+            return 1f;
+        }
+
+        return 1f - Mathf.Exp(-ratePerMeter * progress);
+    }
+
+    // 入力中の追従の距離をどれだけ使うか（_inputFollowWeight）を決める。
+    // 入力中はすぐに1（入力中の距離）。入力をやめたら、InputFollowReturnDuration秒かけてイージングで0（通常の距離）へ戻す
+    // （すぐに戻すと、離した瞬間に向きの遅れ方が急に変わって違和感が出るため）。戻している途中で入力したら、またすぐに1にする。
+    // 「入力中の追従」がOFFなら、常に0。
+    private void UpdateInputFollowWeight(FlightTuningProfile profile, float deltaTime)
+    {
+        if (!profile.UseInputFollowDistance)
+        {
+            _inputFollowWeight = 0f;
+            _inputFollowReleaseTime = 0f;
+            return;
+        }
+
+        if (MoveInput.sqrMagnitude > 0f)
+        {
+            _inputFollowWeight = 1f;
+            _inputFollowReleaseTime = 0f;
+            return;
+        }
+
+        // 一度も入力していない（すでに戻し切った）なら、何もしない。
+        if (_inputFollowWeight <= 0f)
+        {
+            return;
+        }
+
+        float duration = profile.InputFollowReturnDuration;
+        _inputFollowReleaseTime += deltaTime;
+        if (duration <= 0f || _inputFollowReleaseTime >= duration)
+        {
+            _inputFollowWeight = 0f;
+            return;
+        }
+
+        float eased = EaseManager.Evaluate(profile.InputFollowReturnEase, null, _inputFollowReleaseTime, duration, 1.70158f, 0f);
+        _inputFollowWeight = 1f - eased;
     }
 
     // 移動の入力（MoveInput）とコース中央への戻りから目標の上下左右の速さを決め、そこへ加速度で近づける。
