@@ -122,7 +122,8 @@ public class PlayerFlightController : MonoBehaviour
         float tunnelRadius = _guide.GetTunnelRadius(position);
 
         // 移動の方向の方式（8方向固定／任意角度）だけをここで切り替える。速さ・壁の計算は方式によらず共通。
-        MoveInput = MoveDirectionResolver.Resolve(move, profile.MoveDirectionMode);
+        // そのあと、最高速度が出る入力の大きさ（FullSpeedInputMagnitude）に合わせて、入力の強さを広げる。
+        MoveInput = ApplyFullSpeedInputMagnitude(MoveDirectionResolver.Resolve(move, profile.MoveDirectionMode), profile.FullSpeedInputMagnitude);
         Steering = MoveInput.x;
 
         // 前のTickからコースの中心線に沿って進んだ距離（m）。向きの追従は時間ではなく、この距離で進める。
@@ -190,6 +191,20 @@ public class PlayerFlightController : MonoBehaviour
         _forwardPush.Stop();
         MoveInput = Vector2.zero;
         Steering = 0f;
+    }
+
+    // 入力の大きさを、fullSpeedMagnitudeで1（最高速度）になるように広げる。向きは変えず、1を超えた分は1にする。
+    // fullSpeedMagnitudeが1なら何もしない。ここで変えた後の値を、上下左右の速さ・中央への戻り・Steeringのすべてに使う。
+    private static Vector2 ApplyFullSpeedInputMagnitude(Vector2 move, float fullSpeedMagnitude)
+    {
+        float magnitude = move.magnitude;
+        if (magnitude < 0.0001f || fullSpeedMagnitude >= 1f)
+        {
+            return move;
+        }
+
+        float scaledMagnitude = Mathf.Min(magnitude / fullSpeedMagnitude, 1f);
+        return move / magnitude * scaledMagnitude;
     }
 
     // コースの中心線に沿ってprogress（m）進んだときに、目標の向きへ近づける割合（0～1）。

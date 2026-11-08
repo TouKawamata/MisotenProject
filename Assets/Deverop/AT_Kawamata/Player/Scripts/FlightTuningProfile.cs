@@ -47,6 +47,12 @@ public class FlightTuningProfile : ScriptableObject
     [Tooltip("移動の方向の決め方。EightWay：45度刻みの8方向、FreeAngle：入力の角度そのまま（比較検証用）")]
     [SerializeField] private EMoveDirectionMode _moveDirectionMode = EMoveDirectionMode.FreeAngle;
 
+    [Tooltip("上下左右の最高速度（BoostProfileのMax Lateral Speed）が出る入力の大きさ（0～1）。1なら入力いっぱいで最高速度、" +
+             "0.5なら半分傾けた時点で最高速度になる。それより小さい入力では、この値までの割合に比例して遅くなる（0.5のとき、0.25の入力で最高速度の半分）。" +
+             "トラッキングなど、入力いっぱいまで傾けにくい入力の調整用")]
+    [Range(0.01f, 1f)]
+    [SerializeField] private float _fullSpeedInputMagnitude = 1f;
+
     [Tooltip("移動の入力を離した・弱めた・別の向きへ切り替えたときに、上下左右の速さを落とす加速度（m/s²）。大きいほどすぐ止まる。速くするときの加速度はBoostProfileのSteering Power")]
     [SerializeField] private float _lateralStopDeceleration = 200f;
 
@@ -100,6 +106,8 @@ public class FlightTuningProfile : ScriptableObject
     }
 
     public EMoveDirectionMode MoveDirectionMode => _moveDirectionMode;
+
+    public float FullSpeedInputMagnitude => Mathf.Clamp(_fullSpeedInputMagnitude, 0.01f, 1f);
 
     public float LateralStopDeceleration => Mathf.Max(0f, _lateralStopDeceleration);
 
