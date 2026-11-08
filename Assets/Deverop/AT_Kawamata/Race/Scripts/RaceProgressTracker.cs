@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 進行度・ゴール判定・順位の計算だけを担当する。周回なし（CourseSpline.IsLoop = false）の1本道が前提。
+// 進行度・ゴール判定・順位の計算だけを担当する。周回なし（CourseSpline.IsLoop = false）が前提。
+// 分岐のあるコースでも、進行度は本線の距離で測る（分岐の上の距離は、ルート（ICourseRoute）が本線の距離に直す）。
 // ゴール判定は進行度（distance >= goalDistance）に一本化し、通過判定の取りこぼしに影響されないようにする。
 public class RaceProgressTracker
 {
@@ -31,10 +32,22 @@ public class RaceProgressTracker
                 continue;
             }
 
-            float distance = _spline.FindNearestDistance(entry.Racer.Transform.position);
+            float distance = GetCourseDistance(entry.Racer);
             entry.Data.DistanceOnCourse = distance;
             entry.Data.CourseProgress = Mathf.Clamp01(distance / _goalDistance);
         }
+    }
+
+    // 本線の上の距離（m）。分岐のあるコースで自分のルートを持つレーサーは、ルートが本線の距離に直した値を使う
+    // （分岐の上にいても、本線を走るレーサーと比べられる）。持たないレーサーは本線の最寄り点。
+    private float GetCourseDistance(IRacer racer)
+    {
+        if (racer is ICourseGuideOwner owner && owner.CourseGuide is ICourseRoute route)
+        {
+            return route.CourseDistance;
+        }
+
+        return _spline.FindNearestDistance(racer.Transform.position);
     }
 
     // 今回ゴールしたRacerをnewlyFinishedへ追加する（ゴール演出などのイベント通知はRaceManagerが行う）。

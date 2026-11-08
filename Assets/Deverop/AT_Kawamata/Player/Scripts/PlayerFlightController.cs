@@ -20,6 +20,9 @@ public class PlayerFlightController : MonoBehaviour
     [SerializeField] private CourseSpline _courseSpline;
 
     private ICourseGuide _guide;
+
+    // SetCourseGuideで渡された問い合わせ口（未設定ならnullで、Course Splineを使う）。
+    private ICourseGuide _externalGuide;
     private Vector3 _playerForward;
     private Vector3 _velocity;
 
@@ -78,8 +81,21 @@ public class PlayerFlightController : MonoBehaviour
 
     public void Initialize(FlightTuningProfile initialProfile)
     {
-        _guide = _courseSpline;
+        _guide = _externalGuide ?? _courseSpline;
         ResetState(initialProfile);
+    }
+
+    // コースへの問い合わせ口を、Course Spline（本線1本）の代わりに渡す（分岐のあるコースで、レーサーごとのルート（ICourseRoute）を渡す）。
+    // nullならCourse Splineに戻す。Initializeの前でも後でもよい（後なら、次のTickから使う）。
+    // ルートは、次のResetState（スタートグリッドへの配置）で本線から始め直す
+    // （ここではSplineの距離テーブルがまだ無いことがあるので、ルートを動かさない）。
+    public void SetCourseGuide(ICourseGuide guide)
+    {
+        _externalGuide = guide;
+        if (_guide != null)
+        {
+            _guide = _externalGuide ?? _courseSpline;
+        }
     }
 
     // 現在のtransformを基準に、向き・速度などの内部状態をリセットする（スタートグリッドへの配置・リトライ用）。
@@ -100,6 +116,7 @@ public class PlayerFlightController : MonoBehaviour
         _lateralPush.Stop();
         _forwardPush.Stop();
         IsClampedToTunnel = false;
+        (_guide as ICourseRoute)?.ResetRoute(transform.position);
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
         StateReset?.Invoke();
     }
@@ -113,8 +130,9 @@ public class PlayerFlightController : MonoBehaviour
             return;
         }
 
-        // 1. 現在位置でのSpline基準値
+        // 1. 現在位置でのSpline基準値。分岐のあるコースなら、先にルート（どの区間を走っているか）を進めてから問い合わせる。
         Vector3 position = transform.position;
+        (_guide as ICourseRoute)?.Advance(position);
         Vector3 splineForward = _guide.GetForward(position);
         Vector3 splineRight = _guide.GetRight(position);
         Vector3 splineUp = _guide.GetUp(position);
