@@ -2343,7 +2343,7 @@ MonoBehaviour:
   overRing: {fileID: 2143048229}
   _useSpread: 1
   _spreadEase: 4
-  _spreadDuration: 1
+  _spreadDuration: 0.5
   _spreadAfterSize: {x: 1, y: 1, z: 1}
   _delayBeforeRise: 1.5
   _revealSpeed: 3
