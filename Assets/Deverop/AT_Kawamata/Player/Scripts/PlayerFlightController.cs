@@ -33,6 +33,9 @@ public class PlayerFlightController : MonoBehaviour
     private Vector3 _previousCenterPosition;
     private bool _hasPreviousCenterPosition;
 
+    // 前のTickで見た、ルートの区間の切り替わりの回数（ICourseRoute.SegmentChangeCount）。
+    private int _lastSegmentChangeCount;
+
     // 入力中の追従の距離をどれだけ使うか（0＝通常の距離～1＝入力中の距離）。入力中は1、入力をやめるとイージングで0へ戻す。
     private float _inputFollowWeight;
 
@@ -116,7 +119,11 @@ public class PlayerFlightController : MonoBehaviour
         _lateralPush.Stop();
         _forwardPush.Stop();
         IsClampedToTunnel = false;
-        (_guide as ICourseRoute)?.ResetRoute(transform.position);
+        if (_guide is ICourseRoute route)
+        {
+            route.ResetRoute(transform.position);
+            _lastSegmentChangeCount = route.SegmentChangeCount;
+        }
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
         StateReset?.Invoke();
     }
@@ -148,7 +155,12 @@ public class PlayerFlightController : MonoBehaviour
         // 時間で追従させると、回転半径の小さいインコースほどコースの向きが速く変わるのに追いつけず、
         // 機首と速度が曲がる前の向き（新しい区間から見て真横）へ残って、前へ進んでいないように見えていた。
         // 中心線に沿った距離なら、コースの向きの変わり方（1mあたり何度）はどこを走っても同じなので、遅れ方がそろう。
-        float courseProgress = _hasPreviousCenterPosition ? Vector3.Distance(centerPosition, _previousCenterPosition) : 0f;
+        // 分岐のあるコースで走る区間が切り替わったTickは、中心が別のSplineの中心線へ跳ぶので、進んだ距離に数えない
+        // （数えると、跳んだ分だけ機首・速度の向きが一気に回り、視界がガクッと揺れる）。
+        int segmentChangeCount = (_guide as ICourseRoute)?.SegmentChangeCount ?? 0;
+        bool segmentChanged = segmentChangeCount != _lastSegmentChangeCount;
+        _lastSegmentChangeCount = segmentChangeCount;
+        float courseProgress = _hasPreviousCenterPosition && !segmentChanged ? Vector3.Distance(centerPosition, _previousCenterPosition) : 0f;
         _previousCenterPosition = centerPosition;
         _hasPreviousCenterPosition = true;
 

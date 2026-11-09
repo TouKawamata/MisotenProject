@@ -19,6 +19,10 @@ public interface ICourseRoute : ICourseGuide
     // 先に決めておいた分岐（SetIntendedBranch）。決めていなければnull。
     CourseBranch IntendedBranch { get; }
 
+    // 走る区間（本線／分岐。分岐の領域では候補）が切り替わった回数。切り替わった瞬間は、中心が別のSplineの中心線へ跳ぶので、
+    // 中心の動きから進んだ距離を測る側（PlayerFlightControllerの向きの追従）は、この値が変わったTickは進んだ距離に数えない。
+    int SegmentChangeCount { get; }
+
     // 分岐の領域でルートを確定した瞬間（引数は確定した分岐。本線に決めたときはnull）。
     // 先に決めておいた分岐（SetIntendedBranch）へ、分岐点で入ったときも出す。
     event Action<CourseBranch> RouteCommitted;

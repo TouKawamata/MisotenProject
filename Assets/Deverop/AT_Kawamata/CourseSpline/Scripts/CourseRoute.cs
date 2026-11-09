@@ -9,6 +9,8 @@ using UnityEngine;
 //   トンネルが重なっているので、分岐側へ寄っていくと先に候補が切り替わり、本線の壁に止められずに分岐へ入れる。
 //   領域を抜けたところで、そのときの候補でルートを確定する（確定後は、そのルートだけを使う）。
 // ・分岐：分岐の最寄り点を使う。合流の領域で本線の方へ深く入ったか、分岐の終点に着いたら本線に戻る。
+// 区間が切り替わった直後は、向き（前・右・上）だけを、前の区間からCourseNetworkのTransitionDistanceかけてなめらかに移す
+// （2本のSplineの向きの差の分、機首・カメラ・上下左右の移動の向きが一瞬で跳ばないように）。中心・トンネル半径はすぐ新しい区間のものにする。
 public class CourseRoute : ICourseRoute
 {
     // 候補を変えるのに必要な、深さの差（深さ＝中心からの距離÷半径）。
@@ -39,6 +41,17 @@ public class CourseRoute : ICourseRoute
     private float _zoneStartOnMain = float.PositiveInfinity;
     private float _zoneEndOnMain = float.NegativeInfinity;
 
+    // 直前のAdvanceで走っていた区間のSplineと、それが分岐ならその分岐（切り替わりの検出用。本線ならnull）。
+    private CourseSpline _lastSpline;
+    private CourseBranch _lastBranch;
+
+    // 区間が切り替わった直後、前の区間の向きから新しい区間の向きへ移している間の、前の区間（移し終えたらnull）と、
+    // 切り替わってから新しい区間に沿って進んだ距離（m）。
+    private CourseSpline _blendFromSpline;
+    private CourseBranch _blendFromBranch;
+    private float _blendProgress;
+    private float _blendLastDistance;
+
     public CourseRoute(CourseNetwork network)
     {
         _network = network;
@@ -56,6 +69,8 @@ public class CourseRoute : ICourseRoute
 
     public CourseBranch IntendedBranch => _intendedBranch;
 
+    public int SegmentChangeCount { get; private set; }
+
     private CourseSpline MainSpline => _network.MainSpline;
 
     // 今走っている区間（分岐の領域では候補の区間）のSpline。
@@ -70,6 +85,10 @@ public class CourseRoute : ICourseRoute
         ClearZone();
         _branchDistance = 0f;
         _mainDistance = MainSpline != null ? MainSpline.FindNearestDistance(position) : 0f;
+        _lastSpline = MainSpline;
+        _lastBranch = null;
+        _blendFromSpline = null;
+        _blendFromBranch = null;
     }
 
     public void Advance(Vector3 position)
@@ -94,6 +113,20 @@ public class CourseRoute : ICourseRoute
                 AdvanceOnBranch(position);
                 break;
         }
+
+        // 区間の切り替わり（候補の切り替え・確定・合流のどれでも）を、ここ1か所で見つけて、向きをなめらかに移し始める。
+        CourseSpline current = CurrentSpline;
+        if (_lastSpline != null && current != _lastSpline)
+        {
+            BeginTransition(_lastSpline, _lastBranch, current, position);
+        }
+        else
+        {
+            UpdateTransition(current, position);
+        }
+
+        _lastSpline = current;
+        _lastBranch = _branch;
     }
 
     public bool SetIntendedBranch(CourseBranch branch)
@@ -263,6 +296,52 @@ public class CourseRoute : ICourseRoute
         MergedToMain?.Invoke(branch);
     }
 
+    // 区間がfromからtoへ切り替わった。前の区間の向きから、なめらかに移し始める。
+    // 移している途中で元の区間へ戻ったとき（分岐の領域で候補が戻ったとき）は、今の混ぜ具合から逆向きに移す（向きが跳ばないように）。
+    private void BeginTransition(CourseSpline from, CourseBranch fromBranch, CourseSpline to, Vector3 position)
+    {
+        SegmentChangeCount++;
+        if (_network.ShowDebugLogs)
+        {
+            LogTransition(from, to, position);
+        }
+
+        float length = _network.TransitionDistance;
+        _blendProgress = _blendFromSpline == to ? Mathf.Max(0f, length - _blendProgress) : 0f;
+        _blendFromSpline = length > 0f ? from : null;
+        _blendFromBranch = length > 0f ? fromBranch : null;
+        _blendLastDistance = to.FindNearestDistance(position);
+    }
+
+    // 新しい区間に沿って進んだ距離を足し、TransitionDistanceを超えたら移し終える。
+    private void UpdateTransition(CourseSpline current, Vector3 position)
+    {
+        if (_blendFromSpline == null)
+        {
+            return;
+        }
+
+        float distance = current.FindNearestDistance(position);
+        _blendProgress += Mathf.Abs(distance - _blendLastDistance);
+        _blendLastDistance = distance;
+        if (_blendProgress >= _network.TransitionDistance)
+        {
+            _blendFromSpline = null;
+            _blendFromBranch = null;
+        }
+    }
+
+    // つなぎ目の確認用。切り替わった地点での、前後の区間の向き（前・上）の差と、中心のずれ。
+    private static void LogTransition(CourseSpline from, CourseSpline to, Vector3 position)
+    {
+        float fromDistance = from.FindNearestDistance(position);
+        float toDistance = to.FindNearestDistance(position);
+        float forwardAngle = Vector3.Angle(from.EvaluateForwardByDistance(fromDistance), to.EvaluateForwardByDistance(toDistance));
+        float upAngle = Vector3.Angle(from.EvaluateUpByDistance(fromDistance), to.EvaluateUpByDistance(toDistance));
+        float centerGap = Vector3.Distance(from.EvaluatePositionByDistance(fromDistance), to.EvaluatePositionByDistance(toDistance));
+        Debug.Log($"CourseRoute: 区間の切り替え {from.name} → {to.name}（前の向きの差 {forwardAngle:F1}°、上方向の差 {upAngle:F1}°、中心のずれ {centerGap:F1}m）");
+    }
+
     // 今の本線の距離が、分岐の領域（分岐点〜領域の終わり）に入っている分岐を足す（領域の中にいる間は外さない）。
     // 領域の範囲（本線の距離）も、足した分岐に合わせて広げる。1つでも分岐があればtrue。
     private bool AddZoneBranches()
@@ -334,13 +413,13 @@ public class CourseRoute : ICourseRoute
     // ----------------------------------------------------
 
     // 問い合わせの位置を、どの区間のどの距離で答えるかを決める。基本は今の区間。
-    // 分岐の合流の領域では本線のトンネルとも重なっているので、本線の中心線の方が近ければ本線で答える
-    // （合流点より先の位置（カメラの狙い先など）も、本線で答えられるように）。
+    // 分岐を走っていて、問い合わせの位置が分岐の終点より先（カメラの狙い先など）なら、本線の中心線の方が近ければ本線で答える。
+    // 分岐の途中の位置は、合流の領域でも分岐で答える（本線で答えると、自分の位置の向きが区間を切り替える前に本線へ跳ぶため）。
     private void ResolveQuery(Vector3 worldPosition, out CourseSpline spline, out float distance)
     {
         spline = CurrentSpline;
         distance = spline.FindNearestDistance(worldPosition);
-        if (_state != EState.Branch || _branchDistance < _branch.MergeZoneStart)
+        if (_state != EState.Branch || distance < spline.TotalLength - BranchEndMargin)
         {
             return;
         }
@@ -364,20 +443,44 @@ public class CourseRoute : ICourseRoute
 
     public Vector3 GetForward(Vector3 worldPosition)
     {
-        ResolveQuery(worldPosition, out CourseSpline spline, out float distance);
-        return spline.EvaluateForwardByDistance(distance);
+        GetFrame(worldPosition, out Vector3 forward, out _, out _);
+        return forward;
     }
 
     public Vector3 GetRight(Vector3 worldPosition)
     {
-        ResolveQuery(worldPosition, out CourseSpline spline, out float distance);
-        return spline.EvaluateRightByDistance(distance);
+        GetFrame(worldPosition, out _, out Vector3 right, out _);
+        return right;
     }
 
     public Vector3 GetUp(Vector3 worldPosition)
     {
+        GetFrame(worldPosition, out _, out _, out Vector3 up);
+        return up;
+    }
+
+    // その位置での向き（前・右・上）。区間が切り替わった直後は、前の区間の向きから新しい区間の向きへ、
+    // 新しい区間に沿って進んだ距離に合わせてなめらかに移す（回転として混ぜるので、3つの向きは直交したまま）。
+    private void GetFrame(Vector3 worldPosition, out Vector3 forward, out Vector3 right, out Vector3 up)
+    {
         ResolveQuery(worldPosition, out CourseSpline spline, out float distance);
-        return spline.EvaluateUpByDistance(distance);
+        forward = spline.EvaluateForwardByDistance(distance);
+        right = spline.EvaluateRightByDistance(distance);
+        up = spline.EvaluateUpByDistance(distance);
+
+        float weight = GetBlendWeight();
+        if (weight >= 1f)
+        {
+            return;
+        }
+
+        float fromDistance = _blendFromSpline.FindNearestDistance(worldPosition);
+        Quaternion from = Quaternion.LookRotation(_blendFromSpline.EvaluateForwardByDistance(fromDistance), _blendFromSpline.EvaluateUpByDistance(fromDistance));
+        Quaternion to = Quaternion.LookRotation(forward, up);
+        Quaternion blended = Quaternion.Slerp(from, to, weight);
+        forward = blended * Vector3.forward;
+        right = blended * Vector3.right;
+        up = blended * Vector3.up;
     }
 
     public float GetTunnelRadius(Vector3 worldPosition)
@@ -386,29 +489,63 @@ public class CourseRoute : ICourseRoute
         return spline.GetTunnelRadiusByDistance(distance);
     }
 
+    // 区間が切り替わった直後の、新しい区間の向き・狙い先をどれだけ使うか（0＝前の区間のまま～1＝新しい区間）。
+    // 切り替わってから新しい区間に沿って進んだ距離で、なめらか（SmoothStep）に増やす。移していなければ1。
+    private float GetBlendWeight()
+    {
+        float length = _network.TransitionDistance;
+        if (_blendFromSpline == null || length <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.SmoothStep(0f, 1f, _blendProgress / length);
+    }
+
     // ルートに沿って先の位置を返す（CourseSpline.GetLookAheadPositionと同じく、中心からのずれも足す）。
     // 分岐の上で終点を越えたら、合流点から本線の上へ続ける。本線で、先に決めた分岐の分岐点を越えたら、分岐の上へ続ける。
+    // 区間が切り替わった直後は、前の区間に沿った先の位置から、新しい区間に沿った先の位置へなめらかに移す
+    // （カメラの狙い先が、2本のSplineの先の位置の差の分だけ一瞬で跳ばないように。向きの移し方（GetFrame）と同じ混ぜ具合）。
     public Vector3 GetLookAheadPosition(Vector3 worldPosition, float lookAheadDistance)
     {
         ResolveQuery(worldPosition, out CourseSpline spline, out float distance);
+        CourseBranch branch = spline != MainSpline ? _branch : null;
+        CourseBranch intended = _state == EState.Main ? _intendedBranch : null;
+        Vector3 target = GetLookAheadOn(spline, branch, intended, distance, worldPosition, lookAheadDistance);
+
+        float weight = GetBlendWeight();
+        if (weight >= 1f)
+        {
+            return target;
+        }
+
+        float fromDistance = _blendFromSpline.FindNearestDistance(worldPosition);
+        Vector3 fromTarget = GetLookAheadOn(_blendFromSpline, _blendFromBranch, null, fromDistance, worldPosition, lookAheadDistance);
+        return Vector3.Lerp(fromTarget, target, weight);
+    }
+
+    // splineのdistanceの地点から、lookAheadDistance先の位置（中心からのずれも足す）。
+    // branchはsplineが分岐ならその分岐（終点を越えたら合流点から本線へ続ける）、本線ならnull。
+    // intendedは、本線で分岐点を越えたら分岐の上へ続ける分岐（無ければnull）。
+    private Vector3 GetLookAheadOn(CourseSpline spline, CourseBranch branch, CourseBranch intended, float distance, Vector3 worldPosition, float lookAheadDistance)
+    {
         Vector3 offsetFromCenter = worldPosition - spline.EvaluatePositionByDistance(distance);
         float target = distance + lookAheadDistance;
         CourseSpline main = MainSpline;
 
-        if (spline != main)
+        if (branch != null)
         {
             float branchLength = spline.TotalLength;
             return target > branchLength
-                ? main.EvaluatePositionByDistance(_branch.MergeDistance + (target - branchLength)) + offsetFromCenter
+                ? main.EvaluatePositionByDistance(branch.MergeDistance + (target - branchLength)) + offsetFromCenter
                 : spline.EvaluatePositionByDistance(target) + offsetFromCenter;
         }
 
-        CourseBranch intended = _state == EState.Main ? _intendedBranch : null;
         if (intended != null && distance <= intended.ForkDistance && target > intended.ForkDistance)
         {
             return intended.Spline.EvaluatePositionByDistance(target - intended.ForkDistance) + offsetFromCenter;
         }
 
-        return main.EvaluatePositionByDistance(target) + offsetFromCenter;
+        return spline.EvaluatePositionByDistance(target) + offsetFromCenter;
     }
 }

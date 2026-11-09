@@ -13,10 +13,24 @@ public class CourseNetwork : MonoBehaviour
     [Tooltip("本線から分かれる分岐。順番は問わない（分岐点の距離の順に並べ直して使う）")]
     [SerializeField] private CourseBranch[] _branches = new CourseBranch[0];
 
+    [Header("区間の切り替え")]
+    [Tooltip("走る区間（本線／分岐）が切り替わったとき、前の区間の向き（前・右・上）から新しい区間の向きへ、なめらかに移す距離（m。新しい区間に沿って進んだ距離）。" +
+             "0なら一瞬で切り替わる（機首・カメラの向きが、2本のSplineの向きの差の分だけ跳ぶ）。中心・トンネル半径は、壁の判定のため、すぐ新しい区間のものにする")]
+    [Min(0f)]
+    [SerializeField] private float _transitionDistance = 30f;
+
+    [Header("デバッグ")]
+    [Tooltip("ONなら、区間が切り替わるたびに、前後の区間の向きの差・中心のずれをConsoleに出す（つなぎ目の確認用）")]
+    [SerializeField] private bool _showDebugLogs = true;
+
     private readonly List<CourseBranch> _validBranches = new List<CourseBranch>();
     private bool _isBuilt;
 
     public CourseSpline MainSpline => _mainSpline;
+
+    public float TransitionDistance => Mathf.Max(0f, _transitionDistance);
+
+    public bool ShowDebugLogs => _showDebugLogs;
 
     // 使える分岐（分岐点の距離の順）。Build前は空。
     public IReadOnlyList<CourseBranch> Branches => _validBranches;
