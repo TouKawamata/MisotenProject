@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: CyberCircuitFloor
+  m_Shader: {fileID: 4800000, guid: 00238a1e9d2a4803b6845a3b8b12ecef, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _USEWORLDSPACE_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _BevelStrength: 1
+    - _BevelWidth: 0.012
+    - _CircuitBaseLevel: 0.35
+    - _CircuitDensity: 0.3
+    - _CircuitGrid: 10
+    - _CircuitHalo: 0.25
+    - _CircuitHaloStrength: 0.25
+    - _CircuitIntensity: 0.09
+    - _CircuitRun: 3
+    - _CircuitTileChance: 0.55
+    - _CircuitWidth: 0.03
+    - _DespawnRandomness: 0
+    - _DiagonalChance: 0.12
+    - _GrainScale: 180
+    - _GrainStrength: 0.25
+    - _GrooveBevel: 0.005
+    - _GrooveDepth: 0.5
+    - _GrooveWallGlow: 0.25
+    - _GrooveWidth: 0.0025
+    - _HubJitter: 0.08
+    - _Metallic: 0.7
+    - _PadChance: 0.12
+    - _PadRadius: 0
+    - _PortJitter: 0.22
+    - _PulseChance: 0.228
+    - _PulseFrequency: 0.15
+    - _PulseHead: 11
+    - _PulseIntensity: 10
+    - _PulseLength: 10
+    - _PulseSharpness: 8
+    - _PulseSpacing: 1
+    - _PulseSpeed: 1
+    - _PulseSpeedVariation: 1
+    - _PulseStrength: 3
+    - _SeamGlow: 0.15
+    - _SeamWidth: 0.006
+    - _Smoothness: 0.2
+    - _SpawnFade: 0.1
+    - _SpawnRandomness: 0.8
+    - _SpurChance: 0.45
+    - _TileGlowChance: 0.06
+    - _TileGlowIntensity: 0.4
+    - _TileSize: 2
+    - _TileVariation: 0.35
+    - _UseWorldSpace: 1
+    - _VerticalKeepChance: 0.5
+    m_Colors:
+    - _BaseColor: {r: 0.035, g: 0.049999982, b: 0.06999998, a: 1}
+    - _CircuitColor: {r: 0, g: 0.65, b: 1, a: 1}
+    - _GrooveColor: {r: 0.008, g: 0.012, b: 0.018, a: 1}
+    - _PulseColor: {r: 0.4, g: 0.9, b: 1, a: 1}
+    - _PulseDirection: {r: 0, g: 1, b: 0, a: 0}
+    - _SeamColor: {r: 0.005, g: 0.007, b: 0.01, a: 1}
+    - _SeamGlowColor: {r: 0, g: 0.25, b: 0.5, a: 1}
+    - _TileGlowColor: {r: 0, g: 0.35, b: 0.7, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
