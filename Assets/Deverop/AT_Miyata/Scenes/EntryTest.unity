@@ -2351,6 +2351,8 @@ MonoBehaviour:
   _revealHeightMin: -2.6
   _overRingRevealHeightMax: 2.3
   _overRingRevealMin: -2.2
+  _entryCanvasDelay: 0.5
+  _entryCanvasController: {fileID: 1427755944}
 --- !u!4 &1427755943
 Transform:
   m_ObjectHideFlags: 0
