@@ -10,7 +10,7 @@ using UnityEngine;
 // shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
-public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody
+public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -103,8 +103,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     // 以下は、CPUの入力（判断）・UIなどが読むための値。読むだけで、状態は変えない。
 
-    // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。
+    // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。分岐のあるコースでは、自分のルート（CourseRoute）。
     public ICourseGuide CourseGuide => _flightController.Guide;
+
+    // 分岐のあるコースでの自分のルート（今どの区間を走っているか・本線の距離に直した進行度・CPUが先に分岐を決める窓口）。
+    // 分岐の無いコース（RaceManagerのCourse Networkが未設定）ではnull。
+    public ICourseRoute CourseRoute => _flightController.Guide as ICourseRoute;
 
     // 機首の向きの速さ（m/s。最高速度で制限している成分）。
     public float ForwardSpeed => _flightController.ForwardSpeed;
@@ -181,6 +185,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         _steeringLockTimer = 0f;
         _flightController.Initialize(_defaultProfile);
         _isInitialized = true;
+    }
+
+    // 分岐のあるコースで、自分のルートを渡す（RaceManagerがInitializeの後に呼ぶ）。nullなら本線1本（PlayerFlightControllerのCourse Spline）に戻す。
+    public void SetCourseRoute(ICourseRoute route)
+    {
+        _flightController.SetCourseGuide(route);
     }
 
     // 配置してから、ブースト・シールド・スタン・飛行の内部状態をリセットする（飛行の向きはtransformから取るため、この順番）。

@@ -14,11 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlightTuningProfile
   _headingFollowDistance: 112.5
   _velocityFollowDistance: 67.5
+  _useInputFollowDistance: 1
+  _inputHeadingFollowDistance: 0
+  _inputVelocityFollowDistance: 30
+  _inputFollowReturnDuration: 0.5
+  _inputFollowReturnEase: 4
+  _moveDirectionMode: 1
+  _fullSpeedInputMagnitude: 1
+  _lateralStopDeceleration: 200
   _centerCorrectionGain: 0.5
-  _maxCorrectionAccel: 20
-  _verticalCorrectionGain: 15
-  _maxVerticalCorrectionAccel: 20
-  _rollMaxAngle: 25
-  _rollSmoothTime: 0.6
+  _maxCorrectionSpeed: 20
+  _cameraPredictionTime: 0.5
   _lookAheadDistance: 30
+  _lateralSpeedLimitRate: 0.25
   _wallHitSpeedLossRate: 0.5

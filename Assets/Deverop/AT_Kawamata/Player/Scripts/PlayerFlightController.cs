@@ -20,6 +20,9 @@ public class PlayerFlightController : MonoBehaviour
     [SerializeField] private CourseSpline _courseSpline;
 
     private ICourseGuide _guide;
+
+    // SetCourseGuideで渡された問い合わせ口（未設定ならnullで、Course Splineを使う）。
+    private ICourseGuide _externalGuide;
     private Vector3 _playerForward;
     private Vector3 _velocity;
 
@@ -29,6 +32,9 @@ public class PlayerFlightController : MonoBehaviour
     // 前のTickの、コースの中心線上の最寄り点。コースに沿って進んだ距離（向きの追従に使う）を測るために持つ。
     private Vector3 _previousCenterPosition;
     private bool _hasPreviousCenterPosition;
+
+    // 前のTickで見た、ルートの区間の切り替わりの回数（ICourseRoute.SegmentChangeCount）。
+    private int _lastSegmentChangeCount;
 
     // 入力中の追従の距離をどれだけ使うか（0＝通常の距離～1＝入力中の距離）。入力中は1、入力をやめるとイージングで0へ戻す。
     private float _inputFollowWeight;
@@ -78,8 +84,21 @@ public class PlayerFlightController : MonoBehaviour
 
     public void Initialize(FlightTuningProfile initialProfile)
     {
-        _guide = _courseSpline;
+        _guide = _externalGuide ?? _courseSpline;
         ResetState(initialProfile);
+    }
+
+    // コースへの問い合わせ口を、Course Spline（本線1本）の代わりに渡す（分岐のあるコースで、レーサーごとのルート（ICourseRoute）を渡す）。
+    // nullならCourse Splineに戻す。Initializeの前でも後でもよい（後なら、次のTickから使う）。
+    // ルートは、次のResetState（スタートグリッドへの配置）で本線から始め直す
+    // （ここではSplineの距離テーブルがまだ無いことがあるので、ルートを動かさない）。
+    public void SetCourseGuide(ICourseGuide guide)
+    {
+        _externalGuide = guide;
+        if (_guide != null)
+        {
+            _guide = _externalGuide ?? _courseSpline;
+        }
     }
 
     // 現在のtransformを基準に、向き・速度などの内部状態をリセットする（スタートグリッドへの配置・リトライ用）。
@@ -100,6 +119,11 @@ public class PlayerFlightController : MonoBehaviour
         _lateralPush.Stop();
         _forwardPush.Stop();
         IsClampedToTunnel = false;
+        if (_guide is ICourseRoute route)
+        {
+            route.ResetRoute(transform.position);
+            _lastSegmentChangeCount = route.SegmentChangeCount;
+        }
         LookAheadWorldPosition = transform.position + transform.forward * profile.LookAheadDistance;
         StateReset?.Invoke();
     }
@@ -113,8 +137,9 @@ public class PlayerFlightController : MonoBehaviour
             return;
         }
 
-        // 1. 現在位置でのSpline基準値
+        // 1. 現在位置でのSpline基準値。分岐のあるコースなら、先にルート（どの区間を走っているか）を進めてから問い合わせる。
         Vector3 position = transform.position;
+        (_guide as ICourseRoute)?.Advance(position);
         Vector3 splineForward = _guide.GetForward(position);
         Vector3 splineRight = _guide.GetRight(position);
         Vector3 splineUp = _guide.GetUp(position);
@@ -130,7 +155,12 @@ public class PlayerFlightController : MonoBehaviour
         // 時間で追従させると、回転半径の小さいインコースほどコースの向きが速く変わるのに追いつけず、
         // 機首と速度が曲がる前の向き（新しい区間から見て真横）へ残って、前へ進んでいないように見えていた。
         // 中心線に沿った距離なら、コースの向きの変わり方（1mあたり何度）はどこを走っても同じなので、遅れ方がそろう。
-        float courseProgress = _hasPreviousCenterPosition ? Vector3.Distance(centerPosition, _previousCenterPosition) : 0f;
+        // 分岐のあるコースで走る区間が切り替わったTickは、中心が別のSplineの中心線へ跳ぶので、進んだ距離に数えない
+        // （数えると、跳んだ分だけ機首・速度の向きが一気に回り、視界がガクッと揺れる）。
+        int segmentChangeCount = (_guide as ICourseRoute)?.SegmentChangeCount ?? 0;
+        bool segmentChanged = segmentChangeCount != _lastSegmentChangeCount;
+        _lastSegmentChangeCount = segmentChangeCount;
+        float courseProgress = _hasPreviousCenterPosition && !segmentChanged ? Vector3.Distance(centerPosition, _previousCenterPosition) : 0f;
         _previousCenterPosition = centerPosition;
         _hasPreviousCenterPosition = true;
 
