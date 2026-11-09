@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a04247b62422aa468b3305606920064, type: 3}
   m_Name: Default
   m_EditorClassIdentifier: Assembly-CSharp::FlightTuningProfile
-  _headingTurnRate: 1.2
-  _velocityTurnRate: 2
+  _headingFollowDistance: 112.5
+  _velocityFollowDistance: 67.5
   _centerCorrectionGain: 0.5
   _maxCorrectionAccel: 20
   _verticalCorrectionGain: 15

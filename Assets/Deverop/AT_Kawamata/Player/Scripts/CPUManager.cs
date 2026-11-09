@@ -4,7 +4,7 @@ using UnityEngine;
 
 // CPUの窓口。処理の中身はRacerManagerBase（PlayerManagerと共通）で、入力をCPUの入力（判断）から受け取るところだけが違う。
 // 入力は、Inspectorの「Input Source」（IRaceInputを実装したコンポーネント）か、SetInputSource（コードから渡す）で設定する。
-// 入力がICpuRaceInputなら、毎Tickの最初にUpdateInputを呼んでから値を読む。どちらも無ければ、入力なし（コースに沿ってまっすぐ飛ぶ）で走る。
+// 入力がICpuRaceInputなら、毎Tickの最初にUpdateInputを呼んでから値を読む。どちらも無ければ、入力なし（コース中央へ戻りながら前進するだけ）で走る。
 // RaceManagerの「CPU」の欄に入れると、RaceManagerがSetRacers・Initializeを呼び、Playerと同じくPlaceAt・Tickで動かす。
 public class CPUManager : RacerManagerBase
 {
@@ -62,10 +62,10 @@ public class CPUManager : RacerManagerBase
         return input;
     }
 
-    // 入力なし。左右もボタンも押さない（コース中央への補正で、コースに沿ってまっすぐ飛ぶ）。
+    // 入力なし。移動もボタンも押さない（コース中央へだんだん戻りながら、コースに沿って前進する）。
     private class NoRaceInput : IRaceInput
     {
-        public float Horizontal => 0f;
+        public Vector2 Move => Vector2.zero;
 
         public bool BoostPressed => false;
 
@@ -74,7 +74,5 @@ public class CPUManager : RacerManagerBase
         public bool ShieldPressed => false;
 
         public bool ShieldHeld => false;
-
-        public bool ShortcutPressed => false;
     }
 }
