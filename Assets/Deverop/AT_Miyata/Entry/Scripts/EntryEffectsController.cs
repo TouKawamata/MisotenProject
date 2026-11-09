@@ -25,13 +25,19 @@ public class EntryEffectsController : MonoBehaviour {
 	[SerializeField] private float _overRingRevealHeightMax = 2.3f;
 	[SerializeField] private float _overRingRevealMin = -2.2f;
 
+	[Header("エントリーキャンバス")]
+	[SerializeField, Tooltip("エントリーキャンバスの表示遅延(秒)")] private float _entryCanvasDelay = 0.5f;
+	[SerializeField] private EntryCanvasController _entryCanvasController;
+
 	private float _revealHeight = 0.0f;
 
 	private enum State {
 		None,
 		Spread,
 		DelayBeforeRise,
-		Rise
+		Rise,
+		DelayAfterRise,
+		Ready
 	};
 
 	private State _state = State.None;
@@ -61,6 +67,14 @@ public class EntryEffectsController : MonoBehaviour {
 			case State.Rise:
 				Rise();
 				break;
+			case State.DelayAfterRise:
+				DelayAfterRise();
+				break;
+			case State.Ready:
+				Ready();
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -76,6 +90,8 @@ public class EntryEffectsController : MonoBehaviour {
 
 		EffectsVisible(!_useSpread);
 		ApplyHeight();
+
+		_entryCanvasController.ResetEffect();
 	}
 
 
@@ -107,6 +123,7 @@ public class EntryEffectsController : MonoBehaviour {
 	private void DelayBeforeRise() {
 		_time += Time.deltaTime;
 		if (_time > _delayBeforeRise) {
+			_time = 0.0f;
 			_state = State.Rise;
 		}
 	}
@@ -115,10 +132,22 @@ public class EntryEffectsController : MonoBehaviour {
 		_revealHeight += _revealSpeed * Time.deltaTime;
 		if (_revealHeight > _revealHeightMax) {
 			_revealHeight = _revealHeightMax;
-			_state = State.None;
+			_state = State.DelayAfterRise;
 		}
 
 		ApplyHeight();
+	}
+
+	private void DelayAfterRise() {
+		_time += Time.deltaTime;
+		if (_time > _entryCanvasDelay) {
+			_state = State.Ready;
+		}
+	}
+
+	private void Ready() {
+		_entryCanvasController.StartEffect();
+		_state = State.None;
 	}
 
 	private void ApplyHeight() {

@@ -542,7 +542,7 @@ MonoBehaviour:
   _sizeX: {x: 30, y: 40}
   _sizeY: {x: 30, y: 40}
   _alpha: {x: 0.6, y: 1}
-  _lifetime: {x: 0.5, y: 1}
+  _lifetime: {x: 0.2, y: 0.5}
   _shrinkEase: 5
   _particleColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &375198729
@@ -1131,7 +1131,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -960, y: 180}
+  m_AnchoredPosition: {x: -960, y: 120}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &770916964
@@ -2229,7 +2229,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 960, y: 400}
+  m_AnchoredPosition: {x: 960, y: 200}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1411183557
@@ -2474,7 +2474,7 @@ MonoBehaviour:
   _sizeX: {x: 30, y: 40}
   _sizeY: {x: 30, y: 40}
   _alpha: {x: 0.6, y: 1}
-  _lifetime: {x: 0.5, y: 1}
+  _lifetime: {x: 0.2, y: 0.5}
   _shrinkEase: 5
   _particleColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1458619929
