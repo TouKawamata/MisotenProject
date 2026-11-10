@@ -21490,25 +21490,22 @@ PrefabInstance:
       addedObject: {fileID: 659967152165127092}
     - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 659967152165127091}
-    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 659967152165127090}
-    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 659967152165127089}
     - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       insertIndex: -1
       addedObject: {fileID: 659967152165127088}
     - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 659967152165127087}
-    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 659967152165127086}
     - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 659967152165127085}
+      addedObject: {fileID: 659967152165127093}
+    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 659967152165127095}
+    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 659967152165127094}
   m_SourcePrefab: {fileID: 100100000, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
 --- !u!114 &659967152165127083 stripped
 MonoBehaviour:
@@ -21532,19 +21529,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73de88d3061ba8b4284a14bbeb575985, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceInputProvider
---- !u!114 &659967152165127085
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700718785}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9ddf7159684f89499808157f0f9b9cb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RGBBlockNoiseTest
-  _effect: {fileID: 659967152165127086}
 --- !u!114 &659967152165127086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21570,19 +21554,6 @@ MonoBehaviour:
   _stopDuration: 0.2
   _stopEase: 4
   _useUnscaledTime: 0
---- !u!114 &659967152165127087
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700718785}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35bf6cae26fe2984e98e2c6ae72195c3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChromaticAberrationTest
-  _effect: {fileID: 659967152165127088}
 --- !u!114 &659967152165127088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21606,19 +21577,6 @@ MonoBehaviour:
   _stopDuration: 0.35
   _stopEase: 4
   _useUnscaledTime: 0
---- !u!114 &659967152165127089
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700718785}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 28c6f885e3ce92441be6e1fb058150e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TriToneTest
-  _triToneEffect: {fileID: 659967152165127090}
 --- !u!114 &659967152165127090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21643,19 +21601,6 @@ MonoBehaviour:
   _stopDuration: 0.4
   _stopEase: 4
   _useUnscaledTime: 0
---- !u!114 &659967152165127091
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1700718785}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c83ceae20960b4d47b0a2225bbc421ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GrainNoiseTest
-  _grainNoiseEffect: {fileID: 659967152165127092}
 --- !u!114 &659967152165127092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21677,6 +21622,63 @@ MonoBehaviour:
   _stopDuration: 0.35
   _stopEase: 4
   _useUnscaledTime: 0
+--- !u!114 &659967152165127093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700718785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ddab472ab237f4ab2894bef8af1909, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlitchEffectsController
+  glitchMaterial: {fileID: 2100000, guid: 4a00e5e6d955c3147a8fdb5ef1805b6d, type: 2}
+  effectDuration: 1
+--- !u!114 &659967152165127094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700718785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a0b1ac3944d6146a61ccc766c02032, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenNoiseEffectTest
+  _controller: {fileID: 659967152165127095}
+--- !u!114 &659967152165127095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700718785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb43163518eb16646932a7bca761f7dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenNoiseEffectController
+  _grainNoise: {fileID: 659967152165127092}
+  _triTone: {fileID: 659967152165127090}
+  _chromaticAberration: {fileID: 659967152165127088}
+  _rgbBlockNoise: {fileID: 659967152165127086}
+  _glitchEffects: {fileID: 659967152165127093}
+  _presets:
+  - _displayName: Digital Glitch
+    _useGrainNoise: 1
+    _useTriTone: 0
+    _useChromaticAberration: 1
+    _useRGBBlockNoise: 1
+    _useBaseScanLine: 0
+    _useScanLineUp: 0
+    _useWaveformWarp: 1
+    _useDeformLine: 1
+  _selectedPresetIndex: 0
+  _stopUnusedEffects: 1
+  _stopAllOnDisable: 1
 --- !u!1001 &2667757041561019954
 PrefabInstance:
   m_ObjectHideFlags: 0
