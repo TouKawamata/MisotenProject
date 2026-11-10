@@ -3,7 +3,37 @@ guid: 34c00bb62b0fed14f9e1618def6c0dbf
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ao
+    second: {fileID: 2100000, guid: 67b5c031e4d98f943be0fb0ec540d957, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kuro
+    second: {fileID: 2100000, guid: b3cd9432c5bdd544a8fed9fa67c2de3f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: shiro
+    second: {fileID: 2100000, guid: 9037fd59d90767245825a347125a10a7, type: 2}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: main_ao_AlbedoTransparency
+    second: {fileID: 2800000, guid: 19a380f627a567b43b463ffe97bfddd5, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: main_kuro_AlbedoTransparency
+    second: {fileID: 2800000, guid: 0b9f0695aa015884382614d0a5006e6e, type: 3}
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: main_shiro_AlbedoTransparency
+    second: {fileID: 2800000, guid: d8f3d65a7411c654dbfdc52b36326553, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0
