@@ -10,6 +10,7 @@ using UnityEngine;
 // shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
+// ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止）はRacerEffectsに集め、最高速度などに掛ける。
 public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner
 {
     [SerializeField] private PlayerFlightController _flightController;
@@ -41,6 +42,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     [SerializeField] private bool _showDebugLogs = true;
 
     private readonly StunController _stun = new StunController();
+    private readonly RacerEffects _effects = new RacerEffects();
 
     private bool _isInitialized;
     private bool _isFinished;
@@ -120,7 +122,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     public float BoostGaugeNormalized => _boost.GaugeNormalized;
 
     // 今ブーストを発動できるか（ゲージ・待ち時間に加え、シールド中は発動できないことも含める）。
-    public bool CanActivateBoost => _boost.CanActivate && !_shield.IsActive;
+    public bool CanActivateBoost => _boost.CanActivate && !_shield.IsActive && !_effects.IsBoostLocked;
+
+    // ギミック・妨害弾からの時間付きの効果。
+    public IRacerEffects Effects => _effects;
 
     // 今シールドを張れるか（防いだ後の使えない間・ブースト中は張れないことも含める）。
     public bool CanActivateShield => _shield.CanActivate && !_boost.IsBoosting;
@@ -182,6 +187,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
         InitializeInput();
         _stun.Reset();
+        _effects.Reset();
         _steeringLockTimer = 0f;
         _flightController.Initialize(_defaultProfile);
         _isInitialized = true;
@@ -205,6 +211,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         _boost.Initialize();
         _shield.Initialize();
         _stun.Reset();
+        _effects.Reset();
         _steeringLockTimer = 0f;
         _isFinished = false;
         _hasCapturedFinishSpeed = false;
@@ -229,6 +236,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     private void TickCore(float deltaTime, IReadOnlyRacerData data)
     {
         _stun.Tick(deltaTime);
+        _effects.Tick(deltaTime);
         _steeringLockTimer = Mathf.Max(0f, _steeringLockTimer - deltaTime);
         _isFinished = data.IsFinished;
 
@@ -247,6 +255,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
                 // 最高速度は前進の成分だけにかかるので、基準も前進の速さにする。
                 _speedAtFinish = Mathf.Max(0f, _flightController.ForwardSpeed);
                 _hasCapturedFinishSpeed = true;
+
+                // ゴール後は効果を外す。
+                _effects.Reset();
             }
 
             CurrentProfile = _defaultProfile;
@@ -272,6 +283,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         bool canControl = !_stun.IsStunned;
         Vector2 move = canControl && _steeringLockTimer <= 0f ? input.Move : Vector2.zero;
 
+        // ブースト禁止の効果がかかったら、発動中でも止める（押し続けていても、禁止の間は再発動しない）。
+        if (_effects.IsBoostLocked)
+        {
+            _boost.ForceStop();
+        }
+
         if (canControl)
         {
             HandleBoostAndShieldInput(input, data.RankRatio);
@@ -281,8 +298,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         _shield.Tick(deltaTime, canControl && input.ShieldHeld);
 
         CurrentProfile = _defaultProfile;
-        float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier();
-        _flightController.Tick(move, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower, _boost.CurrentMaxLateralSpeed, CurrentProfile, deltaTime);
+        float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier() * _effects.MaxSpeedMultiplier;
+        float lateralMultiplier = _effects.LateralMultiplier;
+        _flightController.Tick(move, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower * lateralMultiplier, _boost.CurrentMaxLateralSpeed * lateralMultiplier, CurrentProfile, deltaTime);
     }
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
@@ -372,7 +390,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     private void HandleBoostAndShieldInput(IRaceInput input, float rankRatio)
     {
         bool wantsBoost = input.BoostPressed || (input.BoostHeld && _boost.CanRestartWhileHeld);
-        if (wantsBoost && !_shield.IsActive && _boost.TryActivate(rankRatio))
+        if (wantsBoost && !_shield.IsActive && !_effects.IsBoostLocked && _boost.TryActivate(rankRatio))
         {
             Log($"ブースト発動 順位の割合 {rankRatio:F2} 消費 {_boost.ConsumptionPerSecond:F1}/秒 ゲージ {_boost.Gauge:F1}");
         }
