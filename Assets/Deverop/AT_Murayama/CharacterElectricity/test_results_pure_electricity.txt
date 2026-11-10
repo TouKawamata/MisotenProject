@@ -1,0 +1,20 @@
+﻿==================================================
+[CharacterPureParticleElectricityTest] テスト開始
+==================================================
+✅ [PASS] テスト1: アセットおよび純粋パーティクル用マテリアルのロード確認
+✅ [PASS] テスト2: SkinnedMeshRenderer自動バインドと全6エミッター階層生成確認
+✅ [PASS] テスト3: 全8パターンの切り替えと放出レート整合性確認（Off含む全9状態）
+✅ [PASS] テスト4: リボンエミッター Trails（3D稲妻軌跡）モジュール設定確認
+✅ [PASS] テスト5: スタン連動API（SetStun, SetStunNormalizedTime）と放出停止動作確認
+✅ [PASS] テスト6: 被弾バーストAPIと VelocityOverLifetime 確実な解除確認（残留ステート汚染防止）
+[GC Alloc] 100 回の ApplyPatternImmediate: 0 bytes
+✅ [PASS] テスト7: 純粋パーティクル制御の毎フレーム完全ゼロGC確認 (0 bytes)
+✅ [PASS] テスト8: キャラクター本来のマテリアル（shiro/ao/kuro）完全不変・保護確認
+✅ [PASS] テスト9: SetupParticlesHierarchy の冪等性（多重生成防止・子オブジェクト数 6）確認
+✅ [PASS] テスト10: 親階層アタッチ時の子 SkinnedMeshRenderer 自動検出確認
+✅ [PASS] テスト11: RibbonWorldSpaceトグル反映とClearAndStop完全停止安全性確認
+✅ [PASS] テスト12: エミッターのマテリアル整合性・レンダーモード及びパターン5這い回り純粋性確認
+✅ [PASS] テスト13: 全6系統パーティクルエミッターの手動クリーンアップ（CleanupAllParticles）及び直接 Remove Component 時の OnDestroy 安全完全消去・階層保護確認
+==================================================
+[CharacterPureParticleElectricityTest] テスト完了: 合格 13 / 失敗 0
+==================================================
