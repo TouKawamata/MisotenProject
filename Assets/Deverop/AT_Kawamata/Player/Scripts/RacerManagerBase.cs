@@ -10,8 +10,9 @@ using UnityEngine;
 // shild_01の当たり判定は、ブースト中は前方（FrontShell。BoostHitDetectorが付いていて、相手に当てる）、
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
+// コースギミックとの接触は、飛行のTickの直後にRacerGimmickSensorが判定し、ギミック（CourseGimmickBase）へIGimmickRacerとして自分を渡す。
 // ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止）はRacerEffectsに集め、最高速度などに掛ける。
-public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner
+public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -43,6 +44,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     private readonly StunController _stun = new StunController();
     private readonly RacerEffects _effects = new RacerEffects();
+
+    // 体のColliderがCapsuleColliderでなければnull（ギミックの判定をしない）。
+    private RacerGimmickSensor _gimmickSensor;
+
+    // 直近のTickでRaceManagerから受け取った、自分の情報。ギミックへIGimmickRacer.Dataとして渡す。
+    private IReadOnlyRacerData _data;
 
     private bool _isInitialized;
     private bool _isFinished;
@@ -81,6 +88,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     public event Action StunStarted;
 
     public event Action StunEnded;
+
+    // コースギミックが自分に効果を出した瞬間（CourseGimmickBase.NotifyActivatedから）。画面の演出（GimmickPresentationBase）が型で絞って受ける。
+    public event Action<CourseGimmickBase> GimmickActivated;
 
     // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
     public FlightTuningProfile CurrentProfile { get; private set; }
@@ -124,7 +134,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // 今ブーストを発動できるか（ゲージ・待ち時間に加え、シールド中は発動できないことも含める）。
     public bool CanActivateBoost => _boost.CanActivate && !_shield.IsActive && !_effects.IsBoostLocked;
 
-    // ギミック・妨害弾からの時間付きの効果。
+    // ギミック・妨害弾からの時間付きの効果（読むだけ。かけるのはIGimmickRacer.Effectsから）。
     public IRacerEffects Effects => _effects;
 
     // 今シールドを張れるか（防いだ後の使えない間・ブースト中は張れないことも含める）。
@@ -185,12 +195,26 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
             Debug.LogWarning($"{GetType().Name}: BoostHitDetectorが見つからないため、BoostHitLandedは出ません", this);
         }
 
+        _gimmickSensor = CreateGimmickSensor();
+
         InitializeInput();
         _stun.Reset();
         _effects.Reset();
         _steeringLockTimer = 0f;
         _flightController.Initialize(_defaultProfile);
         _isInitialized = true;
+    }
+
+    // 体のColliderがCapsuleColliderでなくても走れるよう、止めずに知らせるだけにする（ギミックを通り抜けるようになる）。
+    private RacerGimmickSensor CreateGimmickSensor()
+    {
+        if (_bodyCollider is not CapsuleCollider body)
+        {
+            Debug.LogWarning($"{GetType().Name}: 体のColliderがCapsuleColliderではないため、コースギミックの判定を行いません", this);
+            return null;
+        }
+
+        return new RacerGimmickSensor(body, _flightController, this);
     }
 
     // 分岐のあるコースで、自分のルートを渡す（RaceManagerがInitializeの後に呼ぶ）。nullなら本線1本（PlayerFlightControllerのCourse Spline）に戻す。
@@ -212,6 +236,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         _shield.Initialize();
         _stun.Reset();
         _effects.Reset();
+        _gimmickSensor?.Reset();
         _steeringLockTimer = 0f;
         _isFinished = false;
         _hasCapturedFinishSpeed = false;
@@ -235,6 +260,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     private void TickCore(float deltaTime, IReadOnlyRacerData data)
     {
+        _data = data;
         _stun.Tick(deltaTime);
         _effects.Tick(deltaTime);
         _steeringLockTimer = Mathf.Max(0f, _steeringLockTimer - deltaTime);
@@ -256,8 +282,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
                 _speedAtFinish = Mathf.Max(0f, _flightController.ForwardSpeed);
                 _hasCapturedFinishSpeed = true;
 
-                // ゴール後は効果を外す。
+                // ゴール後はギミックの判定をしないので、効果を外し、入っていたギミックにExitを出しておく。
                 _effects.Reset();
+                _gimmickSensor?.Reset();
             }
 
             CurrentProfile = _defaultProfile;
@@ -300,7 +327,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         CurrentProfile = _defaultProfile;
         float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier() * _effects.MaxSpeedMultiplier;
         float lateralMultiplier = _effects.LateralMultiplier;
+        Vector3 positionBeforeFlight = transform.position;
         _flightController.Tick(move, maxSpeed, _boost.CurrentForwardAcceleration, _boost.CurrentSteeringPower * lateralMultiplier, _boost.CurrentMaxLateralSpeed * lateralMultiplier, CurrentProfile, deltaTime);
+        _gimmickSensor?.Resolve(transform.position - positionBeforeFlight, deltaTime);
     }
 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
@@ -382,6 +411,56 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     void IRacerContactBody.ApplyContactCorrection(Vector3 offset, Vector3 blockNormal)
     {
         _flightController.ApplyContactCorrection(offset, blockNormal);
+    }
+
+    // 以下は、コースギミック・妨害弾へ渡す窓口（IGimmickRacer）。読む値のうち、上で公開しているもの（IsBoostingなど）はそのまま使う。
+    // ギミックからだけ呼ばれる操作なので、IGimmickRacerとしてだけ呼べるよう明示的に実装する。
+
+    IReadOnlyRacerData IGimmickRacer.Data => _data;
+
+    bool IGimmickRacer.IsInvincible => _stun.IsInvincible;
+
+    void IGimmickRacer.ApplyForwardPush(float distance, float duration)
+    {
+        _flightController.ApplyForwardPush(distance, duration);
+    }
+
+    void IGimmickRacer.ApplyLateralPush(Vector3 direction, float distance, float duration)
+    {
+        _flightController.ApplyLateralPush(direction, distance, duration);
+    }
+
+    void IGimmickRacer.Stun(float duration)
+    {
+        _boost.ForceStop();
+        _stun.BeginStun(duration, _boostHitProfile.InvincibleDuration);
+    }
+
+    void IGimmickRacer.StopBoost(float lockDuration)
+    {
+        _boost.ForceStop(lockDuration);
+    }
+
+    void IGimmickRacer.StopFlight()
+    {
+        _flightController.Stop();
+    }
+
+    bool IGimmickRacer.TryBlockWithShield()
+    {
+        if (!_shield.TryBlock())
+        {
+            return false;
+        }
+
+        _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
+        ShieldBlocked?.Invoke();
+        return true;
+    }
+
+    void IGimmickRacer.NotifyGimmickActivated(CourseGimmickBase gimmick)
+    {
+        GimmickActivated?.Invoke(gimmick);
     }
 
     // ブーストとシールドは同時に使えない。片方を使っている間は、もう片方の「押した」入力を受け付けない（先に押した方を優先）。
