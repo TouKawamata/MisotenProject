@@ -1,41 +1,44 @@
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 // デバッグ用のキーボード入力。新Input System（Keyboard.current）のみを使用する。
 // このプロジェクトはActive Input HandlingがNew Input System専用のため、UnityEngine.Inputは使用不可。
+// 移動：A/D・←/→で左右、W/S・↑/↓で上下。ブースト：Space、シールド：左Shift。
 public class KeyboardRaceInput : IRaceInput
 {
-    public float Horizontal
+    public Vector2 Move
     {
         get
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
             {
-                return 0f;
+                return Vector2.zero;
             }
 
-            float value = 0f;
+            Vector2 value = Vector2.zero;
             if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
             {
-                value -= 1f;
+                value.x -= 1f;
             }
 
             if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
             {
-                value += 1f;
+                value.x += 1f;
             }
 
-            if (keyboard.sKey.isPressed)
+            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
             {
-                value -= 0.7f;
+                value.y -= 1f;
             }
 
-            if (keyboard.fKey.isPressed)
+            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
             {
-                value += 0.7f;
+                value.y += 1f;
             }
 
-            return value;
+            // 斜め（例：(1, 1)）でも大きさが1を超えないようにする（IRaceInput.Moveの約束）。
+            return Vector2.ClampMagnitude(value, 1f);
         }
     }
 
@@ -46,6 +49,4 @@ public class KeyboardRaceInput : IRaceInput
     public bool ShieldPressed => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
 
     public bool ShieldHeld => Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
-
-    public bool ShortcutPressed => Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 }

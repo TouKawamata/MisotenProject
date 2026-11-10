@@ -1,0 +1,29 @@
+﻿==================================================
+[CharacterElectricityTest] テスト開始
+==================================================
+✅ [PASS] テスト1: アセットパス解決（shiro.mat, P1~P20 全20種）
+✅ [PASS] テスト2: 色バリエーション(ao/kuro)動的バックアップと完全復元
+✅ [PASS] テスト3: バックアップ null 時の恒久最大放電化バグ防止ガード
+✅ [PASS] テスト4: プレイヤー連携API動作確認 & 元マテリアル自動復帰
+[GC Alloc] 100 回の UpdatePropertyBlockFast: 0 bytes (リフレクション呼出含む)
+✅ [PASS] テスト5: ゼロGCアロケーション構造確認
+✅ [PASS] テスト6: 全20パターン切り替えサイクル & IsElectricityMaterial 整合性確認
+✅ [PASS] テスト7: CharacterElectricityMode と各マテリアルの _PatternMode (0〜19) 整合性確認
+✅ [PASS] テスト8: パーティクル関連アセット（シェーダー・テクスチャ・マテリアル計7点）のロード整合性確認
+✅ [PASS] テスト9: born model.fbx に対するパーティクル自動セットアップ＆SkinnedMeshRenderer 100%追従バインド確認
+✅ [PASS] テスト10: 放電パターン切り替え・カスタムカラー同期・バースト射出動作確認
+✅ [PASS] テスト11: スタン状態連動とスムーズな放出停止・クリーンアップ動作確認
+[GC Alloc] 100 回の SynchronizeWithElectricity: 0 bytes
+✅ [PASS] テスト12: パーティクル連動時のゼロGCアロケーション厳格確認 (0 bytes)
+✅ [PASS] テスト13: 被弾ベクトル適用後の VelocityOverLifetime 確実な解除確認（残留ステート汚染防止）
+✅ [PASS] テスト14: 全20パターンのパーティクル連動パラメータ整合性確認（全パターン放出・停止テスト）
+✅ [PASS] テスト15: パーティクル完全削除・シェーダー単体化及び安全初期化（ResetToOriginalAndCleanup）階層保護検証
+✅ [PASS] テスト16: 単体 Remove Component 時の OnDestroy 安全復帰＆パーティクル残存ゼロ検証（マテリアル復元・子消去・階層保護）
+✅ [PASS] テスト17: 統合コントローラーの全3動作モード双方向切り替え・マテリアル保護・子階層消去・Remove Component (OnDestroy) 安全完全復帰検証
+[GC Alloc] 100 回の RichHybrid Update: 0 bytes
+✅ [PASS] テスト18: RichHybrid モード（シェーダー P1〜P20 ＋ 純粋パーティクル P1〜P8 同時連動）の結合・個別パターン切替・パラメータ同期・ゼロGC・OnDestroy 安全復帰検証
+✅ [PASS] テスト19: HybridParticleSource 切り替え（PureParticles / Lightweight / Both）と即時同期・両系併用 (Both)・一括削除検証
+✅ [PASS] テスト20: コンポーネント Reset() クリーンアップ、RichHybrid 独立制御、ParticleOnly スタン重み同期検証
+==================================================
+[CharacterElectricityTest] テスト完了: 合格 20 / 失敗 0
+==================================================

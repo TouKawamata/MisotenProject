@@ -38,7 +38,7 @@ public class DebugHud : MonoBehaviour
 
     private float boostPressedUntil;
     private float shieldPressedUntil;
-    private float shortcutPressedUntil;
+    // [ショートカット廃止 2026-11-07 川又] private float shortcutPressedUntil;
 
     private float courseDistance;
     private float courseProgress;
@@ -101,7 +101,8 @@ public class DebugHud : MonoBehaviour
 
         if (input != null)
         {
-            float horizontal = input.Horizontal;
+            // IRaceInputがMove（Vector2）になったため、グラフには左右のxを記録する（2026-11-07 川又）。
+            float horizontal = input.Move.x;
 
             SampleHorizontal(horizontal);
 
@@ -112,8 +113,9 @@ public class DebugHud : MonoBehaviour
             if (input.ShieldPressed)
                 shieldPressedUntil = Time.unscaledTime + pressedHoldSeconds;
 
-            if (input.ShortcutPressed)
-                shortcutPressedUntil = Time.unscaledTime + pressedHoldSeconds;
+            // [ショートカット廃止]
+            // if (input.ShortcutPressed)
+            //     shortcutPressedUntil = Time.unscaledTime + pressedHoldSeconds;
         }
 
         // CourseSplineの重い検索は間引く。
@@ -239,9 +241,14 @@ public class DebugHud : MonoBehaviour
             $"Source : {input.GetType().Name}",
             labelStyle);
 
+        // IRaceInputがMove（Vector2）になったため、x（左右）とy（上下）を表示する（2026-11-07 川又）。
         DrawValue(
-            "Horizontal",
-            input.Horizontal.ToString("+0.000;-0.000;0.000"));
+            "Move X",
+            input.Move.x.ToString("+0.000;-0.000;0.000"));
+
+        DrawValue(
+            "Move Y",
+            input.Move.y.ToString("+0.000;-0.000;0.000"));
 
         DrawPressed(
             "BoostPressed",
@@ -251,9 +258,10 @@ public class DebugHud : MonoBehaviour
             "ShieldPressed",
             Time.unscaledTime < shieldPressedUntil);
 
-        DrawPressed(
-            "ShortcutPressed",
-            Time.unscaledTime < shortcutPressedUntil);
+        // [ショートカット廃止]
+        // DrawPressed(
+        //     "ShortcutPressed",
+        //     Time.unscaledTime < shortcutPressedUntil);
 
         GUILayout.Space(4f);
 
@@ -413,21 +421,22 @@ public class DebugHud : MonoBehaviour
 
             DrawValue("Profile", profileName);
 
-            DrawValue(
-                "Shortcut Zone",
-                playerManager.IsInShortcutZone ? "IN" : "OUT",
-                playerManager.IsInShortcutZone
-                    ? Color.yellow
-                    : Color.white);
-
-            DrawValue(
-                "Shortcut Snap",
-                playerManager.IsShortcutProfileActive
-                    ? "ACTIVE"
-                    : "OFF",
-                playerManager.IsShortcutProfileActive
-                    ? Color.green
-                    : Color.white);
+            // [ショートカット廃止]
+            // DrawValue(
+            //     "Shortcut Zone",
+            //     playerManager.IsInShortcutZone ? "IN" : "OUT",
+            //     playerManager.IsInShortcutZone
+            //         ? Color.yellow
+            //         : Color.white);
+            //
+            // DrawValue(
+            //     "Shortcut Snap",
+            //     playerManager.IsShortcutProfileActive
+            //         ? "ACTIVE"
+            //         : "OFF",
+            //     playerManager.IsShortcutProfileActive
+            //         ? Color.green
+            //         : Color.white);
         }
     }
 

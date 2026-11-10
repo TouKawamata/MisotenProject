@@ -1,0 +1,44 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.23f1 (09d2ecc7fb28) revision 643820'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'ja' Physical Memory: 16085 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+[Licensing::IpcConnector] Connection to channel LicenseClient-Mk611 refused
+System  architecture: x64
+Process architecture: x64
+Date: 2026-11-08T14:26:32Z
+[Licensing::Module] Successfully launched the LicensingClient (PId: 30488)
+Assertion failed on expression: 'SUCCEEDED(hr)'
+Assertion failed on expression: 'wmiOpened'
+Assertion failed on expression: 'ERROR_SUCCESS == status'
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.23f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+C:\testUni\MisotenProject
+-executeMethod
+AT_Murayama.CharacterElectricity.Editor.CharacterElectricityTest.RunTests
+-logFile
+C:\testUni\MisotenProject\test_batch_log.txt
+Successfully changed project path to: C:\testUni\MisotenProject
+C:/testUni/MisotenProject
+Exiting without the bug reporter. Application will terminate with return code 1Starting IPC server.
+Named pipe Unity-LicenseClient-Mk611 already exists
+Unable to retrieve BIOS serial number. Exception: System.UnauthorizedAccessException: アクセスが拒否されました。
+
+   at System.Runtime.InteropServices.Marshal.ThrowExceptionForHR(Int32 errorCode, IntPtr errorInfo)
+   at System.Management.ManagementScope.InitializeGuts(Object o)
+   at System.Management.ManagementScope.Initialize()
+   at System.Management.ManagementObjectSearcher.Initialize()
+   at System.Management.ManagementObjectSearcher.Get()
+   at Unity.Licensing.Platform.SystemInfo.WindowsSystemInformation.get_BIOSIdentifier()
+An error occurred when retrieving the network adapter information. Exception: System.UnauthorizedAccessException: アクセスが拒否されました。
+
+   at System.Runtime.InteropServices.Marshal.ThrowExceptionForHR(Int32 errorCode, IntPtr errorInfo)
+   at System.Management.ManagementScope.InitializeGuts(Object o)
+   at System.Management.ManagementScope.Initialize()
+   at System.Management.ManagementObjectSearcher.Initialize()
+   at System.Management.ManagementObjectSearcher.Get()
+   at Unity.Licensing.Platform.SystemInfo.WindowsSystemInformation.GetMacAddressesWindows()
+Shut down.

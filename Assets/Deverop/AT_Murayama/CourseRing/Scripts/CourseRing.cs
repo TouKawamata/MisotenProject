@@ -22,12 +22,29 @@ public class CourseRing : MonoBehaviour
     [Tooltip("通過を監視する対象リスト（Playerや敵などを複数登録可能）")]
     [SerializeField] private List<Transform> _targets = new List<Transform>();
 
+    [Header("通過判定オプション（誤発火・チャタリング防止）")]
+    [Tooltip("逆走方向（表から裏：Z > 0 から Z <= 0）の通過でもイベントを発火するか（通常はOFF推奨）")]
+    [SerializeField] private bool _allowBackwardPass = false;
+
+    [Tooltip("同一ターゲットがリング境界付近で連続多重発火（チャタリング）するのを防ぐクールダウン秒数")]
+    [Min(0f)]
+    [SerializeField] private float _passCooldown = 0.5f;
+
+    [Tooltip("1フレームの移動距離がこの値（m）を超えた場合はリスポーン・ワープとみなして通過判定をスキップする（0以下で無制限）")]
+    [SerializeField] private float _maxPassDistancePerFrame = 100f;
+
+    [Tooltip("通過時にConsoleへデバッグログを出力するか")]
+    [SerializeField] private bool _enableDebugLog = true;
+
     [Header("イベント")]
     [Tooltip("対象がリングを通過した時に発火するイベント（誰が通過したかを渡します）")]
     public RingPassEvent OnPassed;
 
     // 各ターゲットの前フレーム位置を独立して記憶する辞書（すり抜けバグ防止用）
-    private Dictionary<Transform, Vector3> _previousPositions = new Dictionary<Transform, Vector3>();
+    private readonly Dictionary<Transform, Vector3> _previousPositions = new Dictionary<Transform, Vector3>();
+
+    // 各ターゲットの最終通過時刻を記憶する辞書（チャタリング・連続発火防止用）
+    private readonly Dictionary<Transform, float> _lastPassTimes = new Dictionary<Transform, float>();
 
     // デフォルトの基本半径（Scale = 1 のとき、半径1とする）
     private const float BaseRadius = 1.0f;
@@ -55,6 +72,7 @@ public class CourseRing : MonoBehaviour
     private void OnValidate()
     {
         _radius = Mathf.Max(0.1f, _radius);
+        _passCooldown = Mathf.Max(0f, _passCooldown);
         UpdateScale();
     }
 
@@ -78,11 +96,17 @@ public class CourseRing : MonoBehaviour
         {
             _targets.Remove(target);
             _previousPositions.Remove(target);
+            _lastPassTimes.Remove(target);
         }
     }
 
     private void Update()
     {
+        float now = Time.time;
+        float maxDistSq = (_maxPassDistancePerFrame > 0f)
+            ? (_maxPassDistancePerFrame * _maxPassDistancePerFrame)
+            : float.MaxValue;
+
         // 登録されている全ターゲットをチェック
         for (int i = 0; i < _targets.Count; i++)
         {
@@ -98,33 +122,60 @@ public class CourseRing : MonoBehaviour
                 continue;
             }
 
+            // リスポーンやワープによる長距離移動時は、線分がリングを貫通して誤発火するのを防ぐ
+            if ((currentPosition - previousPosition).sqrMagnitude > maxDistSq)
+            {
+                _previousPositions[target] = currentPosition;
+                continue;
+            }
+
             // ワールド座標をリングのローカル座標に変換
             Vector3 localPrev = transform.InverseTransformPoint(previousPosition);
             Vector3 localCur  = transform.InverseTransformPoint(currentPosition);
 
-            // Z軸（前後）をまたいだかチェック
+            // Z軸（前後）をまたいだかチェック（逆走は _allowBackwardPass がONのときのみ許可）
             bool crossedForward  = localPrev.z < 0f && localCur.z >= 0f;
-            bool crossedBackward = localPrev.z > 0f && localCur.z <= 0f;
+            bool crossedBackward = _allowBackwardPass && (localPrev.z > 0f && localCur.z <= 0f);
 
             if (crossedForward || crossedBackward)
             {
-                // Z=0（リングの面）と、移動ラインが交差する割合(t)を求める
-                float t = -localPrev.z / (localCur.z - localPrev.z);
-
-                // 交差点のローカルX, Y座標を計算
-                float crossX = localPrev.x + (localCur.x - localPrev.x) * t;
-                float crossY = localPrev.y + (localCur.y - localPrev.y) * t;
-
-                // 中心からの距離の2乗を計算
-                float distSq = crossX * crossX + crossY * crossY;
-
-                // リングの半径内を通過していればイベント発火！
-                if (distSq <= BaseRadius * BaseRadius)
+                // クールダウン期間中ならチャタリング（連続発火）防止のためスキップ
+                if (_passCooldown > 0f &&
+                    _lastPassTimes.TryGetValue(target, out float lastPassTime) &&
+                    (now - lastPassTime) < _passCooldown)
                 {
-                    Debug.Log($"<color=lime>[CourseRing]</color> <b>{target.name}</b> が <b>{gameObject.name}</b> を通過しました！");
-                    
-                    // 「誰が通ったか(target)」をイベントで渡す
-                    OnPassed?.Invoke(target);
+                    _previousPositions[target] = currentPosition;
+                    continue;
+                }
+
+                float dz = localCur.z - localPrev.z;
+                if (Mathf.Abs(dz) > 0.00001f)
+                {
+                    // Z=0（リングの面）と、移動ラインが交差する割合(t)を求める
+                    float t = -localPrev.z / dz;
+
+                    // 交差点のローカルX, Y座標を計算
+                    float crossX = localPrev.x + (localCur.x - localPrev.x) * t;
+                    float crossY = localPrev.y + (localCur.y - localPrev.y) * t;
+
+                    // 中心からの距離の2乗を計算
+                    float distSq = crossX * crossX + crossY * crossY;
+
+                    // リングの半径内を通過していればイベント発火！
+                    if (distSq <= BaseRadius * BaseRadius)
+                    {
+                        _lastPassTimes[target] = now;
+
+#if UNITY_EDITOR
+                        if (_enableDebugLog)
+                        {
+                            Debug.Log($"<color=lime>[CourseRing]</color> <b>{target.name}</b> が <b>{gameObject.name}</b> を通過しました！");
+                        }
+#endif
+
+                        // 「誰が通ったか(target)」をイベントで渡す
+                        OnPassed?.Invoke(target);
+                    }
                 }
             }
 
@@ -139,7 +190,7 @@ public class CourseRing : MonoBehaviour
         // 親オブジェクトのスケール（拡大縮小）や回転をギズモに完全に反映させる
         UnityEditor.Handles.matrix = transform.localToWorldMatrix;
         UnityEditor.Handles.color = Color.cyan;
-        
+
         // Z=0のローカル平面に半径 1.0 の円を描く（Scaleの値がそのままワールド空間の半径になります）
         UnityEditor.Handles.DrawWireDisc(Vector3.zero, Vector3.forward, BaseRadius);
     }

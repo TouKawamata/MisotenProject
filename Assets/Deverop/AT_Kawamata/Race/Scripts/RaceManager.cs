@@ -17,6 +17,10 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
 	[SerializeField] private PlayerManager _playerManager;
     [SerializeField] private CourseSpline _courseSpline;
+
+    [Tooltip("分岐のあるコースにするときに入れる（本線はCourse Splineと同じものにする）。参加者ごとにルートを作って渡す。未設定なら、Course Splineの1本道で走る")]
+    [SerializeField] private CourseNetwork _courseNetwork;
+
     [SerializeField] private RaceSettings _settings;
 
     [Header("CPU")]
@@ -86,6 +90,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName, _playerManager.Transform), _settings.PlayerGridIndex);
         AddEntry(_playerEntry);
         AddCpuEntries();
+        SetupCourseRoutes();
 
         _startGrid = new StartGrid(_courseSpline, _settings);
         _progressTracker = new RaceProgressTracker(_courseSpline);
@@ -200,6 +205,29 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         }
     }
 
+    // 分岐のあるコースなら、参加者（PlayerManager・CPUManager）ごとにルートを作って渡す。DummyRacerなどは本線のまま。
+    private void SetupCourseRoutes()
+    {
+        if (_courseNetwork == null)
+        {
+            return;
+        }
+
+        if (_courseNetwork.MainSpline != _courseSpline)
+        {
+            Debug.LogError("RaceManager: Course Network の Main Spline が Course Spline と違うため、分岐を使いません（1本道で走ります）", this);
+            return;
+        }
+
+        foreach (RacerEntry entry in _entries)
+        {
+            if (entry.Racer is RacerManagerBase racer)
+            {
+                racer.SetCourseRoute(_courseNetwork.CreateRoute());
+            }
+        }
+    }
+
     // IRacerContactBodyを実装している参加者だけを、通常の接触の押し戻しの対象にする。
     private void SetupContactResolver()
     {
@@ -282,6 +310,25 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         }
 
         _progressTracker.SetGoalDistance(goalDistance);
+        WarnBranchesBeyondGoal(goalDistance);
+    }
+
+    // 合流点がゴールより先にある分岐は、分岐を走るとゴールの判定が本線と合わなくなるので知らせる。
+    private void WarnBranchesBeyondGoal(float goalDistance)
+    {
+        if (_courseNetwork == null || _courseNetwork.MainSpline != _courseSpline)
+        {
+            return;
+        }
+
+        _courseNetwork.EnsureBuilt();
+        foreach (CourseBranch branch in _courseNetwork.Branches)
+        {
+            if (branch.MergeDistance >= goalDistance)
+            {
+                Debug.LogWarning($"RaceManager: 分岐 {branch.name} の合流点（{branch.MergeDistance:F1}m）がゴール（{goalDistance:F1}m）より先にあります。ゴールより手前で本線に合流させてください", branch);
+            }
+        }
     }
 
     private void PlaceRacers()

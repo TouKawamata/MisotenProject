@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_SmartSign_WeatherStation
+  m_Shader: {fileID: 4800000, guid: 8b1e2001bc5f492098d1a100ca000001, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 8b1e2001bc5f492098d1a100ca000052, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AspectRatio: 1.7777
+    - _BlurRadius: 0.018
+    - _Cull: 2
+    - _DstBlend: 10
+    - _DynamicTelemetry: 1
+    - _EdgeGlowIntensity: 1.4
+    - _FresnelPower: 3.2
+    - _GraphWaveAmp: 0.008
+    - _GraphWaveSpeed: 1.8
+    - _HasCustomTex: 1
+    - _RefractionAmount: 0.007
+    - _RoughnessNoise: 0.35
+    - _SpecularIntensity: 1.3
+    - _SpecularSmoothness: 64
+    - _SrcBlend: 5
+    - _SweepIntensity: 0.35
+    - _SweepSpeed: 0.4
+    - _UIIntensity: 2.2
+    - _UIOpacity: 0.95
+    - _UseSceneBlur: 1
+    - _ZTest: 4
+    - _ZWrite: 0
+    m_Colors:
+    - _EdgeGlowColor: {r: 0.85, g: 0.97, b: 1, a: 0.9}
+    - _FresnelColor: {r: 0.75, g: 0.95, b: 1, a: 0.85}
+    - _GlassTint: {r: 0.88, g: 0.95, b: 1, a: 0.25}
+    - _UIColor: {r: 0.70, g: 0.92, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

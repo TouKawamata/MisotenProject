@@ -25,6 +25,10 @@ public class CourseRingSplinePlacer : MonoBehaviour
     [Tooltip("チェックを入れると、配置している位置のコース幅（CourseSplineのTunnelRadius×制御点のRadius Scale）に自動的にサイズを合わせます（違うサイズにしたい場合はチェックを外してCourseRingのRadiusを直接変更してください）")]
     [SerializeField] private bool _syncWithTunnelRadius = true;
 
+    [Header("実行時パフォーマンス設定")]
+    [Tooltip("ゲーム実行中（Playモード中）も毎フレーム位置・サイズを再計算し続けるか（通常はOFF推奨：起動時に1回だけ配置を確定し、実行中の毎フレームCPU負荷をゼロにします）")]
+    [SerializeField] private bool _updateEveryFrameInPlayMode = false;
+
     private CourseRing _ring;
 
     private void Awake()
@@ -32,7 +36,35 @@ public class CourseRingSplinePlacer : MonoBehaviour
         _ring = GetComponent<CourseRing>();
     }
 
+    private void OnEnable()
+    {
+        if (_ring == null)
+        {
+            _ring = GetComponent<CourseRing>();
+        }
+        UpdatePlacement();
+    }
+
+    private void Start()
+    {
+        UpdatePlacement();
+    }
+
     private void Update()
+    {
+        // ゲーム実行中は、毎フレーム更新オプションがOFFならスキップしてCPU負荷を防ぐ
+        if (Application.isPlaying && !_updateEveryFrameInPlayMode)
+        {
+            return;
+        }
+
+        UpdatePlacement();
+    }
+
+    /// <summary>
+    /// スプライン上の指定距離に基づいて位置・回転・リング半径を更新する。
+    /// </summary>
+    public void UpdatePlacement()
     {
         if (_courseSpline == null)
         {
@@ -47,7 +79,7 @@ public class CourseRingSplinePlacer : MonoBehaviour
 
         // オフセットを加えて実際の位置を決定
         transform.position = center + right * _lateralOffset + up * _verticalOffset;
-        
+
         // 前方(forward)と上(up)を元に向きを決定
         if (forward != Vector3.zero)
         {
@@ -71,5 +103,11 @@ public class CourseRingSplinePlacer : MonoBehaviour
             // 距離を0以上に制限（ループコースならTotalLengthでループさせるのもアリですが、一旦0以上のみ）
             _distance = Mathf.Max(0f, _distance);
         }
+
+        if (_ring == null)
+        {
+            _ring = GetComponent<CourseRing>();
+        }
+        UpdatePlacement();
     }
 }

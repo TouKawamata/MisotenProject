@@ -69,9 +69,11 @@ public class RacerContactResolver
             return;
         }
 
+        // 分岐のあるコースでは、レーサーごとに走っている区間が違うので、aのガイド（無ければ本線）で左右・前後を決める。
+        ICourseGuide guide = GetGuide(a);
         Vector3 middle = (transformA.position + transformB.position) * 0.5f;
-        Vector3 right = _guide.GetRight(middle);
-        Vector3 forward = _guide.GetForward(middle);
+        Vector3 right = guide.GetRight(middle);
+        Vector3 forward = guide.GetForward(middle);
         float lateral = Vector3.Dot(direction, right);
         float longitudinal = Vector3.Dot(direction, forward);
         float angleFromSide = Mathf.Atan2(Mathf.Abs(longitudinal), Mathf.Abs(lateral)) * Mathf.Rad2Deg;
@@ -109,6 +111,12 @@ public class RacerContactResolver
         b.ApplyContactCorrection(-awayFromBForA * (lateralDistance * (1f - shareA)), -awayFromBForA);
     }
 
+    // そのレーサーのコースへの問い合わせ口。自分のガイドを持たない（ICourseGuideOwnerでない、Initialize前など）なら、本線のガイド。
+    private ICourseGuide GetGuide(IRacerContactBody body)
+    {
+        return body is ICourseGuideOwner owner && owner.CourseGuide != null ? owner.CourseGuide : _guide;
+    }
+
     // 後ろのレーサーだけを、前に出られないよう戻しつつ、左右へずらす。
     private void ResolveRearContact(IRacerContactBody a, IRacerContactBody b, Vector3 right, Vector3 forward, float longitudinal, float depth, float deltaTime)
     {
@@ -129,7 +137,7 @@ public class RacerContactResolver
         }
         else
         {
-            float offsetToCenter = Vector3.Dot(_guide.GetCenterPosition(rearPosition) - rearPosition, right);
+            float offsetToCenter = Vector3.Dot(GetGuide(rear).GetCenterPosition(rearPosition) - rearPosition, right);
             side = offsetToCenter >= 0f ? 1f : -1f;
         }
 

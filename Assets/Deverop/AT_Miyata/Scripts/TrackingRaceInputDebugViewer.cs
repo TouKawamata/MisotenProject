@@ -32,24 +32,25 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
 
     // 現在使用している入力元（キーボード or トラッキング）。
     private IRaceInput _input;
-    // ショートカットのHeld（継続状態）はIRaceInputには無いTrackingRaceInput独自のプロパティのため、
-    // それを読むためだけにキャストした参照を持つ（キーボードデバッグ時はnullのまま）。
-    private TrackingRaceInput _trackingInput;
+    // [ショートカット廃止 2026-11-07 川又] ショートカットのHeld表示が無くなったため、TrackingRaceInputへのキャストもコメントアウト。
+    // // ショートカットのHeld（継続状態）はIRaceInputには無いTrackingRaceInput独自のプロパティのため、
+    // // それを読むためだけにキャストした参照を持つ（キーボードデバッグ時はnullのまま）。
+    // private TrackingRaceInput _trackingInput;
 
     // 各ジェスチャーがトリガー（成立した瞬間）した回数
     private int _boostCount;
     private int _shieldCount;
-    private int _shortcutCount;
+    // [ショートカット廃止] private int _shortcutCount;
 
     // 各ジェスチャーが最後にトリガーした時刻（Time.time基準）。表示のフラッシュ判定に使う。
     private float _lastBoostTime = -999f;
     private float _lastShieldTime = -999f;
-    private float _lastShortcutTime = -999f;
+    // [ショートカット廃止] private float _lastShortcutTime = -999f;
 
     // 各ジェスチャーの現在の継続状態（ポーズを取り続けているか＝プレス）。
     private bool _boostHeld;
     private bool _shieldHeld;
-    private bool _shortcutHeld;
+    // [ショートカット廃止] private bool _shortcutHeld;
 
     // 直近フレームで取得したHorizontalの値（表示用）。
     private float _latestHorizontal;
@@ -95,8 +96,8 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         int capacity = Mathf.Max(2, Mathf.CeilToInt(_graphSeconds * _graphSamplesPerSecond));
         _horizontalHistory = new float[capacity];
 
-        // ショートカットのHeld（プレス）表示のために、TrackingRaceInputであればキャストして保持しておく（キーボード時はnull）
-        _trackingInput = _input as TrackingRaceInput;
+        // [ショートカット廃止] ショートカットのHeld（プレス）表示のために、TrackingRaceInputであればキャストして保持しておく（キーボード時はnull）
+        // _trackingInput = _input as TrackingRaceInput;
     }
 
     // 作成した白テクスチャを破棄する。
@@ -117,8 +118,8 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
             return;
         }
 
-        // Horizontalの現在値を取得
-        _latestHorizontal = _input.Horizontal;
+        // Horizontalの現在値を取得（IRaceInputがMove（Vector2）になったため、左右のxを読む）
+        _latestHorizontal = _input.Move.x;
         // グラフ用に履歴へ記録
         SampleHorizontal(_latestHorizontal);
 
@@ -136,18 +137,18 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
             _lastShieldTime = Time.time;
         }
 
-        // 判定：ショートカットがこのフレームでトリガーしたか
-        if (_input.ShortcutPressed)
-        {
-            _shortcutCount++;
-            _lastShortcutTime = Time.time;
-        }
+        // [ショートカット廃止] 判定：ショートカットがこのフレームでトリガーしたか
+        // if (_input.ShortcutPressed)
+        // {
+        //     _shortcutCount++;
+        //     _lastShortcutTime = Time.time;
+        // }
 
         // ブースト・シールドの継続状態はIRaceInputから取得する。
         _boostHeld = _input.BoostHeld;
         _shieldHeld = _input.ShieldHeld;
-        // ショートカットの継続状態はTrackingRaceInput独自のため、キーボードモード（_trackingInputがnull）のときは常にfalse
-        _shortcutHeld = _trackingInput != null && _trackingInput.IsShortcutPoseActive;
+        // [ショートカット廃止] ショートカットの継続状態はTrackingRaceInput独自のため、キーボードモード（_trackingInputがnull）のときは常にfalse
+        // _shortcutHeld = _trackingInput != null && _trackingInput.IsShortcutPoseActive;
     }
 
     // 画面左上にデバッグ情報（Source／Horizontal／各ジェスチャーの状態）を表示する。
@@ -168,11 +169,11 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         // 現在の入力元（トラッキング or キーボード）を表示
         string sourceLabel = _useKeyboardForDebug ? "Keyboard (Debug)" : "Tracking";
         GUI.Label(new Rect(20, 215, width - 20, 20), $"Source: {sourceLabel}");
-        // 判定：キーボードモードかどうか（キーボードモードではショートカットのHeld表示が非対応であることを注記する）
-        if (_useKeyboardForDebug)
-        {
-            GUI.Label(new Rect(20, 233, width - 20, 20), "※ShortcutのHeldはキーボードデバッグ時は非対応");
-        }
+        // [ショートカット廃止] 判定：キーボードモードかどうか（キーボードモードではショートカットのHeld表示が非対応であることを注記する）
+        // if (_useKeyboardForDebug)
+        // {
+        //     GUI.Label(new Rect(20, 233, width - 20, 20), "※ShortcutのHeldはキーボードデバッグ時は非対応");
+        // }
 
         // Horizontalの数値とバー表示
         GUI.Label(new Rect(20, 253, width - 20, 20), $"Horizontal: {_latestHorizontal:+0.000;-0.000;0.000}");
@@ -183,7 +184,7 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         // 各ジェスチャー（Boost/Shield/Shortcut）のHolding状態とTrigger回数を1行ずつ表示
         DrawGestureRow(20, 405, "Boost", _boostHeld, _boostCount, _lastBoostTime);
         DrawGestureRow(20, 430, "Shield", _shieldHeld, _shieldCount, _lastShieldTime);
-        DrawGestureRow(20, 455, "Shortcut (Banzai)", _shortcutHeld, _shortcutCount, _lastShortcutTime);
+        // [ショートカット廃止] DrawGestureRow(20, 455, "Shortcut (Banzai)", _shortcutHeld, _shortcutCount, _lastShortcutTime);
     }
 
     // Horizontalの値を、中央（直立＝0）を基準にした横棒グラフとして描画する。

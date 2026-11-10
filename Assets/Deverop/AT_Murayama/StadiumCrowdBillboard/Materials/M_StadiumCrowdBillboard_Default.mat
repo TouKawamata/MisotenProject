@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_StadiumCrowdBillboard_Default
+  m_Shader: {fileID: 4800000, guid: 2695b40edc929c643be2b8d4bda58114, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AccentEmissionStrength: 0
+    - _AlphaCutoff: 0.45
+    - _AmbientMin: 0.35
+    - _AnimSpeed: 1
+    - _ArmWaveAmount: 0.85
+    - _BillboardOrientationMode: 0
+    - _ColorVariation: 0.22
+    - _Excitement: 0.35
+    - _HeightVariation: 0.1
+    - _JumpHeight: 0.22
+    - _JumpRatio: 0.55
+    - _LookAtWeight: 1
+    - _ReactionLagWeight: 0.68
+    - _RimIntensity: 0.45
+    - _SwayAmount: 0.1
+    - _UseCustomTexture: 0
+    - _VerticalTiltWeight: 0.55
+    - _WaveCount: 1
+    - _WaveIntensity: 0.18
+    - _WaveSpeed: 0.22
+    m_Colors:
+    - _AccentEmissionColor: {r: 0.95, g: 0.85, b: 0.25, a: 1}
+    - _DelayedTargetPosOS: {r: 0, g: 35, b: 0, a: 1}
+    - _HairHatColor: {r: 0.18, g: 0.2, b: 0.25, a: 1}
+    - _OutfitColorA: {r: 0.16, g: 0.42, b: 0.86, a: 1}
+    - _OutfitColorB: {r: 0.88, g: 0.22, b: 0.24, a: 1}
+    - _OutfitColorC: {r: 0.9, g: 0.92, b: 0.95, a: 1}
+    - _OutfitColorD: {r: 0.95, g: 0.72, b: 0.15, a: 1}
+    - _PantsColor: {r: 0.14, g: 0.16, b: 0.21, a: 1}
+    - _RimColor: {r: 0.65, g: 0.8, b: 1, a: 1}
+    - _SkinColor: {r: 0.88, g: 0.72, b: 0.62, a: 1}
+    - _TargetPosOS: {r: 0, g: 30, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
