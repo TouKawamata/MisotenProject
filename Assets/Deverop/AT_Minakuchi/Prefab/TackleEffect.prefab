@@ -52,6 +52,7 @@ MonoBehaviour:
   _depth: 0.7
   _windColor: {r: 1.8, g: 2.4, b: 2.8, a: 1}
   _windStrength: 1.1
+  _continuous: 1
   _demoLoop: 0
   _demoInterval: 3
 

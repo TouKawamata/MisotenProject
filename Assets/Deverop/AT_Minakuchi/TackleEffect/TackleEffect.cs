@@ -5,23 +5,24 @@ using UnityEngine.Rendering;
 [DisallowMultipleComponent]
 public sealed class TackleEffect : MonoBehaviour
 {
-    [Header("Shape / 形状（ローカル軸）")]
-    [Tooltip("全体の大きさ。Width / Height / Depth はこの半径に対する倍率です。")]
-    [SerializeField, Min(0.1f)] private float _radius = 1.5f;
+    [Header("形状（ローカル軸）")]
+    [Tooltip("全体の大きさ。横幅・高さ・前方への奥行き はこの半径に対する倍率です。")]
+    [SerializeField, InspectorName("半径"), Min(0.1f)] private float _radius = 1.5f;
     [Tooltip("横幅（X軸）の倍率。1が標準。")]
-    [SerializeField, Min(0.01f)] private float _width = 1f;
+    [SerializeField, InspectorName("横幅"), Min(0.01f)] private float _width = 1f;
     [Tooltip("高さ（Y軸）の倍率。1が標準。")]
-    [SerializeField, Min(0.01f)] private float _height = 1f;
+    [SerializeField, InspectorName("高さ"), Min(0.01f)] private float _height = 1f;
     [Tooltip("前方への奥行き（Z軸）の倍率。1より大きくすると前へ長く伸びます。")]
-    [SerializeField, Min(0.01f)] private float _depth = 0.7f;
-    [Header("Animation / 動き")]
-    [SerializeField, Range(0.08f, 5f)] private float _duration = 2.5f;
-    [SerializeField, Range(0.2f, 5f)] private float _scrollSpeed = 1.8f;
+    [SerializeField, InspectorName("前方への奥行き"), Min(0.01f)] private float _depth = 0.7f;
+    [Header("動き")]
+    [SerializeField, InspectorName("再生時間（秒）"), Range(0.08f, 5f)] private float _duration = 2.5f;
+    [SerializeField, InspectorName("流れる速さ"), Range(0.2f, 5f)] private float _scrollSpeed = 1.8f;
     [UnityEngine.Serialization.FormerlySerializedAs("_gold")]
-    [SerializeField, ColorUsage(true, true)] private Color _windColor = new Color(1.8f, 2.4f, 2.8f, 1f);
-    [SerializeField, Range(0f, 2f)] private float _windStrength = 1.1f;
-    [SerializeField] private bool _demoLoop = false;
-    [SerializeField, Min(0.5f)] private float _demoInterval = 1.2f;
+    [SerializeField, InspectorName("風の色"), ColorUsage(true, true)] private Color _windColor = new Color(1.8f, 2.4f, 2.8f, 1f);
+    [SerializeField, InspectorName("風の強さ"), Range(0f, 2f)] private float _windStrength = 1.1f;
+    [SerializeField, InspectorName("常時表示")] private bool _continuous;
+    [SerializeField, InspectorName("デモの繰り返し")] private bool _demoLoop = false;
+    [SerializeField, InspectorName("デモの間隔（秒）"), Min(0.5f)] private float _demoInterval = 1.2f;
 
     private Material _material;
     private Mesh _mesh;
@@ -38,6 +39,11 @@ public sealed class TackleEffect : MonoBehaviour
     private static readonly int WindStrengthId = Shader.PropertyToID("_WindStrength");
 
     private void Awake() => Build();
+
+    private void OnEnable()
+    {
+        if (_continuous) PlayTackle();
+    }
 
     private bool Build()
     {
@@ -84,7 +90,7 @@ public sealed class TackleEffect : MonoBehaviour
         return true;
     }
 
-    [ContextMenu("Play Tackle (Play Mode)")]
+    [ContextMenu("タックルを再生（プレイモード）")]
     public void PlayTackle()
     {
         if (!Application.isPlaying || !Build()) return;
@@ -111,10 +117,10 @@ public sealed class TackleEffect : MonoBehaviour
         _strength = Mathf.Clamp(strength, 0.1f, 2f);
         _playing = true;
         _shell.gameObject.SetActive(true);
-        Draw(0);
+        Draw();
     }
 
-    [ContextMenu("Stop (Play Mode)")]
+    [ContextMenu("停止（プレイモード）")]
     public void StopRush()
     {
         _playing = false;
@@ -123,7 +129,7 @@ public sealed class TackleEffect : MonoBehaviour
 
     private void Update()
     {
-        if (_demoLoop)
+        if (_demoLoop && !_continuous)
         {
             _demoAge -= Time.deltaTime;
             if (_demoAge <= 0)
@@ -134,11 +140,11 @@ public sealed class TackleEffect : MonoBehaviour
         }
         if (!_playing) return;
         _age += Time.deltaTime;
-        if (_age >= _duration) { StopRush(); return; }
-        Draw(_age / _duration);
+        if (!_continuous && _age >= _duration) { StopRush(); return; }
+        Draw();
     }
 
-    private void Draw(float t)
+    private void Draw()
     {
         if (_fixedPosition) _shell.SetPositionAndRotation(_position, _rotation);
         else
@@ -151,8 +157,9 @@ public sealed class TackleEffect : MonoBehaviour
         _shell.localScale = new Vector3(radius * Mathf.Max(0.01f, _width),
             radius * Mathf.Max(0.01f, _height), radius * Mathf.Max(0.01f, _depth));
         Color color = _windColor;
-        color.a *= Mathf.Clamp01(_age / 0.06f)
-            * Mathf.Clamp01((_duration - _age) / Mathf.Min(0.3f, _duration));
+        if (!_continuous)
+            color.a *= Mathf.Clamp01(_age / 0.06f)
+                * Mathf.Clamp01((_duration - _age) / Mathf.Min(0.3f, _duration));
         _material.SetColor(ColorId, color);
         _material.SetFloat(PhaseId, _age * _scrollSpeed);
         _material.SetFloat(WindStrengthId, _windStrength);
