@@ -7,6 +7,9 @@ public class PlayerManager : RacerManagerBase
     [Header("入力")]
     [SerializeField] private RaceInputProvider _inputProvider;
 
+    // Playerは視界反転を画面で見せる（ViewFlipPresentation）ので、入力は反転しない。
+    protected override bool InvertsMoveOnViewFlip => false;
+
     protected override void InitializeInput()
     {
         _inputProvider.Initialize();

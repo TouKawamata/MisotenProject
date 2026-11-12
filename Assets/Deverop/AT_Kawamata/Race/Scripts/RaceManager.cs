@@ -83,6 +83,8 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
             return;
         }
 
+        // 全員のRacerDataのリストを先に渡す（同じリストなので、この後に加わる参加者も見える。妨害弾の標的探しに使う）。
+        _playerManager.SetRacers(_racerDataList);
         _playerManager.Initialize();
 
         _entries.Clear();

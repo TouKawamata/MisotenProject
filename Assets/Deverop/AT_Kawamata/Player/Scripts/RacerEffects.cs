@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // レーサー1人分の、時間付きの効果を覚えて、毎Tickの倍率・状態を求める（IRacerEffectsの約束の通り）。
-// RacerManagerBaseが持ち、Tickで秒数を進め、最高速度・左右の移動・ブーストの発動に反映する。
+// RacerManagerBaseが持ち、Tickで秒数を進め、最高速度・左右の移動・ブーストの発動・視界反転に反映する。
 // 種類を足すときは、EKindに足して、Tickで出力を求める処理と、窓口のSet〇〇を足す。
 public class RacerEffects : IRacerEffects
 {
@@ -13,7 +13,8 @@ public class RacerEffects : IRacerEffects
     {
         MaxSpeed,
         Lateral,
-        BoostLock
+        BoostLock,
+        ViewFlip
     }
 
     private class Entry
@@ -59,6 +60,8 @@ public class RacerEffects : IRacerEffects
 
     public bool IsBoostLocked { get; private set; }
 
+    public EViewFlip ViewFlip { get; private set; }
+
     public void SetMaxSpeedMultiplier(object source, float multiplier, float duration, float fadeDuration = 0f)
     {
         Set(source, EKind.MaxSpeed, Mathf.Clamp01(multiplier), duration, fadeDuration);
@@ -76,6 +79,18 @@ public class RacerEffects : IRacerEffects
         IsBoostLocked = true;
     }
 
+    // 視界反転も、かけた瞬間から効く。向きはValueに入れておく（Noneなら何もしない）。
+    public void SetViewFlip(object source, EViewFlip flip, float duration)
+    {
+        if (flip == EViewFlip.None)
+        {
+            return;
+        }
+
+        Set(source, EKind.ViewFlip, (float)flip, duration, 0f);
+        ViewFlip |= flip;
+    }
+
     public void Remove(object source)
     {
         _entries.RemoveAll(entry => Equals(entry.Source, source));
@@ -90,6 +105,7 @@ public class RacerEffects : IRacerEffects
         float lateralFade = 0f;
         bool hasLateral = false;
         bool isBoostLocked = false;
+        EViewFlip viewFlip = EViewFlip.None;
 
         for (int i = _entries.Count - 1; i >= 0; i--)
         {
@@ -128,12 +144,17 @@ public class RacerEffects : IRacerEffects
                 case EKind.BoostLock:
                     isBoostLocked = true;
                     break;
+
+                case EKind.ViewFlip:
+                    viewFlip |= (EViewFlip)(int)entry.Value;
+                    break;
             }
         }
 
         _maxSpeed.Tick(maxSpeedTarget, maxSpeedFade, hasMaxSpeed, deltaTime);
         _lateral.Tick(lateralTarget, lateralFade, hasLateral, deltaTime);
         IsBoostLocked = isBoostLocked;
+        ViewFlip = viewFlip;
     }
 
     // スタートグリッドへの配置・ゴールのとき。すべての効果を外し、倍率もすぐ1に戻す。
@@ -143,6 +164,7 @@ public class RacerEffects : IRacerEffects
         _maxSpeed.Reset();
         _lateral.Reset();
         IsBoostLocked = false;
+        ViewFlip = EViewFlip.None;
     }
 
     private void Set(object source, EKind kind, float value, float duration, float fadeDuration)

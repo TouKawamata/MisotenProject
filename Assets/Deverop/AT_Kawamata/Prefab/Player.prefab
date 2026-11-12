@@ -237,13 +237,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
   player: {fileID: 4748799226068538865}
   lookAheadBlendWeight: 0.6
-  rotationSmoothing: 4
+  _rotationSmoothTime: 0.3
+  _firstPersonPlanarSmoothTime: 0.06
+  _firstPersonMaxLagDistance: 0.5
   upFollowSmoothTime: 0
   steeringTiltAngle: 5
   steeringTiltSmoothTime: 0.25
-  _thirdPersonOffset: {x: 0, y: 3, z: -8}
-  _thirdPersonRotationOffset: {x: 10, y: 0, z: 0}
-  _thirdPersonPositionSmoothTime: 0.08
 --- !u!114 &4573234749840560132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,9 +255,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 194b66eae98b8664690fad396bf5701f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoostCameraEffect
-  _cameraController: {fileID: 775241823792952702}
   _camera: {fileID: 0}
-  _switchToThirdPerson: 1
   _boostFieldOfView: 90
   _playDuration: 0.5
   _playEase: 9
@@ -526,6 +523,8 @@ GameObject:
   - component: {fileID: -7268944218637680035}
   - component: {fileID: 6281600909184474877}
   - component: {fileID: 927409305864383182}
+  - component: {fileID: 4560963151100089494}
+  - component: {fileID: 4903786750010904836}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -618,12 +617,12 @@ MonoBehaviour:
   _boost: {fileID: 6537497690453878865}
   _shield: {fileID: -7268944218637680035}
   _defaultProfile: {fileID: 11400000, guid: de9080cdca3819d4ebb124d65d3dd9c9, type: 2}
-  _shortcutProfile: {fileID: 11400000, guid: 4489856c7d464b14ca8c5f08475eb6d9, type: 2}
   _boostHitProfile: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
   _boostHitDetector: {fileID: 4829983956148760436}
   _frontShell: {fileID: 977394030160389999}
   _backShell: {fileID: 5835013902339143918}
   _bodyCollider: {fileID: 0}
+  _jammerLauncher: {fileID: 4560963151100089494}
   _showDebugLogs: 1
   _inputProvider: {fileID: 6976442047495844702}
 --- !u!114 &6976442047495844702
@@ -729,6 +728,43 @@ MonoBehaviour:
   _cameraEffect: {fileID: 4573234749840560132}
   _speedLines: {fileID: 0}
   _radialBlur: {fileID: 0}
+--- !u!114 &4560963151100089494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f9af4facf56794db42a75e527b0191, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JammerLauncher
+  _profile: {fileID: 11400000, guid: f0cfc1c3943adc042ace366d501d5c34, type: 2}
+  _types:
+  - {fileID: 11400000, guid: 065159a1d20bf104a9e4a8d5ba6a09b2, type: 2}
+  - {fileID: 11400000, guid: 677e78db6484b714aaece617c79780eb, type: 2}
+  - {fileID: 11400000, guid: ab0dd08ce9cfbca409479a591c0cff53, type: 2}
+  - {fileID: 11400000, guid: 4389ad731f870e84c9db182c1a9ed8ea, type: 2}
+  - {fileID: 11400000, guid: 0b9dcfe97e13dc049873e2fb7f75d732, type: 2}
+  - {fileID: 11400000, guid: d05df263716ab244489965aaa20657fb, type: 2}
+  _currentTypeIndex: 0
+  _ringTargets: []
+  _showDebugLogs: 1
+--- !u!114 &4903786750010904836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cfdb81f2c9740c489b40377c0e00e5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ViewFlipPresentation
+  _racerManager: {fileID: 2079369644378980432}
+  _camera: {fileID: 6938946564118524447}
 --- !u!1001 &1738267748168641387
 PrefabInstance:
   m_ObjectHideFlags: 0
