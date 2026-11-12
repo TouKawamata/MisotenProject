@@ -34,6 +34,7 @@ Material:
     - _CenterAlpha: 0.12
     - _Cull: 2
     - _DstBlend: 1
+    - _EnableBreathePulse: 1
     - _FresnelPower: 2.5
     - _GradientMaxY: 1
     - _GradientMinY: -1

@@ -27,6 +27,8 @@ public class ExtraModelHologramShowcaseEditor : Editor
         "M_Model_06_HoloPatternBanner",
         "M_Model_07_HoloProjectorBeam",
         "M_Model_08_GhostRim",
+        "M_Model_08_GhostRim_Static",
+        "M_Model_08_GhostRim_NoPulse",
         "M_Model_09_Dissolve",
         "M_Model_10_TriplanarDots",
         "M_Model_11_GradientEnergy",
@@ -54,6 +56,22 @@ public class ExtraModelHologramShowcaseEditor : Editor
         {
             DrawStyleButton(comp, "⑩ TriplanarDots (3軸ドット)", ExtraModelHologramShowcase.ExtraHologramStyle.TriplanarDots, curr, new Color(0.4f, 1f, 0.7f));
             DrawStyleButton(comp, "⑪ GradientEnergy (高さグラデ)", ExtraModelHologramShowcase.ExtraHologramStyle.GradientEnergy, curr, new Color(0.95f, 0.6f, 1f));
+        }
+
+        if (curr == ExtraModelHologramShowcase.ExtraHologramStyle.GhostRim)
+        {
+            EditorGUILayout.Space(2f);
+            using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+            {
+                EditorGUI.BeginChangeCheck();
+                bool disablePulse = EditorGUILayout.ToggleLeft(" ⏸️ 呼吸パルスを無効化（常時固定強度・パルス無しバージョン）", comp.DisableGhostRimPulse, EditorStyles.boldLabel);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(comp, "Toggle GhostRim Pulse");
+                    comp.DisableGhostRimPulse = disablePulse;
+                    EditorUtility.SetDirty(comp);
+                }
+            }
         }
 
         EditorGUILayout.Space(6f);
@@ -329,6 +347,22 @@ public class ExtraModelHologramShowcaseEditor : Editor
         EnsureFolder(MaterialsFolder);
 
         CreateOrUpdateMaterial("M_Model_08_GhostRim.mat",       "Custom/Hologram/ModelHologram_GhostRim");
+        Material ghostStatic = CreateOrUpdateMaterial("M_Model_08_GhostRim_Static.mat", "Custom/Hologram/ModelHologram_GhostRim");
+        if (ghostStatic != null)
+        {
+            if (ghostStatic.HasProperty("_EnableBreathePulse")) ghostStatic.SetFloat("_EnableBreathePulse", 0f);
+            if (ghostStatic.HasProperty("_BreatheAmount")) ghostStatic.SetFloat("_BreatheAmount", 0f);
+            if (ghostStatic.HasProperty("_BreatheSpeed")) ghostStatic.SetFloat("_BreatheSpeed", 0f);
+            EditorUtility.SetDirty(ghostStatic);
+        }
+        Material ghostNoPulse = CreateOrUpdateMaterial("M_Model_08_GhostRim_NoPulse.mat", "Custom/Hologram/ModelHologram_GhostRim");
+        if (ghostNoPulse != null)
+        {
+            if (ghostNoPulse.HasProperty("_EnableBreathePulse")) ghostNoPulse.SetFloat("_EnableBreathePulse", 0f);
+            if (ghostNoPulse.HasProperty("_BreatheAmount")) ghostNoPulse.SetFloat("_BreatheAmount", 0f);
+            if (ghostNoPulse.HasProperty("_BreatheSpeed")) ghostNoPulse.SetFloat("_BreatheSpeed", 0f);
+            EditorUtility.SetDirty(ghostNoPulse);
+        }
         Material dissolve = CreateOrUpdateMaterial("M_Model_09_Dissolve.mat", "Custom/Hologram/ModelHologram_Dissolve");
         CreateOrUpdateMaterial("M_Model_10_TriplanarDots.mat",  "Custom/Hologram/ModelHologram_TriplanarDots");
         CreateOrUpdateMaterial("M_Model_11_GradientEnergy.mat", "Custom/Hologram/ModelHologram_GradientEnergy");

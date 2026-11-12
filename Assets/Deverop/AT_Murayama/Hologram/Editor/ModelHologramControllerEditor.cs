@@ -23,6 +23,8 @@ public class ModelHologramControllerEditor : Editor
         "M_Model_06_HoloPatternBanner",
         "M_Model_07_HoloProjectorBeam",
         "M_Model_08_GhostRim",
+        "M_Model_08_GhostRim_Static",
+        "M_Model_08_GhostRim_NoPulse",
         "M_Model_09_Dissolve",
         "M_Model_10_TriplanarDots",
         "M_Model_11_GradientEnergy",

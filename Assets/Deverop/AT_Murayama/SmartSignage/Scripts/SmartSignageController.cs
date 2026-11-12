@@ -154,6 +154,13 @@ public class SmartSignageController : MonoBehaviour
     [Tooltip("ガラス表面を流れる反射光ハイライトの強度")]
     [SerializeField] private float _sweepIntensity = 0.35f;
 
+    [Range(0.0f, 1.0f)]
+    [Tooltip("ガラス表面を流れる反射光ハイライトの位相オフセット（0〜1）。看板ごとにタイミングをずらせます")]
+    [SerializeField] private float _sweepPhaseOffset = 0f;
+
+    [Tooltip("看板のワールド設置座標から自動でランダムな位相差（シード）を付与してタイミングを自然に分散させるか")]
+    [SerializeField] private bool _autoStaggerPhaseByPosition = true;
+
     [Header("UI テレメトリ表示パラメータ")]
     [Tooltip("表示するUIテレメトリテクスチャ（未指定時はプロシージャルHUDが自動描画されます）")]
     [SerializeField] private Texture2D _mainTexture;
@@ -212,6 +219,7 @@ public class SmartSignageController : MonoBehaviour
     private static readonly int EdgeGlowIntensityId  = Shader.PropertyToID("_EdgeGlowIntensity");
     private static readonly int SweepSpeedId         = Shader.PropertyToID("_SweepSpeed");
     private static readonly int SweepIntensityId     = Shader.PropertyToID("_SweepIntensity");
+    private static readonly int SweepPhaseOffsetId   = Shader.PropertyToID("_SweepPhaseOffset");
     private static readonly int MainTexId            = Shader.PropertyToID("_MainTex");
     private static readonly int HasCustomTexId       = Shader.PropertyToID("_HasCustomTex");
     private static readonly int AspectRatioId        = Shader.PropertyToID("_AspectRatio");
@@ -247,6 +255,36 @@ public class SmartSignageController : MonoBehaviour
     {
         get => _customSaveName;
         set => _customSaveName = value;
+    }
+
+    public float SweepPhaseOffset
+    {
+        get => _sweepPhaseOffset;
+        set
+        {
+            _sweepPhaseOffset = Mathf.Clamp01(value);
+            ApplyMaterialProperties();
+        }
+    }
+
+    public bool AutoStaggerPhaseByPosition
+    {
+        get => _autoStaggerPhaseByPosition;
+        set
+        {
+            _autoStaggerPhaseByPosition = value;
+            ApplyMaterialProperties();
+        }
+    }
+
+    public void SetSweepPhaseOffset(float offset)
+    {
+        SweepPhaseOffset = offset;
+    }
+
+    public void RandomizeSweepPhase()
+    {
+        SweepPhaseOffset = UnityEngine.Random.value;
     }
 
     private void Awake()
@@ -485,6 +523,15 @@ public class SmartSignageController : MonoBehaviour
         _mpb.SetFloat(SweepSpeedId, _sweepSpeed);
         _mpb.SetFloat(SweepIntensityId, _sweepIntensity);
 
+        float effectiveSweepPhase = _sweepPhaseOffset;
+        if (_autoStaggerPhaseByPosition)
+        {
+            Vector3 pos = transform.position;
+            float posHash = Mathf.Repeat(Mathf.Abs(Mathf.Sin(pos.x * 12.9898f + pos.y * 78.233f + pos.z * 45.164f)) * 43758.5453f, 1.0f);
+            effectiveSweepPhase = Mathf.Repeat(_sweepPhaseOffset + posHash, 1.0f);
+        }
+        _mpb.SetFloat(SweepPhaseOffsetId, effectiveSweepPhase);
+
         if (_mainTexture != null)
         {
             _mpb.SetTexture(MainTexId, _mainTexture);
@@ -665,6 +712,7 @@ public class SmartSignageController : MonoBehaviour
         mat.SetFloat(EdgeGlowIntensityId, _edgeGlowIntensity);
 
         mat.SetFloat(SweepSpeedId, _sweepSpeed);
+        mat.SetFloat(SweepPhaseOffsetId, _sweepPhaseOffset);
         mat.SetColor(UIColorId, _uiColor);
         mat.SetFloat(UIIntensityId, _uiIntensity);
         mat.SetFloat(UIOpacityId, _uiOpacity);

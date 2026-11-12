@@ -32,7 +32,7 @@ namespace AT_Murayama.PlayerStatusUI
 
         public enum ScreenCorner
         {
-            [InspectorName("右下 (Bottom Right)")]
+            [InspectorName("右下 (Bottom Right - 従来標準)")]
             BottomRight = 0,
 
             [InspectorName("左下 (Bottom Left)")]
@@ -42,7 +42,19 @@ namespace AT_Murayama.PlayerStatusUI
             TopRight = 2,
 
             [InspectorName("左上 (Top Left)")]
-            TopLeft = 3
+            TopLeft = 3,
+
+            [InspectorName("画面下中央 (Bottom Center - 推奨候補)")]
+            BottomCenter = 4,
+
+            [InspectorName("画面上中央 (Top Center)")]
+            TopCenter = 5,
+
+            [InspectorName("画面中央 (Center)")]
+            Center = 6,
+
+            [InspectorName("カスタム自由配置 (Custom)")]
+            Custom = 7
         }
 
         public enum SteeringPoseMode
@@ -64,6 +76,61 @@ namespace AT_Murayama.PlayerStatusUI
 
             [InspectorName("③ ユーザー指定カスタムマテリアル (Custom Material)")]
             CustomMaterial = 2
+        }
+
+        /// <summary>
+        /// プレイヤー状態ポーズUIに適用できる全16種類のホログラムパターン
+        /// （定番7種 ＋ 汎用拡張4種 ＋ 新設UI特化5種）
+        /// </summary>
+        public enum UIHologramPattern
+        {
+            [InspectorName("01. 王道スキャンライン (Classic Scanline)")]
+            ClassicScanline = 0,
+
+            [InspectorName("02. 六角形ヘックスシールド (Hex Shield)")]
+            HexShield = 1,
+
+            [InspectorName("03. 3D等高線CADワイヤーフレーム (Wireframe Grid)")]
+            WireframeGrid = 2,
+
+            [InspectorName("04. サイバーRGB色収差グリッチ (Cyber Glitch)")]
+            CyberGlitch = 3,
+
+            [InspectorName("05. サイバーLEDドットマトリクス (LED Matrix)")]
+            LEDMatrix = 4,
+
+            [InspectorName("06. 流れるサイバー矢印・ストライプ (Pattern Banner)")]
+            PatternBanner = 5,
+
+            [InspectorName("07. 台座プロジェクター照射光 (Projector Beam)")]
+            ProjectorBeam = 6,
+
+            [InspectorName("08. 最軽量フレネル輪郭・呼吸パルス (Ghost Rim)")]
+            GhostRim = 7,
+
+            [InspectorName("09. 出現消滅ディゾルブ (Dissolve Energy)")]
+            Dissolve = 8,
+
+            [InspectorName("10. 3軸均等ドット点群 (Triplanar Dots)")]
+            TriplanarDots = 9,
+
+            [InspectorName("11. 高さグラデーション・上昇エネルギー (Gradient Energy)")]
+            GradientEnergy = 10,
+
+            [InspectorName("12. ✨ UI専用：サイバーネオン・クリスタル (Cyber Neon)")]
+            UI_CyberNeon = 11,
+
+            [InspectorName("13. ✨ UI専用：クアンタム格子・デジタルスケルトン (Quantum Lattice)")]
+            UI_QuantumLattice = 12,
+
+            [InspectorName("14. ✨ UI専用：戦術データストリーム・グリッチ (Tactical Glitch)")]
+            UI_TacticalGlitch = 13,
+
+            [InspectorName("15. ✨ UI専用：オーロラプラズマ・シールド (Aurora Plasma)")]
+            UI_AuroraPlasma = 14,
+
+            [InspectorName("16. ✨ UI専用：レーダースキャン・パルスグロー (Glint Pulse Radar)")]
+            UI_GlintPulseRadar = 15
         }
 
         // ──────────────────────────────────────────────
@@ -121,6 +188,9 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("UIモデルの表示マテリアル方式（モデル本来の通常マテリアル／サイバーホログラムシェーダー／カスタムマテリアル）")]
         [SerializeField] private MaterialDisplayMode _materialMode = MaterialDisplayMode.OriginalMaterial;
 
+        [Tooltip("状態（スタン、シールド/ガード、ブースト等）によるモデルの強制色変化・ティントを有効にするか。OFFにするとスタン時やガード時でも本来のマテリアル色／ホログラム配色を100%維持します")]
+        [SerializeField] private bool _enableStateColorOverride = true;
+
         [Tooltip("【通常マテリアル時】状態変化（スタン・ブースト・シールド等）に応じてモデルの色をほんのり発光・ティントさせるか")]
         [SerializeField] private bool _tintOriginalMaterialOnState = true;
 
@@ -128,8 +198,16 @@ namespace AT_Murayama.PlayerStatusUI
         [Range(0f, 1f)]
         [SerializeField] private float _originalMaterialTintIntensity = 0.35f;
 
-        [Tooltip("【ホログラム時】キャラクターモデルに適用する3Dホログラムスタイル")]
-        [SerializeField] private ModelHologramController.ModelHologramStyle _hologramStyle =
+        [Tooltip("【ホログラム時】キャラクターモデルに適用する3Dホログラムパターン（全16種類）")]
+        [SerializeField] private UIHologramPattern _hologramPattern = UIHologramPattern.ClassicScanline;
+
+        [Tooltip("【ホログラム時】ホログラムマテリアルの色をプレイヤー状態（通常/ブースト/シールド/スタン）の発光色と連動させるか（OFFにするとマテリアル固有の配色を完全維持）")]
+        [SerializeField] private bool _syncHologramColorsWithState = true;
+
+        [Tooltip("GhostRim（最軽量ゴースト輪郭）選択時、呼吸パルスを無効化して常時一定強度（静止・Static）にするか")]
+        [SerializeField] private bool _disableGhostRimPulse = false;
+
+        [SerializeField, HideInInspector] private ModelHologramController.ModelHologramStyle _hologramStyle =
             ModelHologramController.ModelHologramStyle.ClassicScanline;
 
         [Tooltip("【カスタムマテリアル時】モデルの全スロットに割り当てるカスタムマテリアル")]
@@ -149,39 +227,48 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("UI背景の半透明バックプレートを表示するか")]
         [SerializeField] private bool _showUIBackdrop = true;
 
-        [Tooltip("UI背景バックプレートの色と透明度（アルファを0にすると背景が完全透明になりキャラクターのみ浮きます）")]
+        [Tooltip("UI背景バックプレートの色と透明度（アルファを0にすると背景が完全透明になりキャラクターのみ浮きます。03シーン設定準拠：透過デフォルト）")]
         [ColorUsage(true, false)]
-        [SerializeField] private Color _uiBackdropColor = new Color(0.02f, 0.08f, 0.14f, 0.55f);
+        [SerializeField] private Color _uiBackdropColor = new Color(0.02f, 0.08f, 0.14f, 0.0f);
 
-        [Tooltip("UI外枠（ボーダー）を表示するか")]
-        [SerializeField] private bool _showUIBorderFrame = true;
+        [Tooltip("UI外枠（ボーダー）を表示するか（03シーン設定準拠：非表示デフォルト）")]
+        [SerializeField] private bool _showUIBorderFrame = false;
 
         [Tooltip("UI外枠の色をプレイヤー状態の発光色と連動させるか（ON: 通常はシアン、ブースト時はオレンジ、シールド時は緑、スタン時は赤等に発光）")]
         [SerializeField] private bool _dynamicBorderColor = true;
 
         [Tooltip("【動的枠色OFF時】UI外枠の固定カラー")]
         [ColorUsage(true, false)]
-        [SerializeField] private Color _uiBorderStaticColor = new Color(0.1f, 0.6f, 0.8f, 0.6f);
+        [SerializeField] private Color _uiBorderStaticColor = new Color(1f, 1f, 1f, 0f);
 
-        [Tooltip("UI外枠の透明度（アルファ倍率）")]
+        [Tooltip("UI外枠の透明度（アルファ倍率。03シーン設定準拠：0デフォルト）")]
         [Range(0f, 1f)]
-        [SerializeField] private float _uiBorderAlpha = 0.65f;
+        [SerializeField] private float _uiBorderAlpha = 0.0f;
 
         [Tooltip("サブカメラの背景クリア色（通常は完全透明 (0,0,0,0) を推奨。単色やグラデーションにしたい場合に変更可能）")]
         [ColorUsage(true, false)]
         [SerializeField] private Color _cameraBackgroundColor = new Color(0f, 0f, 0f, 0f);
 
+        [Tooltip("RenderTexture表示時にUI専用アルファブレンド（Premultiplied Alpha）を適用するか（ホログラムの加算発光・走査線が背景透過時も暗くならず鮮やかに光ります）")]
+        [SerializeField] private bool _usePremultipliedUIAlpha = true;
+
         [Header("7. UI表示方式・レイアウト・カメラアングル設定")]
         [Tooltip("方式A（RenderTexture＋Canvas UI表示）と 方式B（メインカメラ前3Dミニチュア配置）を切り替えます")]
         [SerializeField] private UIDisplayMode _displayMode = UIDisplayMode.ModeA_RenderTextureUI;
 
-        [Tooltip("画面のどの角にステータスUIを表示するか")]
+        [Tooltip("画面のどの位置・アンカーにステータスUIを表示するか")]
         [SerializeField] private ScreenCorner _screenCorner = ScreenCorner.BottomRight;
 
-        [Tooltip("UIの表示サイズ（ピクセル）")]
-        [SerializeField] private Vector2 _uiSize = new Vector2(260f, 300f);
+        [Tooltip("カスタム配置時のアンカー位置 (X: 0=左〜1=右, Y: 0=下〜1=上)")]
+        [SerializeField] private Vector2 _customAnchor = new Vector2(0.5f, 0f);
 
-        [Tooltip("画面端からの余白（ピクセル）")]
+        [Tooltip("カスタム配置時のピボット位置 (X: 0=左〜1=右, Y: 0=下〜1=上)")]
+        [SerializeField] private Vector2 _customPivot = new Vector2(0.5f, 0f);
+
+        [Tooltip("UIの表示サイズ（ピクセル。03シーン設定準拠：390x450）")]
+        [SerializeField] private Vector2 _uiSize = new Vector2(390f, 450f);
+
+        [Tooltip("画面端・アンカー基準位置からの余白・オフセット（ピクセル）")]
         [SerializeField] private Vector2 _uiMargin = new Vector2(28f, 28f);
 
         [Tooltip("キャラクターを映す向き（度）。160〜200度で正面〜斜め前、0〜30度で背面〜斜め後ろから映します")]
@@ -252,7 +339,9 @@ namespace AT_Murayama.PlayerStatusUI
         private readonly List<Renderer> _cachedRenderers = new List<Renderer>();
         private readonly Dictionary<Renderer, Material[]> _originalMaterialsMap = new Dictionary<Renderer, Material[]>();
         private Material _runtimeHologramMaterial;
-        private ModelHologramController.ModelHologramStyle _lastRuntimeHoloStyle = (ModelHologramController.ModelHologramStyle)(-1);
+        private UIHologramPattern _lastRuntimeHoloPattern = (UIHologramPattern)(-1);
+        private bool _lastRuntimeHoloPulseDisabled = false;
+        private Material _runtimeUIRawImageMaterial;
         private MaterialPropertyBlock _propBlock;
 
         private readonly Dictionary<string, Transform> _boneByPath = new Dictionary<string, Transform>();
@@ -277,6 +366,7 @@ namespace AT_Murayama.PlayerStatusUI
         private float _eventScalePunch = 0f;
 
         private bool _wasStunnedLastFrame = false;
+        private bool _wasHoloColorOverridden = false;
         private Bounds _initialModelLocalBounds;
         private bool _hasValidModelBounds = false;
 
@@ -294,8 +384,19 @@ namespace AT_Murayama.PlayerStatusUI
         private static readonly int ShaderProp_GlitchGlowColor  = Shader.PropertyToID("_GlitchGlowColor");
         private static readonly int ShaderProp_SubColor         = Shader.PropertyToID("_SubColor");
         private static readonly int ShaderProp_EmitterColor     = Shader.PropertyToID("_EmitterColor");
+        private static readonly int ShaderProp_EdgeColor        = Shader.PropertyToID("_EdgeColor");
+        private static readonly int ShaderProp_DotColor         = Shader.PropertyToID("_DotColor");
+        private static readonly int ShaderProp_PatternColor     = Shader.PropertyToID("_PatternColor");
+        private static readonly int ShaderProp_BottomColor      = Shader.PropertyToID("_BottomColor");
+        private static readonly int ShaderProp_TopColor         = Shader.PropertyToID("_TopColor");
+        private static readonly int ShaderProp_FlowColor        = Shader.PropertyToID("_FlowColor");
         private static readonly int ShaderProp_ZTest            = Shader.PropertyToID("_ZTest");
         private static readonly int ShaderProp_UseWorldSpaceScan = Shader.PropertyToID("_UseWorldSpaceScan");
+        private static readonly int ShaderProp_UseWorldSpace    = Shader.PropertyToID("_UseWorldSpace");
+        private static readonly int ShaderProp_UseWorldSpaceHex = Shader.PropertyToID("_UseWorldSpaceHex");
+        private static readonly int ShaderProp_EnableBreathePulse = Shader.PropertyToID("_EnableBreathePulse");
+        private static readonly int ShaderProp_BreatheAmount    = Shader.PropertyToID("_BreatheAmount");
+        private static readonly int ShaderProp_BreatheSpeed     = Shader.PropertyToID("_BreatheSpeed");
 
         // ──────────────────────────────────────────────
         // 公開プロパティ
@@ -426,14 +527,388 @@ namespace AT_Murayama.PlayerStatusUI
             }
         }
 
-        public ModelHologramController.ModelHologramStyle HologramStyle
+        public UIHologramPattern HologramPattern
         {
-            get => _hologramStyle;
+            get => _hologramPattern;
             set
             {
-                _hologramStyle = value;
+                _hologramPattern = value;
+                _hologramStyle = (ModelHologramController.ModelHologramStyle)Mathf.Clamp((int)value, 0, 6);
                 ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
             }
+        }
+
+        public ModelHologramController.ModelHologramStyle HologramStyle
+        {
+            get => (ModelHologramController.ModelHologramStyle)Mathf.Clamp((int)_hologramPattern, 0, 6);
+            set => HologramPattern = (UIHologramPattern)(int)value;
+        }
+
+        public bool EnableStateColorOverride
+        {
+            get => _enableStateColorOverride;
+            set
+            {
+                _enableStateColorOverride = value;
+                if (!value && _materialMode == MaterialDisplayMode.HologramShader && _runtimeHologramMaterial != null)
+                {
+                    RestoreHologramOriginalColors(_runtimeHologramMaterial, _hologramPattern);
+                    _wasHoloColorOverridden = false;
+                }
+                ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+            }
+        }
+
+        public bool TintOriginalMaterialOnState
+        {
+            get => _tintOriginalMaterialOnState;
+            set
+            {
+                _tintOriginalMaterialOnState = value;
+                ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+            }
+        }
+
+        public float OriginalMaterialTintIntensity
+        {
+            get => _originalMaterialTintIntensity;
+            set
+            {
+                _originalMaterialTintIntensity = Mathf.Clamp01(value);
+                ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+            }
+        }
+
+        public bool SyncHologramColorsWithState
+        {
+            get => _syncHologramColorsWithState;
+            set
+            {
+                _syncHologramColorsWithState = value;
+                ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+            }
+        }
+
+        /// <summary>
+        /// 状態（スタン、シールド/ガード、ブースト等）によるモデルの強制色変化・ティントのON/OFFを一括設定します。
+        /// falseに設定するとスタン時やガード時でも元の色を完全に維持します。
+        /// </summary>
+        public void SetStateColorOverride(bool enabled)
+        {
+            EnableStateColorOverride = enabled;
+        }
+
+        public bool UsePremultipliedUIAlpha
+        {
+            get => _usePremultipliedUIAlpha;
+            set
+            {
+                _usePremultipliedUIAlpha = value;
+                UpdateUIRawImageMaterial();
+            }
+        }
+
+        public bool DisableGhostRimPulse
+        {
+            get => _disableGhostRimPulse;
+            set
+            {
+                if (_disableGhostRimPulse != value || _runtimeHologramMaterial == null)
+                {
+                    _disableGhostRimPulse = value;
+                    if (_hologramPattern == UIHologramPattern.GhostRim)
+                    {
+                        EnsureRuntimeHologramMaterial();
+                        if (_runtimeHologramMaterial != null)
+                        {
+                            ApplyGhostRimPulseSetting(_runtimeHologramMaterial);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void ApplyGhostRimPulseSetting(Material mat)
+        {
+            if (mat == null) return;
+            if (_disableGhostRimPulse)
+            {
+                if (mat.HasProperty(ShaderProp_EnableBreathePulse)) mat.SetFloat(ShaderProp_EnableBreathePulse, 0f);
+                if (mat.HasProperty(ShaderProp_BreatheAmount)) mat.SetFloat(ShaderProp_BreatheAmount, 0f);
+                if (mat.HasProperty(ShaderProp_BreatheSpeed)) mat.SetFloat(ShaderProp_BreatheSpeed, 0f);
+            }
+            else
+            {
+                if (mat.HasProperty(ShaderProp_EnableBreathePulse)) mat.SetFloat(ShaderProp_EnableBreathePulse, 1f);
+                if (mat.HasProperty(ShaderProp_BreatheAmount)) mat.SetFloat(ShaderProp_BreatheAmount, 0.28f);
+                if (mat.HasProperty(ShaderProp_BreatheSpeed)) mat.SetFloat(ShaderProp_BreatheSpeed, 1.8f);
+            }
+        }
+
+        /// <summary>
+        /// 指定したホログラムパターンを適用し、表示モードをホログラムシェーダーに切り替えます。
+        /// </summary>
+        public void ApplyHologramPattern(UIHologramPattern pattern)
+        {
+            _materialMode = MaterialDisplayMode.HologramShader;
+            HologramPattern = pattern;
+        }
+
+        /// <summary>
+        /// 任意のマテリアルアセットをモデル全スロットへ割り当て、表示モードをカスタムマテリアルに切り替えます。
+        /// 割り当てられたマテリアルが既知のホログラムパターンと合致する場合はホログラム番号も自動同期します。
+        /// </summary>
+        public void AssignMaterialAsset(Material mat)
+        {
+            if (mat == null) return;
+            _materialMode = MaterialDisplayMode.CustomMaterial;
+            _customMaterial = mat;
+
+            string matName = mat.name;
+            for (int i = 0; i <= (int)UIHologramPattern.UI_GlintPulseRadar; i++)
+            {
+                UIHologramPattern p = (UIHologramPattern)i;
+                string pName = p.ToString();
+                string fName = GetHologramMaterialFileName(p);
+                if (matName.Contains(pName) || matName.Contains(fName))
+                {
+                    _hologramPattern = p;
+                    _hologramStyle = (ModelHologramController.ModelHologramStyle)Mathf.Clamp((int)p, 0, 6);
+                    if (p == UIHologramPattern.GhostRim)
+                    {
+                        bool isStatic = matName.Contains("Static") || matName.Contains("NoPulse") ||
+                                        (mat.HasProperty(ShaderProp_EnableBreathePulse) && mat.GetFloat(ShaderProp_EnableBreathePulse) < 0.5f) ||
+                                        (mat.HasProperty(ShaderProp_BreatheAmount) && mat.GetFloat(ShaderProp_BreatheAmount) < 0.001f);
+                        _disableGhostRimPulse = isStatic;
+                    }
+                    break;
+                }
+            }
+
+            ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+        }
+
+        /// <summary>
+        /// 現在プレビュー中のホログラムパターンを本採用（確定）として永続設定します。
+        /// 対応するUIマテリアルアセットをCustomMaterialに割り当て、シーン保存で確実に維持できるようにします。
+        /// </summary>
+        public void AdoptCurrentHologram(bool useAsCustomMaterial = false)
+        {
+#if UNITY_EDITOR
+            Material matAsset = null;
+            if (useAsCustomMaterial && _customMaterial != null)
+            {
+                matAsset = _customMaterial;
+            }
+            else
+            {
+                string assetPath = (_hologramPattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                    ? GetGhostRimMaterialAssetPath(true)
+                    : GetHologramMaterialAssetPath(_hologramPattern);
+                matAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+                if (matAsset == null && (int)_hologramPattern < 11)
+                {
+                    // UI用が見つからない場合は既存モデルホログラム側を検索
+                    string existingPath = (_hologramPattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                        ? GetModelGhostRimMaterialAssetPath(true)
+                        : $"Assets/Deverop/AT_Murayama/Hologram/Materials/{GetExistingModelHologramFileName((int)_hologramPattern)}.mat";
+                    matAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(existingPath);
+                }
+            }
+
+            if (matAsset != null)
+            {
+                _customMaterial = matAsset;
+            }
+
+            _materialMode = useAsCustomMaterial ? MaterialDisplayMode.CustomMaterial : MaterialDisplayMode.HologramShader;
+
+            UnityEditor.EditorUtility.SetDirty(this);
+            ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+            Debug.Log($"[PlayerPoseStatusUI] ホログラムパターン【 {_hologramPattern} 】（アセット: {(matAsset != null ? UnityEditor.AssetDatabase.GetAssetPath(matAsset) : "Runtime")}）を本採用（表示モード: {_materialMode}）として確定しました。");
+#else
+            _materialMode = useAsCustomMaterial ? MaterialDisplayMode.CustomMaterial : MaterialDisplayMode.HologramShader;
+            ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
+#endif
+        }
+
+        /// <summary>
+        /// コンポーネント追加時またはインスペクターのコンテキストメニュー「Reset」時に03シーン推奨設定を適用します。
+        /// </summary>
+        private void Reset()
+        {
+            Apply03SceneDefaults();
+        }
+
+        /// <summary>
+        /// 03検証シーン推奨の設定（背景完全透過・枠線なし・サブカメラ透過クリア・Premultiplied Alpha ON・390x450）を一発適用します。
+        /// </summary>
+        public void Apply03SceneDefaults()
+        {
+            _showUIBackdrop = true;
+            _uiBackdropColor = new Color(0.02f, 0.08f, 0.14f, 0.0f);
+            _showUIBorderFrame = false;
+            _uiBorderAlpha = 0.0f;
+            _uiBorderStaticColor = new Color(1f, 1f, 1f, 0f);
+            _cameraBackgroundColor = new Color(0f, 0f, 0f, 0f);
+            _usePremultipliedUIAlpha = true;
+            _uiSize = new Vector2(390f, 450f);
+            if (_screenCorner == ScreenCorner.BottomCenter)
+            {
+                _uiMargin = new Vector2(0f, 28f);
+            }
+            else
+            {
+                _screenCorner = ScreenCorner.BottomRight;
+                _uiMargin = new Vector2(28f, 28f);
+            }
+            _modelViewYaw = 165f;
+            _cameraPitch = 6f;
+            _cameraDistanceMultiplier = 0.95f;
+            _cameraHeightOffset = 0.05f;
+
+            if (_stageRoot != null && _modelInstance != null)
+            {
+                UpdateUIRawImageMaterial();
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public ScreenCorner ScreenCornerPosition
+        {
+            get => _screenCorner;
+            set
+            {
+                _screenCorner = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public Vector2 UISize
+        {
+            get => _uiSize;
+            set
+            {
+                _uiSize = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public Vector2 UIMargin
+        {
+            get => _uiMargin;
+            set
+            {
+                _uiMargin = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public Vector2 CustomAnchor
+        {
+            get => _customAnchor;
+            set
+            {
+                _customAnchor = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public Vector2 CustomPivot
+        {
+            get => _customPivot;
+            set
+            {
+                _customPivot = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public UIDisplayMode DisplayMode
+        {
+            get => _displayMode;
+            set
+            {
+                _displayMode = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float ModelViewYaw
+        {
+            get => _modelViewYaw;
+            set
+            {
+                _modelViewYaw = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float CameraPitch
+        {
+            get => _cameraPitch;
+            set
+            {
+                _cameraPitch = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float CameraDistanceMultiplier
+        {
+            get => _cameraDistanceMultiplier;
+            set
+            {
+                _cameraDistanceMultiplier = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float CameraHeightOffset
+        {
+            get => _cameraHeightOffset;
+            set
+            {
+                _cameraHeightOffset = value;
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float ModeBForwardDistance
+        {
+            get => _modeBForwardDistance;
+            set
+            {
+                _modeBForwardDistance = Mathf.Clamp(value, 0.4f, 3.0f);
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public float ModeBMiniatureScale
+        {
+            get => _modeBMiniatureScale;
+            set
+            {
+                _modeBMiniatureScale = Mathf.Clamp(value, 0.01f, 0.5f);
+                UpdateUILayoutAndCamera();
+            }
+        }
+
+        public void SetScreenCornerPreset(ScreenCorner corner, bool resetHorizontalMargin = true)
+        {
+            _screenCorner = corner;
+            if (resetHorizontalMargin)
+            {
+                if (corner == ScreenCorner.BottomCenter || corner == ScreenCorner.TopCenter || corner == ScreenCorner.Center)
+                {
+                    _uiMargin.x = 0f;
+                }
+                else if (_uiMargin.x == 0f)
+                {
+                    _uiMargin.x = 28f;
+                }
+            }
+            UpdateUILayoutAndCamera();
         }
 
         public Material CustomMaterial
@@ -452,6 +927,13 @@ namespace AT_Murayama.PlayerStatusUI
         {
             get => _posePresetAsset;
             set => _posePresetAsset = value;
+        }
+
+        [SerializeField, HideInInspector] private string _customSaveName = "";
+        public string CustomSaveName
+        {
+            get => _customSaveName;
+            set => _customSaveName = value;
         }
 
         // ──────────────────────────────────────────────
@@ -495,10 +977,12 @@ namespace AT_Murayama.PlayerStatusUI
             if (this == null) return;
 
             _uiModelLayer = Mathf.Clamp(_uiModelLayer, 0, 31);
+            _hologramStyle = (ModelHologramController.ModelHologramStyle)Mathf.Clamp((int)_hologramPattern, 0, 6);
 
             // インスペクター変更時に即座にUIレイアウト・カメラ・マテリアル・色を更新
             if (_stageRoot != null && _modelInstance != null)
             {
+                UpdateUIRawImageMaterial();
                 UpdateUILayoutAndCamera();
                 ApplyMaterialsAndColors(_currentMainColor, _currentRimColor, _currentAccentColor);
             }
@@ -882,8 +1366,9 @@ namespace AT_Murayama.PlayerStatusUI
                 targetAccent = Color.Lerp(targetAccent, secondaryEntry.accentColor, secondaryBlend);
             }
 
-            // スタン中の警告点滅
-            if (targetState == PlayerUIState.Stunned && _enableStunWobbleAndFlicker)
+            // スタン中の警告点滅（状態カラー変更が有効な場合のみ）
+            bool shouldOverrideColor = _enableStateColorOverride && (_materialMode == MaterialDisplayMode.OriginalMaterial ? _tintOriginalMaterialOnState : _syncHologramColorsWithState);
+            if (targetState == PlayerUIState.Stunned && _enableStunWobbleAndFlicker && shouldOverrideColor)
             {
                 float blink = 0.55f + 0.45f * Mathf.Sin(time * 18.0f);
                 targetMain *= blink;
@@ -897,7 +1382,7 @@ namespace AT_Murayama.PlayerStatusUI
             // 切り替わり瞬間フラッシュの加算
             Color finalMain = _currentMainColor;
             Color finalRim = _currentRimColor;
-            if (_enableEventFlash && _eventFlashTimer > 0.001f)
+            if (_enableEventFlash && _eventFlashTimer > 0.001f && shouldOverrideColor)
             {
                 float flashWeight = _eventFlashTimer * _eventFlashIntensity * 0.5f;
                 finalMain += _eventFlashColor * flashWeight;
@@ -1012,7 +1497,8 @@ namespace AT_Murayama.PlayerStatusUI
             }
 
             // 2. 状態ティントがONなら MaterialPropertyBlock で安全に色・発光をブレンド
-            if (_tintOriginalMaterialOnState && _originalMaterialTintIntensity > 0.001f)
+            bool shouldTint = _enableStateColorOverride && _tintOriginalMaterialOnState && (_originalMaterialTintIntensity > 0.001f);
+            if (shouldTint)
             {
                 if (_propBlock == null) _propBlock = new MaterialPropertyBlock();
 
@@ -1126,47 +1612,445 @@ namespace AT_Murayama.PlayerStatusUI
 
         private void EnsureRuntimeHologramMaterial()
         {
-            string shaderPath = ModelHologramController.GetShaderPath(_hologramStyle);
+            string assetPath = (_hologramPattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                ? GetGhostRimMaterialAssetPath(true)
+                : GetHologramMaterialAssetPath(_hologramPattern);
+            Material sourceMat = null;
+#if UNITY_EDITOR
+            sourceMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+            if (sourceMat == null && (int)_hologramPattern < 11)
+            {
+                string existingPath = (_hologramPattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                    ? GetModelGhostRimMaterialAssetPath(true)
+                    : $"Assets/Deverop/AT_Murayama/Hologram/Materials/{GetExistingModelHologramFileName((int)_hologramPattern)}.mat";
+                sourceMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(existingPath);
+            }
+#endif
+            string shaderPath = GetHologramShaderPath(_hologramPattern);
             Shader shader = Shader.Find(shaderPath);
             if (shader == null)
             {
                 shader = Shader.Find("Custom/Hologram/ModelHologram");
             }
 
-            if (_runtimeHologramMaterial == null || _lastRuntimeHoloStyle != _hologramStyle || _runtimeHologramMaterial.shader != shader)
+            bool pulseSettingChanged = (_hologramPattern == UIHologramPattern.GhostRim && _lastRuntimeHoloPulseDisabled != _disableGhostRimPulse);
+
+            if (_runtimeHologramMaterial == null || _lastRuntimeHoloPattern != _hologramPattern || pulseSettingChanged || (_runtimeHologramMaterial.shader != shader && sourceMat == null))
             {
                 if (_runtimeHologramMaterial != null)
                 {
                     DestroySafe(_runtimeHologramMaterial);
                 }
-                if (shader != null)
+
+                if (sourceMat != null)
+                {
+                    _runtimeHologramMaterial = Instantiate(sourceMat);
+                    _runtimeHologramMaterial.name = $"M_RuntimePoseHologram_{_hologramPattern}";
+                    _runtimeHologramMaterial.hideFlags = HideFlags.DontSave;
+                }
+                else if (shader != null)
                 {
                     _runtimeHologramMaterial = new Material(shader)
                     {
-                        name = $"M_RuntimePoseHologram_{_hologramStyle}",
+                        name = $"M_RuntimePoseHologram_{_hologramPattern}",
                         hideFlags = HideFlags.DontSave
                     };
-                    _lastRuntimeHoloStyle = _hologramStyle;
                 }
+
+                if (_runtimeHologramMaterial != null)
+                {
+                    ConfigurePatternSpecificDefaults(_runtimeHologramMaterial, _hologramPattern, false, _disableGhostRimPulse);
+                    if (_hologramPattern == UIHologramPattern.GhostRim)
+                    {
+                        ApplyGhostRimPulseSetting(_runtimeHologramMaterial);
+                    }
+                    _lastRuntimeHoloPattern = _hologramPattern;
+                    _lastRuntimeHoloPulseDisabled = _disableGhostRimPulse;
+                }
+            }
+        }
+
+        public static string GetExistingModelHologramFileName(int index)
+        {
+            switch (index)
+            {
+                case 0: return "M_Model_01_ClassicScanline";
+                case 1: return "M_Model_02_HexShield";
+                case 2: return "M_Model_03_WireframeGrid";
+                case 3: return "M_Model_04_CyberGlitch";
+                case 4: return "M_Model_05_HoloLEDMatrix";
+                case 5: return "M_Model_06_HoloPatternBanner";
+                case 6: return "M_Model_07_HoloProjectorBeam";
+                case 7: return "M_Model_08_GhostRim";
+                case 8: return "M_Model_09_Dissolve";
+                case 9: return "M_Model_10_TriplanarDots";
+                case 10: return "M_Model_11_GradientEnergy";
+                default: return "M_Model_01_ClassicScanline";
+            }
+        }
+
+        public static string GetHologramMaterialFileName(UIHologramPattern pattern)
+        {
+            switch (pattern)
+            {
+                case UIHologramPattern.ClassicScanline: return "M_UIHolo_01_ClassicScanline";
+                case UIHologramPattern.HexShield: return "M_UIHolo_02_HexShield";
+                case UIHologramPattern.WireframeGrid: return "M_UIHolo_03_WireframeGrid";
+                case UIHologramPattern.CyberGlitch: return "M_UIHolo_04_CyberGlitch";
+                case UIHologramPattern.LEDMatrix: return "M_UIHolo_05_HoloLEDMatrix";
+                case UIHologramPattern.PatternBanner: return "M_UIHolo_06_HoloPatternBanner";
+                case UIHologramPattern.ProjectorBeam: return "M_UIHolo_07_HoloProjectorBeam";
+                case UIHologramPattern.GhostRim: return "M_UIHolo_08_GhostRim";
+                case UIHologramPattern.Dissolve: return "M_UIHolo_09_Dissolve";
+                case UIHologramPattern.TriplanarDots: return "M_UIHolo_10_TriplanarDots";
+                case UIHologramPattern.GradientEnergy: return "M_UIHolo_11_GradientEnergy";
+                case UIHologramPattern.UI_CyberNeon: return "M_UIHolo_12_CyberNeon";
+                case UIHologramPattern.UI_QuantumLattice: return "M_UIHolo_13_QuantumLattice";
+                case UIHologramPattern.UI_TacticalGlitch: return "M_UIHolo_14_TacticalGlitch";
+                case UIHologramPattern.UI_AuroraPlasma: return "M_UIHolo_15_AuroraPlasma";
+                case UIHologramPattern.UI_GlintPulseRadar: return "M_UIHolo_16_GlintPulseRadar";
+                default: return "M_UIHolo_01_ClassicScanline";
+            }
+        }
+
+        public static string GetHologramMaterialAssetPath(UIHologramPattern pattern)
+        {
+            return $"Assets/Deverop/AT_Murayama/PlayerStatusUI/Materials/{GetHologramMaterialFileName(pattern)}.mat";
+        }
+
+        public static string GetGhostRimMaterialAssetPath(bool isStatic = false)
+        {
+            return isStatic
+                ? "Assets/Deverop/AT_Murayama/PlayerStatusUI/Materials/M_UIHolo_08_GhostRim_Static.mat"
+                : "Assets/Deverop/AT_Murayama/PlayerStatusUI/Materials/M_UIHolo_08_GhostRim.mat";
+        }
+
+        public static string GetModelGhostRimMaterialAssetPath(bool isStatic = false)
+        {
+            return isStatic
+                ? "Assets/Deverop/AT_Murayama/Hologram/Materials/M_Model_08_GhostRim_Static.mat"
+                : "Assets/Deverop/AT_Murayama/Hologram/Materials/M_Model_08_GhostRim.mat";
+        }
+
+        public static string GetHologramShaderPath(UIHologramPattern pattern)
+        {
+            switch (pattern)
+            {
+                case UIHologramPattern.ClassicScanline:
+                case UIHologramPattern.UI_CyberNeon:
+                    return "Custom/Hologram/ModelHologram";
+                case UIHologramPattern.HexShield:
+                    return "Custom/Hologram/ModelHologram_HexGrid";
+                case UIHologramPattern.WireframeGrid:
+                case UIHologramPattern.UI_QuantumLattice:
+                    return "Custom/Hologram/ModelHologram_WireframeGrid";
+                case UIHologramPattern.CyberGlitch:
+                case UIHologramPattern.UI_TacticalGlitch:
+                    return "Custom/Hologram/ModelHologram_CyberGlitch";
+                case UIHologramPattern.LEDMatrix:
+                    return "Custom/Hologram/ModelHologram_LEDMatrix";
+                case UIHologramPattern.PatternBanner:
+                    return "Custom/Hologram/ModelHologram_PatternBanner";
+                case UIHologramPattern.ProjectorBeam:
+                    return "Custom/Hologram/ModelHologram_ProjectorBeam";
+                case UIHologramPattern.GhostRim:
+                case UIHologramPattern.UI_GlintPulseRadar:
+                    return "Custom/Hologram/ModelHologram_GhostRim";
+                case UIHologramPattern.Dissolve:
+                    return "Custom/Hologram/ModelHologram_Dissolve";
+                case UIHologramPattern.TriplanarDots:
+                    return "Custom/Hologram/ModelHologram_TriplanarDots";
+                case UIHologramPattern.GradientEnergy:
+                case UIHologramPattern.UI_AuroraPlasma:
+                    return "Custom/Hologram/ModelHologram_GradientEnergy";
+                default:
+                    return "Custom/Hologram/ModelHologram";
+            }
+        }
+
+        public static void ConfigurePatternSpecificDefaults(Material mat, UIHologramPattern pattern, bool setColorsIfDefault = true, bool disableGhostRimPulse = false)
+        {
+            if (mat == null) return;
+
+            // ローカル座標基準（高速移動時の走査線ストロボ防止）
+            if (mat.HasProperty(ShaderProp_UseWorldSpaceScan)) mat.SetFloat(ShaderProp_UseWorldSpaceScan, 0f);
+            if (mat.HasProperty(ShaderProp_UseWorldSpace)) mat.SetFloat(ShaderProp_UseWorldSpace, 0f);
+            if (mat.HasProperty(ShaderProp_UseWorldSpaceHex)) mat.SetFloat(ShaderProp_UseWorldSpaceHex, 0f);
+
+            bool ShouldSetColor(int propId)
+            {
+                if (!mat.HasProperty(propId)) return false;
+                if (setColorsIfDefault) return true;
+                Color cur = mat.GetColor(propId);
+                return (cur.r < 0.01f && cur.g < 0.01f && cur.b < 0.01f);
+            }
+
+            switch (pattern)
+            {
+                case UIHologramPattern.ClassicScanline:
+                    if (mat.HasProperty("_ScanlineDensity")) mat.SetFloat("_ScanlineDensity", 30f);
+                    if (mat.HasProperty("_ScanlineSpeed")) mat.SetFloat("_ScanlineSpeed", 1.6f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.6f);
+                    if (mat.HasProperty("_CenterAlpha")) mat.SetFloat("_CenterAlpha", 0.22f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.HexShield:
+                    if (mat.HasProperty("_HexScale")) mat.SetFloat("_HexScale", 14f);
+                    if (mat.HasProperty("_HexPulseSpeed")) mat.SetFloat("_HexPulseSpeed", 2.8f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.3f);
+                    if (mat.HasProperty("_CenterAlpha")) mat.SetFloat("_CenterAlpha", 0.2f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_HexWireColor)) mat.SetColor(ShaderProp_HexWireColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.WireframeGrid:
+                    if (mat.HasProperty("_VerticalGridDensity")) mat.SetFloat("_VerticalGridDensity", 20f);
+                    if (mat.HasProperty("_VerticalGridIntensity")) mat.SetFloat("_VerticalGridIntensity", 0.7f);
+                    if (mat.HasProperty("_ContourInterval")) mat.SetFloat("_ContourInterval", 0.45f);
+                    if (mat.HasProperty("_ContourLineWidth")) mat.SetFloat("_ContourLineWidth", 0.045f);
+                    if (mat.HasProperty("_ScanSliceSpeed")) mat.SetFloat("_ScanSliceSpeed", 1.4f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_GridColor)) mat.SetColor(ShaderProp_GridColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_ScanPlaneColor)) mat.SetColor(ShaderProp_ScanPlaneColor, new Color(0.4f, 0.95f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.CyberGlitch:
+                    if (mat.HasProperty("_ChromaticSplit")) mat.SetFloat("_ChromaticSplit", 0.03f);
+                    if (mat.HasProperty("_SyncRollSpeed")) mat.SetFloat("_SyncRollSpeed", 0.85f);
+                    if (mat.HasProperty("_SyncRollIntensity")) mat.SetFloat("_SyncRollIntensity", 0.45f);
+                    if (mat.HasProperty("_VertexGlitchIntensity")) mat.SetFloat("_VertexGlitchIntensity", 0.08f);
+                    if (mat.HasProperty("_VertexGlitchRate")) mat.SetFloat("_VertexGlitchRate", 0.25f);
+                    if (mat.HasProperty("_SliceDensity")) mat.SetFloat("_SliceDensity", 14f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_GlitchGlowColor)) mat.SetColor(ShaderProp_GlitchGlowColor, new Color(0.3f, 0.9f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.LEDMatrix:
+                    if (mat.HasProperty("_PatternMode")) mat.SetFloat("_PatternMode", 2f);
+                    mat.EnableKeyword("_PATTERNMODE_CYBERARROWS");
+                    if (mat.HasProperty("_PixelateTexToDots")) mat.SetFloat("_PixelateTexToDots", 1f);
+                    mat.EnableKeyword("_PIXELATETEXTODOTS_ON");
+                    if (mat.HasProperty("_DotRadius")) mat.SetFloat("_DotRadius", 0.35f);
+                    if (mat.HasProperty("_SparkleSpeed")) mat.SetFloat("_SparkleSpeed", 4f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_DotColor)) mat.SetColor(ShaderProp_DotColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.PatternBanner:
+                    if (mat.HasProperty("_PatternMode")) mat.SetFloat("_PatternMode", 2f);
+                    mat.EnableKeyword("_PATTERNMODE_CYBERARROWS");
+                    if (mat.HasProperty("_PatternScrollSpeed")) mat.SetFloat("_PatternScrollSpeed", 1.8f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_PatternColor)) mat.SetColor(ShaderProp_PatternColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.ProjectorBeam:
+                    if (mat.HasProperty("_BeamDensity")) mat.SetFloat("_BeamDensity", 24f);
+                    if (mat.HasProperty("_BeamIntensity")) mat.SetFloat("_BeamIntensity", 0.7f);
+                    if (mat.HasProperty("_BeamSpeed")) mat.SetFloat("_BeamSpeed", 3.5f);
+                    if (mat.HasProperty("_EmitterGlowHeight")) mat.SetFloat("_EmitterGlowHeight", 0.4f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_EmitterColor)) mat.SetColor(ShaderProp_EmitterColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.GhostRim:
+                    if (setColorsIfDefault)
+                    {
+                        if (disableGhostRimPulse)
+                        {
+                            if (mat.HasProperty(ShaderProp_BreatheSpeed)) mat.SetFloat(ShaderProp_BreatheSpeed, 0f);
+                            if (mat.HasProperty(ShaderProp_BreatheAmount)) mat.SetFloat(ShaderProp_BreatheAmount, 0f);
+                            if (mat.HasProperty(ShaderProp_EnableBreathePulse)) mat.SetFloat(ShaderProp_EnableBreathePulse, 0f);
+                        }
+                        else
+                        {
+                            if (mat.HasProperty(ShaderProp_BreatheSpeed)) mat.SetFloat(ShaderProp_BreatheSpeed, 1.8f);
+                            if (mat.HasProperty(ShaderProp_BreatheAmount)) mat.SetFloat(ShaderProp_BreatheAmount, 0.28f);
+                            if (mat.HasProperty(ShaderProp_EnableBreathePulse)) mat.SetFloat(ShaderProp_EnableBreathePulse, 1.0f);
+                        }
+                        if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.4f);
+                    }
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.Dissolve:
+                    if (mat.HasProperty("_AutoLoopSpeed")) mat.SetFloat("_AutoLoopSpeed", 0.35f);
+                    if (mat.HasProperty("_DirectionMode")) mat.SetFloat("_DirectionMode", 1f);
+                    mat.EnableKeyword("_DIRECTIONMODE_BOTTOMTOTOP");
+                    if (mat.HasProperty("_DirectionBlend")) mat.SetFloat("_DirectionBlend", 0.65f);
+                    if (mat.HasProperty("_EdgeWidth")) mat.SetFloat("_EdgeWidth", 0.09f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_EdgeColor)) mat.SetColor(ShaderProp_EdgeColor, new Color(0.3f, 0.95f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.TriplanarDots:
+                    if (mat.HasProperty("_DotScale")) mat.SetFloat("_DotScale", 8.0f);
+                    if (mat.HasProperty("_DotRadius")) mat.SetFloat("_DotRadius", 0.24f);
+                    if (mat.HasProperty("_WaveSpeed")) mat.SetFloat("_WaveSpeed", 1.8f);
+                    if (mat.HasProperty("_WaveDotBoost")) mat.SetFloat("_WaveDotBoost", 0.65f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.65f, 0.95f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_DotColor)) mat.SetColor(ShaderProp_DotColor, new Color(0.2f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.GradientEnergy:
+                    if (mat.HasProperty("_FlowScale")) mat.SetFloat("_FlowScale", 3.0f);
+                    if (mat.HasProperty("_FlowSpeed")) mat.SetFloat("_FlowSpeed", 0.9f);
+                    if (mat.HasProperty("_FlowContrast")) mat.SetFloat("_FlowContrast", 3.2f);
+                    if (mat.HasProperty("_FlowIntensity")) mat.SetFloat("_FlowIntensity", 1.0f);
+                    if (ShouldSetColor(ShaderProp_BottomColor)) mat.SetColor(ShaderProp_BottomColor, new Color(0.05f, 0.5f, 0.9f, 0.8f));
+                    if (ShouldSetColor(ShaderProp_TopColor)) mat.SetColor(ShaderProp_TopColor, new Color(0.2f, 0.85f, 1.0f, 0.9f));
+                    if (ShouldSetColor(ShaderProp_FlowColor)) mat.SetColor(ShaderProp_FlowColor, new Color(0.3f, 0.95f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.35f, 0.85f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.UI_CyberNeon:
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 3.8f);
+                    if (mat.HasProperty("_CenterAlpha")) mat.SetFloat("_CenterAlpha", 0.2f);
+                    if (mat.HasProperty("_ScanlineDensity")) mat.SetFloat("_ScanlineDensity", 36f);
+                    if (mat.HasProperty("_ScanlineSpeed")) mat.SetFloat("_ScanlineSpeed", 2.0f);
+                    if (mat.HasProperty("_SweepIntensity")) mat.SetFloat("_SweepIntensity", 1.25f);
+                    if (mat.HasProperty("_GlitchFrequency")) mat.SetFloat("_GlitchFrequency", 0.06f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.45f, 0.9f, 0.85f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.75f, 0.05f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.UI_QuantumLattice:
+                    if (mat.HasProperty("_VerticalGridDensity")) mat.SetFloat("_VerticalGridDensity", 32f);
+                    if (mat.HasProperty("_VerticalGridIntensity")) mat.SetFloat("_VerticalGridIntensity", 0.85f);
+                    if (mat.HasProperty("_ContourInterval")) mat.SetFloat("_ContourInterval", 0.35f);
+                    if (mat.HasProperty("_ContourLineWidth")) mat.SetFloat("_ContourLineWidth", 0.05f);
+                    if (mat.HasProperty("_ScanSliceSpeed")) mat.SetFloat("_ScanSliceSpeed", 1.8f);
+                    if (mat.HasProperty("_ScanSliceThickness")) mat.SetFloat("_ScanSliceThickness", 0.16f);
+                    if (mat.HasProperty("_ScanSliceRange")) mat.SetFloat("_ScanSliceRange", 2.5f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.8f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0f, 0.6f, 0.9f, 0.75f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0f, 0.9f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_GridColor)) mat.SetColor(ShaderProp_GridColor, new Color(0f, 0.85f, 1.0f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_ScanPlaneColor)) mat.SetColor(ShaderProp_ScanPlaneColor, new Color(0.2f, 0.95f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.UI_TacticalGlitch:
+                    if (mat.HasProperty("_ChromaticSplit")) mat.SetFloat("_ChromaticSplit", 0.035f);
+                    if (mat.HasProperty("_SyncRollSpeed")) mat.SetFloat("_SyncRollSpeed", 0.75f);
+                    if (mat.HasProperty("_SyncRollIntensity")) mat.SetFloat("_SyncRollIntensity", 0.35f);
+                    if (mat.HasProperty("_VertexGlitchIntensity")) mat.SetFloat("_VertexGlitchIntensity", 0.07f);
+                    if (mat.HasProperty("_VertexGlitchRate")) mat.SetFloat("_VertexGlitchRate", 0.2f);
+                    if (mat.HasProperty("_SliceDensity")) mat.SetFloat("_SliceDensity", 16f);
+                    if (mat.HasProperty("_StaticNoiseIntensity")) mat.SetFloat("_StaticNoiseIntensity", 0.25f);
+                    if (mat.HasProperty("_FlickerDropRate")) mat.SetFloat("_FlickerDropRate", 0.1f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.7f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0.05f, 0.75f, 0.65f, 0.85f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.2f, 0.95f, 0.85f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_GlitchGlowColor)) mat.SetColor(ShaderProp_GlitchGlowColor, new Color(1.0f, 0.35f, 0.15f, 1.0f));
+                    break;
+
+                case UIHologramPattern.UI_AuroraPlasma:
+                    if (mat.HasProperty("_FlowScale")) mat.SetFloat("_FlowScale", 3.6f);
+                    if (mat.HasProperty("_FlowSpeed")) mat.SetFloat("_FlowSpeed", 1.2f);
+                    if (mat.HasProperty("_FlowContrast")) mat.SetFloat("_FlowContrast", 3.5f);
+                    if (mat.HasProperty("_FlowIntensity")) mat.SetFloat("_FlowIntensity", 1.25f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 2.5f);
+                    if (ShouldSetColor(ShaderProp_BottomColor)) mat.SetColor(ShaderProp_BottomColor, new Color(0.0f, 0.8f, 0.8f, 0.9f));
+                    if (ShouldSetColor(ShaderProp_TopColor)) mat.SetColor(ShaderProp_TopColor, new Color(0.85f, 0.1f, 0.85f, 0.9f));
+                    if (ShouldSetColor(ShaderProp_FlowColor)) mat.SetColor(ShaderProp_FlowColor, new Color(0.2f, 0.95f, 0.85f, 1.0f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.7f, 0.3f, 1.0f, 1.0f));
+                    break;
+
+                case UIHologramPattern.UI_GlintPulseRadar:
+                    if (mat.HasProperty("_BreatheSpeed")) mat.SetFloat("_BreatheSpeed", 2.6f);
+                    if (mat.HasProperty("_BreatheAmount")) mat.SetFloat("_BreatheAmount", 0.45f);
+                    if (mat.HasProperty("_FresnelPower")) mat.SetFloat("_FresnelPower", 3.2f);
+                    if (mat.HasProperty("_CenterAlpha")) mat.SetFloat("_CenterAlpha", 0.16f);
+                    if (ShouldSetColor(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, new Color(0.0f, 0.75f, 0.95f, 0.8f));
+                    if (ShouldSetColor(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, new Color(0.3f, 0.95f, 1.0f, 1.0f));
+                    break;
             }
         }
 
         private void UpdateHologramMaterialProperties(Material mat, Color mainCol, Color rimCol, Color accentCol)
         {
             if (mat == null) return;
-            if (mat.HasProperty(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, mainCol);
-            if (mat.HasProperty(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, rimCol);
-            if (mat.HasProperty(ShaderProp_HexWireColor)) mat.SetColor(ShaderProp_HexWireColor, accentCol);
-            if (mat.HasProperty(ShaderProp_GridColor)) mat.SetColor(ShaderProp_GridColor, accentCol);
-            if (mat.HasProperty(ShaderProp_ScanPlaneColor)) mat.SetColor(ShaderProp_ScanPlaneColor, accentCol);
-            if (mat.HasProperty(ShaderProp_GlitchGlowColor)) mat.SetColor(ShaderProp_GlitchGlowColor, accentCol);
-            if (mat.HasProperty(ShaderProp_SubColor)) mat.SetColor(ShaderProp_SubColor, accentCol * 0.35f);
-            if (mat.HasProperty(ShaderProp_EmitterColor)) mat.SetColor(ShaderProp_EmitterColor, accentCol);
+
+            bool shouldSyncHoloColors = _enableStateColorOverride && _syncHologramColorsWithState;
+
+            if (shouldSyncHoloColors)
+            {
+                // 通常状態（Normal / MoveLeft / MoveRight）以外のイベント状態（Boosting, Shielding, Stunned）の時のみ
+                // 強烈な状態カラーでマテリアル色をダイナミックに上書き
+                bool isEventActiveState = (_currentState == PlayerUIState.Boosting ||
+                                           _currentState == PlayerUIState.Shielding ||
+                                           _currentState == PlayerUIState.Stunned);
+
+                if (_useManualTestMode)
+                {
+                    isEventActiveState = (_manualTestState == PlayerUIState.Boosting ||
+                                          _manualTestState == PlayerUIState.Shielding ||
+                                          _manualTestState == PlayerUIState.Stunned);
+                }
+
+                if (isEventActiveState)
+                {
+                    if (mat.HasProperty(ShaderProp_MainColor)) mat.SetColor(ShaderProp_MainColor, mainCol);
+                    if (mat.HasProperty(ShaderProp_RimColor)) mat.SetColor(ShaderProp_RimColor, rimCol);
+                    if (mat.HasProperty(ShaderProp_HexWireColor)) mat.SetColor(ShaderProp_HexWireColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_GridColor)) mat.SetColor(ShaderProp_GridColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_ScanPlaneColor)) mat.SetColor(ShaderProp_ScanPlaneColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_GlitchGlowColor)) mat.SetColor(ShaderProp_GlitchGlowColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_SubColor)) mat.SetColor(ShaderProp_SubColor, accentCol * 0.35f);
+                    if (mat.HasProperty(ShaderProp_EmitterColor)) mat.SetColor(ShaderProp_EmitterColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_EdgeColor)) mat.SetColor(ShaderProp_EdgeColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_DotColor)) mat.SetColor(ShaderProp_DotColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_PatternColor)) mat.SetColor(ShaderProp_PatternColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_BottomColor)) mat.SetColor(ShaderProp_BottomColor, mainCol);
+                    if (mat.HasProperty(ShaderProp_TopColor)) mat.SetColor(ShaderProp_TopColor, accentCol);
+                    if (mat.HasProperty(ShaderProp_FlowColor)) mat.SetColor(ShaderProp_FlowColor, rimCol);
+                    _wasHoloColorOverridden = true;
+                }
+                else
+                {
+                    // 通常状態に戻った場合、前回イベントで上書きされていれば元のホログラム固有色に復元
+                    if (_wasHoloColorOverridden)
+                    {
+                        RestoreHologramOriginalColors(mat, _hologramPattern);
+                        _wasHoloColorOverridden = false;
+                    }
+                    else if (mat.HasProperty(ShaderProp_MainColor))
+                    {
+                        Color c = mat.GetColor(ShaderProp_MainColor);
+                        if (c.r < 0.01f && c.g < 0.01f && c.b < 0.01f) mat.SetColor(ShaderProp_MainColor, mainCol);
+                    }
+                }
+            }
+            else
+            {
+                // 状態色連動OFFの場合：もし前回上書き状態のままなら直ちに本来のホログラム配色に復元
+                if (_wasHoloColorOverridden)
+                {
+                    RestoreHologramOriginalColors(mat, _hologramPattern);
+                    _wasHoloColorOverridden = false;
+                }
+            }
 
             // 方式Bでカメラと一緒に高速移動してもスキャンラインがストロボ点滅しないようローカル空間基準にする
-            if (mat.HasProperty(ShaderProp_UseWorldSpaceScan))
+            if (mat.HasProperty(ShaderProp_UseWorldSpaceScan)) mat.SetFloat(ShaderProp_UseWorldSpaceScan, 0f);
+            if (mat.HasProperty(ShaderProp_UseWorldSpace)) mat.SetFloat(ShaderProp_UseWorldSpace, 0f);
+            if (mat.HasProperty(ShaderProp_UseWorldSpaceHex)) mat.SetFloat(ShaderProp_UseWorldSpaceHex, 0f);
+
+            // GhostRim選択時はパルス無効化設定を常に確実に同期
+            if (_hologramPattern == UIHologramPattern.GhostRim)
             {
-                mat.SetFloat(ShaderProp_UseWorldSpaceScan, 0f);
+                ApplyGhostRimPulseSetting(mat);
             }
 
             // 方式Bにおける壁・地形めり込み防止用の ZTest Always 切り替え
@@ -1176,6 +2060,42 @@ namespace AT_Murayama.PlayerStatusUI
                 mat.SetFloat(ShaderProp_ZTest, useAlwaysZ ? (float)CompareFunction.Always : (float)CompareFunction.LessEqual);
             }
             mat.renderQueue = useAlwaysZ ? 3990 : -1;
+        }
+
+        /// <summary>
+        /// ホログラムマテリアルの配色をディスク上のアセット原本（または既定パターンカラー）から完全復元します。
+        /// アーティストがマテリアルアセット上で微調整した配色を100%維持します。
+        /// </summary>
+        private void RestoreHologramOriginalColors(Material mat, UIHologramPattern pattern)
+        {
+            if (mat == null) return;
+            Material sourceMat = null;
+#if UNITY_EDITOR
+            string assetPath = (pattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                ? GetGhostRimMaterialAssetPath(true)
+                : GetHologramMaterialAssetPath(pattern);
+            sourceMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(assetPath);
+            if (sourceMat == null && (int)pattern < 11)
+            {
+                string existingPath = (pattern == UIHologramPattern.GhostRim && _disableGhostRimPulse)
+                    ? GetModelGhostRimMaterialAssetPath(true)
+                    : $"Assets/Deverop/AT_Murayama/Hologram/Materials/{GetExistingModelHologramFileName((int)pattern)}.mat";
+                sourceMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(existingPath);
+            }
+#endif
+            if (sourceMat != null)
+            {
+                mat.CopyPropertiesFromMaterial(sourceMat);
+            }
+            else
+            {
+                ConfigurePatternSpecificDefaults(mat, pattern, true, _disableGhostRimPulse);
+            }
+
+            if (pattern == UIHologramPattern.GhostRim)
+            {
+                ApplyGhostRimPulseSetting(mat);
+            }
         }
 
         // ──────────────────────────────────────────────
@@ -1340,6 +2260,7 @@ namespace AT_Murayama.PlayerStatusUI
             _uiRawImage = rawImgObj.AddComponent<RawImage>();
             _uiRawImage.texture = _renderTexture;
             _uiRawImage.raycastTarget = false;
+            UpdateUIRawImageMaterial();
             RectTransform rawRect = _uiRawImage.rectTransform;
             rawRect.anchorMin = Vector2.zero;
             rawRect.anchorMax = Vector2.one;
@@ -1458,11 +2379,50 @@ namespace AT_Murayama.PlayerStatusUI
                     float vHeight = 2f * _modeBForwardDistance * Mathf.Tan(mainCam.fieldOfView * 0.5f * Mathf.Deg2Rad);
                     float vWidth = vHeight * aspect;
 
-                    float signX = (_screenCorner == ScreenCorner.BottomRight || _screenCorner == ScreenCorner.TopRight) ? 1f : -1f;
-                    float signY = (_screenCorner == ScreenCorner.TopRight || _screenCorner == ScreenCorner.TopLeft) ? 1f : -1f;
+                    float signX;
+                    float signY;
 
-                    float offsetX = signX * (vWidth * 0.34f);
-                    float offsetY = signY * (vHeight * 0.28f) - (_initialModelLocalBounds.center.y * _modeBMiniatureScale);
+                    switch (_screenCorner)
+                    {
+                        case ScreenCorner.BottomLeft:
+                            signX = -1f;
+                            signY = -1f;
+                            break;
+                        case ScreenCorner.TopRight:
+                            signX = 1f;
+                            signY = 1f;
+                            break;
+                        case ScreenCorner.TopLeft:
+                            signX = -1f;
+                            signY = 1f;
+                            break;
+                        case ScreenCorner.BottomCenter:
+                            signX = 0f;
+                            signY = -1f;
+                            break;
+                        case ScreenCorner.TopCenter:
+                            signX = 0f;
+                            signY = 1f;
+                            break;
+                        case ScreenCorner.Center:
+                            signX = 0f;
+                            signY = 0f;
+                            break;
+                        case ScreenCorner.Custom:
+                            signX = (_customAnchor.x - 0.5f) * 2f;
+                            signY = (_customAnchor.y - 0.5f) * 2f;
+                            break;
+                        default: // BottomRight
+                            signX = 1f;
+                            signY = -1f;
+                            break;
+                    }
+
+                    float marginSignX = (signX > 0.01f) ? -1f : 1f;
+                    float marginSignY = (signY > 0.01f) ? -1f : 1f;
+
+                    float offsetX = signX * (vWidth * 0.34f) + (marginSignX * _uiMargin.x * 0.001f);
+                    float offsetY = signY * (vHeight * 0.28f) + (marginSignY * _uiMargin.y * 0.001f) - (_initialModelLocalBounds.center.y * _modeBMiniatureScale);
 
                     _stageRoot.transform.position = mainCam.transform.TransformPoint(new Vector3(offsetX, offsetY, _modeBForwardDistance));
                     _stageRoot.transform.rotation = mainCam.transform.rotation;
@@ -1501,6 +2461,26 @@ namespace AT_Murayama.PlayerStatusUI
                     pivot = new Vector2(0f, 1f);
                     pos = new Vector2(_uiMargin.x, -_uiMargin.y);
                     break;
+                case ScreenCorner.BottomCenter:
+                    anchor = new Vector2(0.5f, 0f);
+                    pivot = new Vector2(0.5f, 0f);
+                    pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                    break;
+                case ScreenCorner.TopCenter:
+                    anchor = new Vector2(0.5f, 1f);
+                    pivot = new Vector2(0.5f, 1f);
+                    pos = new Vector2(_uiMargin.x, -_uiMargin.y);
+                    break;
+                case ScreenCorner.Center:
+                    anchor = new Vector2(0.5f, 0.5f);
+                    pivot = new Vector2(0.5f, 0.5f);
+                    pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                    break;
+                case ScreenCorner.Custom:
+                    anchor = _customAnchor;
+                    pivot = _customPivot;
+                    pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                    break;
                 default: // BottomRight
                     anchor = new Vector2(1f, 0f);
                     pivot = new Vector2(1f, 0f);
@@ -1508,11 +2488,11 @@ namespace AT_Murayama.PlayerStatusUI
                     break;
             }
 
-            rect.anchorMin = anchor;
-            rect.anchorMax = anchor;
-            rect.pivot = pivot;
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = _uiSize;
+            if (rect.anchorMin != anchor) rect.anchorMin = anchor;
+            if (rect.anchorMax != anchor) rect.anchorMax = anchor;
+            if (rect.pivot != pivot) rect.pivot = pivot;
+            if (rect.anchoredPosition != pos) rect.anchoredPosition = pos;
+            if (rect.sizeDelta != _uiSize) rect.sizeDelta = _uiSize;
         }
 
         /// <summary>
@@ -1575,6 +2555,32 @@ namespace AT_Murayama.PlayerStatusUI
             }
         }
 
+        private void UpdateUIRawImageMaterial()
+        {
+            if (_uiRawImage == null) return;
+
+            if (_usePremultipliedUIAlpha)
+            {
+                if (_runtimeUIRawImageMaterial == null)
+                {
+                    Shader uiPremulShader = Shader.Find("Custom/UI/PremultipliedRawImage");
+                    if (uiPremulShader != null)
+                    {
+                        _runtimeUIRawImageMaterial = new Material(uiPremulShader)
+                        {
+                            name = "M_Runtime_UIPremultipliedRawImage",
+                            hideFlags = HideFlags.DontSave
+                        };
+                    }
+                }
+                _uiRawImage.material = _runtimeUIRawImageMaterial;
+            }
+            else
+            {
+                _uiRawImage.material = null;
+            }
+        }
+
         private void CleanupGeneratedObjects()
         {
             if (_renderTexture != null)
@@ -1601,6 +2607,12 @@ namespace AT_Murayama.PlayerStatusUI
             {
                 DestroySafe(_runtimeHologramMaterial);
                 _runtimeHologramMaterial = null;
+            }
+
+            if (_runtimeUIRawImageMaterial != null)
+            {
+                DestroySafe(_runtimeUIRawImageMaterial);
+                _runtimeUIRawImageMaterial = null;
             }
 
             // 念のため残骸オブジェクトをクリーンアップ

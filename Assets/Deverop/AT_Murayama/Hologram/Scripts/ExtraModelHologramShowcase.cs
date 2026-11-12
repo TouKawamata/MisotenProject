@@ -30,6 +30,9 @@ public class ExtraModelHologramShowcase : MonoBehaviour
     [Tooltip("このオブジェクト（および子階層）の Renderer に適用する汎用ホログラムスタイル")]
     [SerializeField] private ExtraHologramStyle _style = ExtraHologramStyle.GhostRim;
 
+    [Tooltip("⑧ GhostRim 選択時、呼吸パルスを無効化して常時固定強度（静止・Static）にするか")]
+    [SerializeField] private bool _disableGhostRimPulse = false;
+
     [Tooltip("子階層のすべてのRenderer（SkinnedMeshRenderer / MeshRenderer）と全マテリアルスロットに一括適用するか")]
     [SerializeField] private bool _includeChildRenderers = true;
 
@@ -78,6 +81,16 @@ public class ExtraModelHologramShowcase : MonoBehaviour
         set
         {
             _customMaterial = value;
+            UpdateSingleModelMaterial();
+        }
+    }
+
+    public bool DisableGhostRimPulse
+    {
+        get => _disableGhostRimPulse;
+        set
+        {
+            _disableGhostRimPulse = value;
             UpdateSingleModelMaterial();
         }
     }
@@ -225,6 +238,16 @@ public class ExtraModelHologramShowcase : MonoBehaviour
         if (_runtimeMaterial.HasProperty(AutoLoopSpeedId))
         {
             _runtimeMaterial.SetFloat(AutoLoopSpeedId, _dissolveAutoLoopSpeed);
+        }
+
+        if (_style == ExtraHologramStyle.GhostRim)
+        {
+            if (_runtimeMaterial.HasProperty("_EnableBreathePulse"))
+                _runtimeMaterial.SetFloat("_EnableBreathePulse", _disableGhostRimPulse ? 0f : 1f);
+            if (_runtimeMaterial.HasProperty("_BreatheAmount"))
+                _runtimeMaterial.SetFloat("_BreatheAmount", _disableGhostRimPulse ? 0f : 0.25f);
+            if (_runtimeMaterial.HasProperty("_BreatheSpeed"))
+                _runtimeMaterial.SetFloat("_BreatheSpeed", _disableGhostRimPulse ? 0f : 1.6f);
         }
 
         AssignMaterialToAllRenderers(_runtimeMaterial);

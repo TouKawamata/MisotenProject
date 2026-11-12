@@ -20,6 +20,7 @@ Shader "Custom/SmartSignage/S_FrostedGlassSignboard"
         [Header(Dynamic Glass Light Sweep)]
         _SweepSpeed ("Specular Light Sweep Speed", Range(0.0, 3.0)) = 0.4
         _SweepIntensity ("Specular Light Sweep Intensity", Range(0.0, 1.0)) = 0.35
+        _SweepPhaseOffset ("Specular Light Sweep Phase Offset", Range(0.0, 1.0)) = 0.0
 
         [Header(UI Telemetry Overlay)]
         _MainTex ("UI Telemetry Texture (RGBA)", 2D) = "white" {}
@@ -108,6 +109,7 @@ Shader "Custom/SmartSignage/S_FrostedGlassSignboard"
                 float  _EdgeGlowIntensity;
                 float  _SweepSpeed;
                 float  _SweepIntensity;
+                float  _SweepPhaseOffset;
                 float  _HasCustomTex;
                 float  _AspectRatio;
                 float  _UIIntensity;
@@ -298,8 +300,9 @@ Shader "Custom/SmartSignage/S_FrostedGlassSignboard"
                 float  spec     = pow(NdotH, _SpecularSmoothness) * _SpecularIntensity;
                 float3 specCol  = mainLight.color * spec;
 
-                // --- 4. 動的ガラス光沢スイープ（スマートガラスの美しい反射光の流延） ---
-                float sweepCoord = (input.uv.x * 0.75 + input.uv.y * 0.25) - frac(_Time.y * _SweepSpeed * 0.25) * 2.2;
+                // --- 4. 動的ガラス光沢スイープ（スマートガラスの美しい反射光の流延・位相オフセット対応） ---
+                float totalSweepPhase = (_Time.y * _SweepSpeed * 0.25) + _SweepPhaseOffset;
+                float sweepCoord = (input.uv.x * 0.75 + input.uv.y * 0.25) - frac(totalSweepPhase) * 2.2;
                 float sweep = smoothstep(0.06, 0.0, abs(sweepCoord)) * _SweepIntensity;
                 float3 sweepCol = float3(0.95, 0.98, 1.0) * sweep;
 

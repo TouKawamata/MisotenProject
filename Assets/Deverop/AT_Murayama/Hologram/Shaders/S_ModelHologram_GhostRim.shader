@@ -14,6 +14,7 @@ Shader "Custom/Hologram/ModelHologram_GhostRim"
         _CenterAlpha ("Center Fill Alpha", Range(0.0, 1.0)) = 0.12
 
         [Header(Breathing Pulse)]
+        [Toggle] _EnableBreathePulse ("Enable Breathing Pulse", Float) = 1.0
         _BreatheSpeed ("Breathe Speed", Float) = 1.6
         _BreatheAmount ("Breathe Amount (0 = off)", Range(0.0, 0.8)) = 0.25
 
@@ -83,6 +84,7 @@ Shader "Custom/Hologram/ModelHologram_GhostRim"
                 float _UseTexColor;
                 float _FresnelPower;
                 float _CenterAlpha;
+                float _EnableBreathePulse;
                 float _BreatheSpeed;
                 float _BreatheAmount;
                 float _UseHeightFade;
@@ -117,7 +119,11 @@ Shader "Custom/Hologram/ModelHologram_GhostRim"
                 float ndotv = abs(dot(normalize(input.normalWS), viewDirWS));
                 float fresnel = pow(1.0 - saturate(ndotv), _FresnelPower);
 
-                float breathe = 1.0 + sin(_Time.y * _BreatheSpeed * 6.28318) * _BreatheAmount;
+                float breathe = 1.0;
+                if (_EnableBreathePulse > 0.5 && _BreatheAmount > 0.0001)
+                {
+                    breathe = 1.0 + sin(_Time.y * _BreatheSpeed * 6.28318) * _BreatheAmount;
+                }
 
                 float heightFade = 1.0;
                 if (_UseHeightFade > 0.5)
