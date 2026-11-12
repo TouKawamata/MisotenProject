@@ -98,6 +98,52 @@ public class SmartSignageControllerEditor : Editor
 
         EditorGUILayout.Space(6f);
 
+        // --- ガラス反射・光沢スイープのタイミング分散セクション ---
+        EditorGUILayout.LabelField("【光の反射・スイープ演出のタイミング】", EditorStyles.boldLabel);
+        using (new EditorGUILayout.VerticalScope(GUI.skin.box))
+        {
+            EditorGUI.BeginChangeCheck();
+            float newPhase = EditorGUILayout.Slider("反射タイミング位相 (0〜1)", comp.SweepPhaseOffset, 0f, 1f);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(comp, "Change Sweep Phase Offset");
+                comp.SweepPhaseOffset = newPhase;
+                EditorUtility.SetDirty(comp);
+                SceneView.RepaintAll();
+            }
+
+            EditorGUI.BeginChangeCheck();
+            bool newAutoStagger = EditorGUILayout.ToggleLeft("📍 設置位置に応じた自動タイミング分散 (Auto Stagger by Position)", comp.AutoStaggerPhaseByPosition);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(comp, "Toggle Auto Stagger Phase");
+                comp.AutoStaggerPhaseByPosition = newAutoStagger;
+                EditorUtility.SetDirty(comp);
+                SceneView.RepaintAll();
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("🎲 ランダムな位相を設定", GUILayout.Height(22f)))
+                {
+                    Undo.RecordObject(comp, "Randomize Sweep Phase");
+                    comp.RandomizeSweepPhase();
+                    EditorUtility.SetDirty(comp);
+                    SceneView.RepaintAll();
+                }
+                if (GUILayout.Button("🔄 0にリセット", GUILayout.Height(22f)))
+                {
+                    Undo.RecordObject(comp, "Reset Sweep Phase");
+                    comp.SweepPhaseOffset = 0f;
+                    EditorUtility.SetDirty(comp);
+                    SceneView.RepaintAll();
+                }
+            }
+            EditorGUILayout.HelpBox("複数看板を配置した際に光の反射が同時に流れないよう、看板ごとにタイミングをずらせます（位置連動ONなら配置するだけで自動分散）。", MessageType.None);
+        }
+
+        EditorGUILayout.Space(6f);
+
         // --- マテリアル別名保存セクション ---
         EditorGUILayout.LabelField("【マテリアル別名保存 (Save As)】", EditorStyles.boldLabel);
         using (new EditorGUILayout.VerticalScope(GUI.skin.box))
@@ -488,6 +534,8 @@ public class SmartSignageControllerEditor : Editor
         so.FindProperty("_showFrame").boolValue = false;
         so.FindProperty("_signWidth").floatValue = 8.0f;
         so.FindProperty("_signHeight").floatValue = 4.5f;
+        so.FindProperty("_sweepPhaseOffset").floatValue = 0.87f;
+        so.FindProperty("_autoStaggerPhaseByPosition").boolValue = true;
         so.FindProperty("_screenRenderer").objectReferenceValue = smr;
         so.FindProperty("_frameObject").objectReferenceValue = frameObj;
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -526,6 +574,8 @@ public class SmartSignageControllerEditor : Editor
         so.FindProperty("_showFrame").boolValue = true;
         so.FindProperty("_signWidth").floatValue = 8.0f;
         so.FindProperty("_signHeight").floatValue = 4.5f;
+        so.FindProperty("_sweepPhaseOffset").floatValue = 0.37f;
+        so.FindProperty("_autoStaggerPhaseByPosition").boolValue = true;
         so.FindProperty("_screenRenderer").objectReferenceValue = smr;
         so.FindProperty("_frameObject").objectReferenceValue = frameObj;
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -565,6 +615,8 @@ public class SmartSignageControllerEditor : Editor
         so.FindProperty("_showFrame").boolValue = true;
         so.FindProperty("_signWidth").floatValue = 10.5f;
         so.FindProperty("_signHeight").floatValue = 4.5f;
+        so.FindProperty("_sweepPhaseOffset").floatValue = 0.62f;
+        so.FindProperty("_autoStaggerPhaseByPosition").boolValue = true;
         so.FindProperty("_screenRenderer").objectReferenceValue = smr;
         so.FindProperty("_frameObject").objectReferenceValue = pylonObj;
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -604,6 +656,8 @@ public class SmartSignageControllerEditor : Editor
         so.FindProperty("_showFrame").boolValue = true;
         so.FindProperty("_signWidth").floatValue = 4.5f;
         so.FindProperty("_signHeight").floatValue = 8.0f;
+        so.FindProperty("_sweepPhaseOffset").floatValue = 0.12f;
+        so.FindProperty("_autoStaggerPhaseByPosition").boolValue = true;
         so.FindProperty("_screenRenderer").objectReferenceValue = smr;
         so.FindProperty("_frameObject").objectReferenceValue = mountObj;
         so.ApplyModifiedPropertiesWithoutUndo();
@@ -671,6 +725,7 @@ public class SmartSignageControllerEditor : Editor
             SmartSignageController ctrl = instance.GetComponent<SmartSignageController>();
             if (ctrl != null)
             {
+                ctrl.SweepPhaseOffset = (float)i / prefabNames.Length;
                 ctrl.ApplyPreset(presets[i]);
                 ctrl.UpdateSignboard();
             }

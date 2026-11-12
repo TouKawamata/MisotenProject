@@ -309,6 +309,7 @@ namespace AT_Murayama.CharacterElectricity
         private static readonly int _propBaseColorMapAlt = Shader.PropertyToID("_BASE_COLOR_MAP");
         private static readonly int _propBaseColorAlt = Shader.PropertyToID("_BASE_COLOR");
         private static readonly int _propColorAlt = Shader.PropertyToID("_Color");
+        private static readonly int _propMainTex = Shader.PropertyToID("_MainTex");
         private static readonly int _propElectricityIntensity = Shader.PropertyToID("_ElectricityIntensity");
         private static readonly int _propElectricitySpeed = Shader.PropertyToID("_ElectricitySpeed");
         private static readonly int _propElectricityColor = Shader.PropertyToID("_ElectricityColor");
@@ -904,17 +905,43 @@ namespace AT_Murayama.CharacterElectricity
                 _cachedOriginalBaseMap = originalMat.GetTexture(_propBaseColorMapAlt);
                 texturePropName = "_BASE_COLOR_MAP";
             }
-            else if (originalMat.mainTexture != null)
+            else if (originalMat.HasProperty(_propMainTex) && originalMat.GetTexture(_propMainTex) != null)
             {
-                _cachedOriginalBaseMap = originalMat.mainTexture;
-                _cachedOriginalBaseMapST = new Vector4(originalMat.mainTextureScale.x, originalMat.mainTextureScale.y, originalMat.mainTextureOffset.x, originalMat.mainTextureOffset.y);
+                _cachedOriginalBaseMap = originalMat.GetTexture(_propMainTex);
+                texturePropName = "_MainTex";
+            }
+            else
+            {
+                // 任意のテクスチャプロパティが存在するか安全に走査（ShaderGraph / カスタムシェーダー対応）
+                string[] texPropNames = originalMat.GetTexturePropertyNames();
+                if (texPropNames != null && texPropNames.Length > 0)
+                {
+                    for (int i = 0; i < texPropNames.Length; i++)
+                    {
+                        string pName = texPropNames[i];
+                        Texture tex = originalMat.GetTexture(pName);
+                        if (tex != null)
+                        {
+                            _cachedOriginalBaseMap = tex;
+                            texturePropName = pName;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (texturePropName != null)
             {
-                Vector2 scale = originalMat.GetTextureScale(texturePropName);
-                Vector2 offset = originalMat.GetTextureOffset(texturePropName);
-                _cachedOriginalBaseMapST = new Vector4(scale.x, scale.y, offset.x, offset.y);
+                try
+                {
+                    Vector2 scale = originalMat.GetTextureScale(texturePropName);
+                    Vector2 offset = originalMat.GetTextureOffset(texturePropName);
+                    _cachedOriginalBaseMapST = new Vector4(scale.x, scale.y, offset.x, offset.y);
+                }
+                catch
+                {
+                    _cachedOriginalBaseMapST = new Vector4(1f, 1f, 0f, 0f);
+                }
             }
 
             // ベースカラーの取得

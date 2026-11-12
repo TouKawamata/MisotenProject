@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_SmartArrow_HoloGold
+  m_Shader: {fileID: 4800000, guid: 8b1e2002bc5f492098d1a100ca000001, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _AnimMode: 2
+    - _AnimSpeed: 2
+    - _ArrowAngle: 0
+    - _ArrowAspect: 1
+    - _ArrowPattern: 7
+    - _ArrowRepeat: 1
+    - _ArrowScale: 1
+    - _ArrowSpacing: 0.35
+    - _AspectRatio: 1
+    - _BlurRadius: 0.015
+    - _CoreIntensity: 2
+    - _Cull: 2
+    - _DstBlend: 1
+    - _EdgeGlowIntensity: 1.4
+    - _EmissionMultiplier: 3.2
+    - _FresnelPower: 3.2
+    - _GlowIntensity: 1.2
+    - _GlowWidth: 0.06
+    - _OutlineWidth: 0.04
+    - _RefractionAmount: 0.008
+    - _RoughnessNoise: 0.35
+    - _ShowHUDDecorations: 1
+    - _SignMode: 1
+    - _SpecularIntensity: 1.3
+    - _SpecularSmoothness: 64
+    - _SrcBlend: 1
+    - _StripeDensity: 22
+    - _SweepIntensity: 0.35
+    - _SweepSpeed: 0.4
+    - _UseSceneBlur: 0
+    - _ZTest: 4
+    - _ZWrite: 0
+    m_Colors:
+    - _ArrowColor: {r: 1, g: 0.82, b: 0.25, a: 1}
+    - _ArrowOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _CoreColor: {r: 1, g: 0.98, b: 0.85, a: 1}
+    - _EdgeGlowColor: {r: 0.85, g: 0.97, b: 1, a: 0.9}
+    - _FresnelColor: {r: 0.75, g: 0.95, b: 1, a: 0.85}
+    - _GlassTint: {r: 0.92, g: 0.97, b: 1, a: 0.22}
+    - _HUDColor: {r: 1, g: 0.9, b: 0.5, a: 0.7}
+    - _SecondaryColor: {r: 1, g: 0.4, b: 0.05, a: 1}

@@ -5,7 +5,8 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 /// <summary>
-/// CourseSpline から立体的な3Dミニマップ用のコースメッシュ（帯リボン または 円柱トンネル）と機体アイコンを自動生成し、
+/// CourseSpline（および CourseNetwork / CourseBranch の分岐ルート）から
+/// 立体的な3Dミニマップ用のコースメッシュ（帯リボン または 円柱トンネル）と機体アイコンを自動生成し、
 /// 【方式A：専用レイヤー＋斜め見下ろしサブカメラ（RenderTexture UI）】と
 /// 【方式B：メインカメラ前 1/1000スケール 3Dミニチュアホログラム】、
 /// 【自機周辺ズーム】と【コース全体マップ】、
@@ -42,6 +43,40 @@ public class CourseMinimapController : MonoBehaviour
         CylinderTube = 1
     }
 
+    public enum MinimapScreenAnchor
+    {
+        [InspectorName("左下 (Bottom Left - デフォルト)")]
+        BottomLeft = 0,
+
+        [InspectorName("右下 (Bottom Right)")]
+        BottomRight = 1,
+
+        [InspectorName("左上 (Top Left)")]
+        TopLeft = 2,
+
+        [InspectorName("右上 (Top Right - 一般的レースゲーム)")]
+        TopRight = 3,
+
+        [InspectorName("下中央 (Bottom Center)")]
+        BottomCenter = 4,
+
+        [InspectorName("上中央 (Top Center)")]
+        TopCenter = 5,
+
+        [InspectorName("画面中央 (Center)")]
+        Center = 6,
+
+        [InspectorName("カスタム自由配置 (Custom)")]
+        Custom = 7
+    }
+
+    private struct SplineSampleTarget
+    {
+        public CourseSpline Spline;
+        public List<float> SampleDistances;
+        public float StartUvX;
+    }
+
     // ──────────────────────────────────────────────
     // Inspector
     // ──────────────────────────────────────────────
@@ -56,9 +91,18 @@ public class CourseMinimapController : MonoBehaviour
     [Tooltip("コースの形状を「平らな帯」にするか「円柱トンネル（スプラインギズモ風）」にするかを切り替えます")]
     [SerializeField] private MinimapMeshShape _meshShape = MinimapMeshShape.CylinderTube;
 
-    [Header("コース・機体参照")]
-    [Tooltip("コースの Spline（未指定ならシーン内から自動検索）")]
+    [Header("コース・分岐・機体参照")]
+    [Tooltip("メインコースの Spline（未指定なら CourseNetwork またはシーン内から自動検索）")]
     [SerializeField] private CourseSpline _courseSpline;
+
+    [Tooltip("コース分岐を管理する CourseNetwork（未指定ならシーン内から自動検索）")]
+    [SerializeField] private CourseNetwork _courseNetwork;
+
+    [Tooltip("CourseNetwork未設定時や登録漏れ時に、シーン内の CourseBranch を自動検出してミニマップに含めるか")]
+    [SerializeField] private bool _autoIncludeSceneBranches = true;
+
+    [Tooltip("手動で追加したい分岐（CourseBranch）リスト（任意）")]
+    [SerializeField] private List<CourseBranch> _additionalBranches = new List<CourseBranch>();
 
     [Tooltip("自機の Transform（中心基準＆進行方向基準）")]
     [SerializeField] private Transform _playerTarget;
@@ -135,10 +179,19 @@ public class CourseMinimapController : MonoBehaviour
     [Range(0.3f, 2.5f)]
     [SerializeField] private float _wholeCourseCameraDistanceMultiplier = 1.15f;
 
+    [Tooltip("画面上の配置アンカー位置プリセット（左下、右下、左上、右上、下中央、上中央、カスタム）")]
+    [SerializeField] private MinimapScreenAnchor _screenAnchor = MinimapScreenAnchor.BottomLeft;
+
+    [Tooltip("カスタム配置時のアンカー位置 (X: 0=左〜1=右, Y: 0=下〜1=上)")]
+    [SerializeField] private Vector2 _customAnchor = new Vector2(0f, 0f);
+
+    [Tooltip("カスタム配置時のピボット位置 (X: 0=左〜1=右, Y: 0=下〜1=上)")]
+    [SerializeField] private Vector2 _customPivot = new Vector2(0f, 0f);
+
     [Tooltip("UI上のミニマップ表示サイズ（ピクセル）")]
     [SerializeField] private Vector2 _uiSize = new Vector2(280f, 280f);
 
-    [Tooltip("UI上の画面左下からの余白（ピクセル）")]
+    [Tooltip("UI上の画面端・アンカー基準位置からの余白・オフセット（ピクセル）")]
     [SerializeField] private Vector2 _uiMargin = new Vector2(32f, 32f);
 
     [Header("【方式B】メインカメラ前 3Dミニチュア設定")]
@@ -184,6 +237,7 @@ public class CourseMinimapController : MonoBehaviour
     private bool _yawInitialized;
     private MinimapMeshShape _lastBuiltShape = (MinimapMeshShape)(-1);
     private int _lastBuiltSegments = -1;
+    private int _lastBuiltBranchCount = 0;
     private float _nextAutoFindTime = 0f;
 
     private static readonly int PlayerLocalPosId    = Shader.PropertyToID("_PlayerLocalPos");
@@ -367,6 +421,7 @@ public class CourseMinimapController : MonoBehaviour
         _visibleRadius = Mathf.Max(10f, _visibleRadius);
         _heightColorRange = Mathf.Max(1f, _heightColorRange);
         _cameraDistance = Mathf.Max(20f, _cameraDistance);
+        _pitchAngle = Mathf.Clamp(_pitchAngle, 10f, 85f);
         _miniatureScale = Mathf.Clamp(_miniatureScale, 0.00005f, 0.05f);
         _wholeCourseMiniatureApparentSize = Mathf.Clamp(_wholeCourseMiniatureApparentSize, 0.05f, 1.5f);
         _wholeCourseIconScaleMultiplier = Mathf.Max(0.5f, _wholeCourseIconScaleMultiplier);
@@ -397,8 +452,12 @@ public class CourseMinimapController : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────
-    // 公開メソッド（インスペクターボタン等から呼び出し）
+    // 公開メソッド・プロパティ（インスペクターボタン等から呼び出し）
     // ──────────────────────────────────────────────
+
+    public CourseSpline CourseSpline => _courseSpline;
+    public CourseNetwork CourseNetwork => _courseNetwork;
+    public int ActiveBranchCount => _lastBuiltBranchCount;
 
     public void SetDisplayMode(MinimapDisplayMode mode)
     {
@@ -432,6 +491,258 @@ public class CourseMinimapController : MonoBehaviour
 
     public MinimapMeshShape GetMeshShape() => _meshShape;
 
+    public MinimapScreenAnchor GetScreenAnchor() => _screenAnchor;
+
+    public void SetScreenAnchor(MinimapScreenAnchor anchor, bool resetHorizontalMargin = true)
+    {
+        _screenAnchor = anchor;
+        if (resetHorizontalMargin)
+        {
+            if (anchor == MinimapScreenAnchor.BottomCenter || anchor == MinimapScreenAnchor.TopCenter || anchor == MinimapScreenAnchor.Center)
+            {
+                _uiMargin.x = 0f;
+            }
+            else if (_uiMargin.x == 0f)
+            {
+                _uiMargin.x = 32f;
+            }
+        }
+        UpdateUILayout();
+    }
+
+    public Vector2 UISize
+    {
+        get => _uiSize;
+        set
+        {
+            _uiSize = value;
+            UpdateUILayout();
+        }
+    }
+
+    public Vector2 UIMargin
+    {
+        get => _uiMargin;
+        set
+        {
+            _uiMargin = value;
+            UpdateUILayout();
+        }
+    }
+
+    public Vector2 CustomAnchor
+    {
+        get => _customAnchor;
+        set
+        {
+            _customAnchor = value;
+            UpdateUILayout();
+        }
+    }
+
+    public Vector2 CustomPivot
+    {
+        get => _customPivot;
+        set
+        {
+            _customPivot = value;
+            UpdateUILayout();
+        }
+    }
+
+    public Vector3 MiniatureScreenOffset
+    {
+        get => _miniatureScreenOffset;
+        set => _miniatureScreenOffset = value;
+    }
+
+    public float MiniatureScale
+    {
+        get => _miniatureScale;
+        set => _miniatureScale = value;
+    }
+
+    /// <summary>
+    /// コース全体マップ表示時の水平回転角度（Yaw・度）。外部スクリプトから簡単に取得・設定できます。
+    /// </summary>
+    public float WholeCourseMapRotation
+    {
+        get => _wholeCourseFixedYaw;
+        set => SetWholeCourseMapRotation(value);
+    }
+
+    /// <summary>
+    /// コース全体マップ固定Yaw角度のエイリアス（後方互換用）。
+    /// </summary>
+    public float WholeCourseFixedYaw
+    {
+        get => _wholeCourseFixedYaw;
+        set => SetWholeCourseMapRotation(value);
+    }
+
+    /// <summary>
+    /// コース全体マップでも自機の向きに合わせて回すか（OFFなら固定角度）
+    /// </summary>
+    public bool RotateInWholeCourse
+    {
+        get => _rotateInWholeCourse;
+        set => _rotateInWholeCourse = value;
+    }
+
+    /// <summary>
+    /// ミニマップの見下ろしピッチ角度（度、10〜85度）
+    /// </summary>
+    public float PitchAngle
+    {
+        get => _pitchAngle;
+        set => _pitchAngle = Mathf.Clamp(value, 10f, 85f);
+    }
+
+    /// <summary>
+    /// コース全体マップの水平回転角度（Yaw・度）を設定します。
+    /// 外部スクリプトから簡単に呼び出し可能です。
+    /// </summary>
+    /// <param name="angleDegrees">回転角度（度、0〜360度）</param>
+    /// <param name="snapImmediately">trueの場合、補間を待たず即座に指定角度へスナップします</param>
+    public void SetWholeCourseMapRotation(float angleDegrees, bool snapImmediately = false)
+    {
+        float normalized = Mathf.Repeat(angleDegrees, 360f);
+        // 360度ちょうどの指定時にインスペクタースライダーが0に跳ね返る現象を防止
+        if (Mathf.Approximately(angleDegrees, 360f))
+        {
+            normalized = 360f;
+        }
+        _wholeCourseFixedYaw = normalized;
+        if (snapImmediately || !Application.isPlaying)
+        {
+            _currentSmoothYaw = _wholeCourseFixedYaw;
+            _yawInitialized = true;
+        }
+    }
+
+    /// <summary>
+    /// コース全体マップの水平回転角度に相対差分角度（deltaAngle）を加算回転します。
+    /// </summary>
+    /// <param name="deltaAngle">加算する角度（度）</param>
+    /// <param name="snapImmediately">trueの場合、即座にスナップします</param>
+    public void RotateWholeCourseMap(float deltaAngle, bool snapImmediately = false)
+    {
+        SetWholeCourseMapRotation(_wholeCourseFixedYaw + deltaAngle, snapImmediately);
+    }
+
+    /// <summary>
+    /// コース全体マップの回転角度を0度（初期状態）にリセットします。
+    /// </summary>
+    public void ResetWholeCourseMapRotation(bool snapImmediately = false)
+    {
+        SetWholeCourseMapRotation(0f, snapImmediately);
+    }
+
+    public void ApplyModeBMiniaturePreset(MinimapScreenAnchor anchor)
+    {
+        switch (anchor)
+        {
+            case MinimapScreenAnchor.BottomLeft:
+                _miniatureScreenOffset = new Vector3(-0.42f, -0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.BottomRight:
+                _miniatureScreenOffset = new Vector3(0.42f, -0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.BottomCenter:
+                _miniatureScreenOffset = new Vector3(0.0f, -0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.TopLeft:
+                _miniatureScreenOffset = new Vector3(-0.42f, 0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.TopRight:
+                _miniatureScreenOffset = new Vector3(0.42f, 0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.TopCenter:
+                _miniatureScreenOffset = new Vector3(0.0f, 0.24f, 0.85f);
+                break;
+            case MinimapScreenAnchor.Center:
+                _miniatureScreenOffset = new Vector3(0.0f, 0.0f, 0.85f);
+                break;
+            default:
+                _miniatureScreenOffset = new Vector3(-0.42f, -0.24f, 0.85f);
+                break;
+        }
+    }
+
+    public void UpdateUILayout()
+    {
+        if (_uiRawImage == null) return;
+        RectTransform rt = _uiRawImage.rectTransform;
+        if (rt == null) return;
+
+        Vector2 anchor;
+        Vector2 pivot;
+        Vector2 pos;
+
+        switch (_screenAnchor)
+        {
+            case MinimapScreenAnchor.BottomLeft:
+                anchor = new Vector2(0f, 0f);
+                pivot = new Vector2(0f, 0f);
+                pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.BottomRight:
+                anchor = new Vector2(1f, 0f);
+                pivot = new Vector2(1f, 0f);
+                pos = new Vector2(-_uiMargin.x, _uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.TopLeft:
+                anchor = new Vector2(0f, 1f);
+                pivot = new Vector2(0f, 1f);
+                pos = new Vector2(_uiMargin.x, -_uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.TopRight:
+                anchor = new Vector2(1f, 1f);
+                pivot = new Vector2(1f, 1f);
+                pos = new Vector2(-_uiMargin.x, -_uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.BottomCenter:
+                anchor = new Vector2(0.5f, 0f);
+                pivot = new Vector2(0.5f, 0f);
+                pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.TopCenter:
+                anchor = new Vector2(0.5f, 1f);
+                pivot = new Vector2(0.5f, 1f);
+                pos = new Vector2(_uiMargin.x, -_uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.Center:
+                anchor = new Vector2(0.5f, 0.5f);
+                pivot = new Vector2(0.5f, 0.5f);
+                pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                break;
+
+            case MinimapScreenAnchor.Custom:
+                anchor = _customAnchor;
+                pivot = _customPivot;
+                pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                break;
+
+            default:
+                anchor = new Vector2(0f, 0f);
+                pivot = new Vector2(0f, 0f);
+                pos = new Vector2(_uiMargin.x, _uiMargin.y);
+                break;
+        }
+
+        if (rt.anchorMin != anchor) rt.anchorMin = anchor;
+        if (rt.anchorMax != anchor) rt.anchorMax = anchor;
+        if (rt.pivot != pivot) rt.pivot = pivot;
+        if (rt.anchoredPosition != pos) rt.anchoredPosition = pos;
+        if (rt.sizeDelta != _uiSize) rt.sizeDelta = _uiSize;
+    }
+
     public int MinimapLayer
     {
         get => _minimapLayer;
@@ -461,7 +772,7 @@ public class CourseMinimapController : MonoBehaviour
 
     private void AutoFindReferences(bool forceImmediate)
     {
-        if (_courseSpline != null && _playerTarget != null)
+        if (!forceImmediate && _courseSpline != null && _playerTarget != null)
         {
             return;
         }
@@ -476,9 +787,38 @@ public class CourseMinimapController : MonoBehaviour
             _nextAutoFindTime = now + 0.5f;
         }
 
+        if (_courseNetwork == null)
+        {
+            _courseNetwork = FindFirstObjectByType<CourseNetwork>();
+        }
+
+        // CourseNetwork が存在する場合は、その MainSpline を最優先でメインコースとして採用
+        // （万が一 _courseSpline に CourseBranch 側のスプラインが誤設定されていた場合も補正）
+        if (_courseNetwork != null && _courseNetwork.MainSpline != null)
+        {
+            if (_courseSpline == null || _courseSpline.GetComponent<CourseBranch>() != null)
+            {
+                _courseSpline = _courseNetwork.MainSpline;
+            }
+        }
+
         if (_courseSpline == null)
         {
-            _courseSpline = FindFirstObjectByType<CourseSpline>();
+            // シーン内に複数の CourseSpline がある場合、CourseBranch が付いていない（本線の）Spline を優先選択する
+            CourseSpline[] allSplines = FindObjectsByType<CourseSpline>(FindObjectsSortMode.None);
+            for (int i = 0; i < allSplines.Length; i++)
+            {
+                if (allSplines[i] != null && allSplines[i].GetComponent<CourseBranch>() == null)
+                {
+                    _courseSpline = allSplines[i];
+                    break;
+                }
+            }
+
+            if (_courseSpline == null && allSplines.Length > 0)
+            {
+                _courseSpline = allSplines[0];
+            }
         }
 
         if (_playerTarget == null)
@@ -532,7 +872,7 @@ public class CourseMinimapController : MonoBehaviour
             _meshRoot = rootObj.transform;
         }
 
-        // 2. コースメッシュ（帯 または 円柱トンネル）生成 ＆ コース全体Bounds計測
+        // 2. コースメッシュ（本線＋全分岐の帯 または 円柱トンネル）生成 ＆ コース全体Bounds計測
         BuildRoadMesh();
 
         // 3. 自機＆他機アイコン生成
@@ -593,7 +933,7 @@ public class CourseMinimapController : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────
-    // メッシュ生成（コース本来のワールド座標系＝メートル単位で頂点を格納）
+    // メッシュ生成（本線＋全分岐を単一メッシュに統合し、ワールド座標系＝メートル単位で頂点を格納）
     // ──────────────────────────────────────────────
 
     private void BuildRoadMesh()
@@ -615,34 +955,17 @@ public class CourseMinimapController : MonoBehaviour
             DestroyObjectSafely(oldRoad.gameObject);
         }
 
-        float totalLength = _courseSpline.TotalLength;
-        bool isLoop = _courseSpline.IsLoop;
         float interval = Mathf.Max(0.5f, _sampleInterval);
-        int sampleCount = Mathf.FloorToInt(totalLength / interval) + 1;
-
-        List<float> sampleDistances = new List<float>(sampleCount + 2);
-        for (int i = 0; i < sampleCount; i++)
-        {
-            sampleDistances.Add(Mathf.Min(i * interval, totalLength));
-        }
-        if (sampleDistances[sampleDistances.Count - 1] < totalLength - 0.01f)
-        {
-            sampleDistances.Add(totalLength);
-        }
-        if (isLoop)
-        {
-            sampleDistances.Add(0f);
-        }
-
-        int ringCount = sampleDistances.Count;
-        if (ringCount < 2) return;
+        List<SplineSampleTarget> targets = CollectSplineTargets(interval);
+        if (targets.Count == 0) return;
 
         Mesh roadMesh = (_meshShape == MinimapMeshShape.CylinderTube)
-            ? GenerateCylinderMesh(sampleDistances)
-            : GenerateRibbonMesh(sampleDistances);
+            ? GenerateCylinderMesh(targets)
+            : GenerateRibbonMesh(targets);
 
         _lastBuiltShape = _meshShape;
         _lastBuiltSegments = _cylinderRadialSegments;
+        _lastBuiltBranchCount = Mathf.Max(0, targets.Count - 1);
 
         GameObject roadObj = new GameObject("Minimap_Road");
         roadObj.transform.SetParent(_meshRoot, false);
@@ -657,66 +980,202 @@ public class CourseMinimapController : MonoBehaviour
     }
 
     /// <summary>
-    /// 【平らな帯（FlatRibbon）】メッシュを生成する
+    /// メインコース（_courseSpline）と、CourseNetwork / シーン内 / 手動指定のすべての有効な分岐（CourseBranch）から
+    /// サンプリング対象リストを構築する。
     /// </summary>
-    private Mesh GenerateRibbonMesh(List<float> sampleDistances)
+    private List<SplineSampleTarget> CollectSplineTargets(float interval)
     {
-        int ringCount = sampleDistances.Count;
-        int quadCount = ringCount - 1;
+        List<SplineSampleTarget> targets = new List<SplineSampleTarget>(4);
 
-        Vector3[] vertices = new Vector3[ringCount * 2];
-        Vector3[] normals = new Vector3[ringCount * 2];
-        Vector2[] uvs = new Vector2[ringCount * 2];
-        int[] triangles = new int[quadCount * 6];
+        // 1. メインコース
+        List<float> mainDistances = BuildSampleDistances(_courseSpline.TotalLength, interval, _courseSpline.IsLoop);
+        if (mainDistances.Count < 2) return targets;
 
-        float accumulatedDist = 0f;
-        Vector3 prevCenter = Vector3.zero;
+        targets.Add(new SplineSampleTarget
+        {
+            Spline = _courseSpline,
+            SampleDistances = mainDistances,
+            StartUvX = 0f
+        });
+
+        // 2. 分岐（CourseBranch）の収集（重複排除）
+        HashSet<CourseSpline> visitedSplines = new HashSet<CourseSpline> { _courseSpline };
+        List<CourseBranch> candidateBranches = new List<CourseBranch>();
+
+        if (_courseNetwork != null)
+        {
+            _courseNetwork.EnsureBuilt();
+            IReadOnlyList<CourseBranch> netBranches = _courseNetwork.Branches;
+            if (netBranches != null)
+            {
+                for (int i = 0; i < netBranches.Count; i++)
+                {
+                    if (netBranches[i] != null) candidateBranches.Add(netBranches[i]);
+                }
+            }
+        }
+
+        if (_additionalBranches != null)
+        {
+            for (int i = 0; i < _additionalBranches.Count; i++)
+            {
+                if (_additionalBranches[i] != null) candidateBranches.Add(_additionalBranches[i]);
+            }
+        }
+
+        if (_autoIncludeSceneBranches)
+        {
+            CourseBranch[] sceneBranches = FindObjectsByType<CourseBranch>(FindObjectsSortMode.None);
+            for (int i = 0; i < sceneBranches.Length; i++)
+            {
+                if (sceneBranches[i] != null) candidateBranches.Add(sceneBranches[i]);
+            }
+        }
+
+        for (int i = 0; i < candidateBranches.Count; i++)
+        {
+            CourseBranch branch = candidateBranches[i];
+            if (branch == null || !branch.gameObject.activeInHierarchy) continue;
+
+            // 別のメインコースに紐づく分岐は除外
+            if (branch.MainSpline != null && branch.MainSpline != _courseSpline) continue;
+
+            // エディタ編集時や未ビルド時は Rebuild() を呼んで最新のスプラインと ForkDistance を確定させる
+            if ((!Application.isPlaying || !branch.IsValid) && branch.MainSpline != null)
+            {
+                branch.Rebuild();
+            }
+
+            CourseSpline branchSpline = branch.Spline != null ? branch.Spline : branch.GetComponent<CourseSpline>();
+            if (branchSpline == null || !visitedSplines.Add(branchSpline)) continue;
+
+            float branchLength = branchSpline.TotalLength;
+            if (branchLength <= 0.01f) continue;
+
+            // 分岐ルートは終端から始端へループさせない（isLoop: false）
+            List<float> branchDistances = BuildSampleDistances(branchLength, interval, isLoop: false);
+            if (branchDistances.Count < 2) continue;
+
+            // 分岐開始地点の距離を UV.x の初期値にすることで、本線と進行方向パルスアニメーションの位相を揃える
+            float startUvX = branch.IsValid
+                ? branch.ForkDistance
+                : _courseSpline.FindNearestDistance(branchSpline.EvaluatePositionByDistance(0f));
+
+            targets.Add(new SplineSampleTarget
+            {
+                Spline = branchSpline,
+                SampleDistances = branchDistances,
+                StartUvX = startUvX
+            });
+        }
+
+        return targets;
+    }
+
+    private static List<float> BuildSampleDistances(float totalLength, float interval, bool isLoop)
+    {
+        int sampleCount = Mathf.FloorToInt(totalLength / interval) + 1;
+        List<float> sampleDistances = new List<float>(sampleCount + 2);
+        for (int i = 0; i < sampleCount; i++)
+        {
+            sampleDistances.Add(Mathf.Min(i * interval, totalLength));
+        }
+        if (sampleDistances.Count == 0 || sampleDistances[sampleDistances.Count - 1] < totalLength - 0.01f)
+        {
+            sampleDistances.Add(totalLength);
+        }
+        if (isLoop)
+        {
+            sampleDistances.Add(0f);
+        }
+        return sampleDistances;
+    }
+
+    /// <summary>
+    /// 【平らな帯（FlatRibbon）】本線＋全分岐を統合した単一リボンメッシュを生成する
+    /// </summary>
+    private Mesh GenerateRibbonMesh(List<SplineSampleTarget> targets)
+    {
+        int totalRings = 0;
+        int totalQuads = 0;
+        for (int tIdx = 0; tIdx < targets.Count; tIdx++)
+        {
+            int rc = targets[tIdx].SampleDistances.Count;
+            if (rc < 2) continue;
+            totalRings += rc;
+            totalQuads += (rc - 1);
+        }
+
+        Vector3[] vertices = new Vector3[totalRings * 2];
+        Vector3[] normals = new Vector3[totalRings * 2];
+        Vector2[] uvs = new Vector2[totalRings * 2];
+        int[] triangles = new int[totalQuads * 6];
+
         Bounds calcBounds = new Bounds();
         bool boundsInit = false;
 
-        for (int i = 0; i < ringCount; i++)
+        int ringOffset = 0;
+        int triOffset = 0;
+
+        for (int tIdx = 0; tIdx < targets.Count; tIdx++)
         {
-            float d = sampleDistances[i];
-            SampleSplineFrame(d, out Vector3 center, out Vector3 right, out Vector3 up, out float radius);
+            SplineSampleTarget target = targets[tIdx];
+            List<float> sampleDistances = target.SampleDistances;
+            int ringCount = sampleDistances.Count;
+            if (ringCount < 2) continue;
 
-            Vector3 leftEdge = center - right * radius;
-            Vector3 rightEdge = center + right * radius;
+            int quadCount = ringCount - 1;
+            float accumulatedDist = target.StartUvX;
+            Vector3 prevCenter = Vector3.zero;
 
-            if (!boundsInit)
+            for (int i = 0; i < ringCount; i++)
             {
-                calcBounds = new Bounds(center, Vector3.zero);
-                boundsInit = true;
+                float d = sampleDistances[i];
+                SampleSplineFrame(target.Spline, d, out Vector3 center, out Vector3 right, out Vector3 up, out float radius);
+
+                Vector3 leftEdge = center - right * radius;
+                Vector3 rightEdge = center + right * radius;
+
+                if (!boundsInit)
+                {
+                    calcBounds = new Bounds(center, Vector3.zero);
+                    boundsInit = true;
+                }
+                calcBounds.Encapsulate(leftEdge);
+                calcBounds.Encapsulate(rightEdge);
+
+                if (i > 0) accumulatedDist += Vector3.Distance(center, prevCenter);
+                prevCenter = center;
+
+                int vIdx = (ringOffset + i) * 2;
+                vertices[vIdx]     = leftEdge;
+                vertices[vIdx + 1] = rightEdge;
+                normals[vIdx]      = up;
+                normals[vIdx + 1]  = up;
+                uvs[vIdx]          = new Vector2(accumulatedDist, 0f);
+                uvs[vIdx + 1]      = new Vector2(accumulatedDist, 1f);
             }
-            calcBounds.Encapsulate(leftEdge);
-            calcBounds.Encapsulate(rightEdge);
 
-            if (i > 0) accumulatedDist += Vector3.Distance(center, prevCenter);
-            prevCenter = center;
+            for (int i = 0; i < quadCount; i++)
+            {
+                int b = (ringOffset + i) * 2;
+                int t = triOffset + i * 6;
 
-            vertices[i * 2]     = leftEdge;
-            vertices[i * 2 + 1] = rightEdge;
-            normals[i * 2]      = up;
-            normals[i * 2 + 1]  = up;
-            uvs[i * 2]          = new Vector2(accumulatedDist, 0f);
-            uvs[i * 2 + 1]      = new Vector2(accumulatedDist, 1f);
+                triangles[t]     = b;
+                triangles[t + 1] = b + 2;
+                triangles[t + 2] = b + 1;
+
+                triangles[t + 3] = b + 1;
+                triangles[t + 4] = b + 2;
+                triangles[t + 5] = b + 3;
+            }
+
+            ringOffset += ringCount;
+            triOffset += quadCount * 6;
         }
 
         _courseWorldBounds = calcBounds;
         _courseBoundingRadius = Mathf.Max(50f, calcBounds.extents.magnitude);
-
-        for (int i = 0; i < quadCount; i++)
-        {
-            int b = i * 2;
-            int t = i * 6;
-
-            triangles[t]     = b;
-            triangles[t + 1] = b + 2;
-            triangles[t + 2] = b + 1;
-
-            triangles[t + 3] = b + 1;
-            triangles[t + 4] = b + 2;
-            triangles[t + 5] = b + 3;
-        }
 
         Mesh mesh = new Mesh
         {
@@ -732,83 +1191,105 @@ public class CourseMinimapController : MonoBehaviour
     }
 
     /// <summary>
-    /// 【円柱トンネル（CylinderTube）】CourseSplineのトンネルギズモのように断面円を繋いだチューブメッシュを生成する
+    /// 【円柱トンネル（CylinderTube）】本線＋全分岐の断面円を繋いだ単一チューブメッシュを生成する
     /// </summary>
-    private Mesh GenerateCylinderMesh(List<float> sampleDistances)
+    private Mesh GenerateCylinderMesh(List<SplineSampleTarget> targets)
     {
-        int ringCount = sampleDistances.Count;
         int segs = Mathf.Clamp(_cylinderRadialSegments, 4, 32);
         int vertsPerRing = segs + 1; // UV.y = 0〜1 の継ぎ目のため +1
 
-        Vector3[] vertices = new Vector3[ringCount * vertsPerRing];
-        Vector3[] normals = new Vector3[ringCount * vertsPerRing];
-        Vector2[] uvs = new Vector2[ringCount * vertsPerRing];
-        int[] triangles = new int[(ringCount - 1) * segs * 6];
+        int totalRings = 0;
+        int totalTubeSegments = 0;
+        for (int tIdx = 0; tIdx < targets.Count; tIdx++)
+        {
+            int rc = targets[tIdx].SampleDistances.Count;
+            if (rc < 2) continue;
+            totalRings += rc;
+            totalTubeSegments += (rc - 1);
+        }
 
-        float accumulatedDist = 0f;
-        Vector3 prevCenter = Vector3.zero;
+        Vector3[] vertices = new Vector3[totalRings * vertsPerRing];
+        Vector3[] normals = new Vector3[totalRings * vertsPerRing];
+        Vector2[] uvs = new Vector2[totalRings * vertsPerRing];
+        int[] triangles = new int[totalTubeSegments * segs * 6];
+
         Bounds calcBounds = new Bounds();
         bool boundsInit = false;
 
-        for (int i = 0; i < ringCount; i++)
+        int ringOffset = 0;
+        int t = 0;
+
+        for (int tIdx = 0; tIdx < targets.Count; tIdx++)
         {
-            float d = sampleDistances[i];
-            SampleSplineFrame(d, out Vector3 center, out Vector3 right, out Vector3 up, out float radius);
+            SplineSampleTarget target = targets[tIdx];
+            List<float> sampleDistances = target.SampleDistances;
+            int ringCount = sampleDistances.Count;
+            if (ringCount < 2) continue;
 
-            if (!boundsInit)
+            float accumulatedDist = target.StartUvX;
+            Vector3 prevCenter = Vector3.zero;
+
+            for (int i = 0; i < ringCount; i++)
             {
-                calcBounds = new Bounds(center, Vector3.zero);
-                boundsInit = true;
+                float d = sampleDistances[i];
+                SampleSplineFrame(target.Spline, d, out Vector3 center, out Vector3 right, out Vector3 up, out float radius);
+
+                if (!boundsInit)
+                {
+                    calcBounds = new Bounds(center, Vector3.zero);
+                    boundsInit = true;
+                }
+
+                if (i > 0) accumulatedDist += Vector3.Distance(center, prevCenter);
+                prevCenter = center;
+
+                int ringBase = (ringOffset + i) * vertsPerRing;
+                for (int s = 0; s <= segs; s++)
+                {
+                    float vRatio = (float)s / segs;
+                    float angleRad = vRatio * Mathf.PI * 2f;
+                    float cosA = Mathf.Cos(angleRad);
+                    float sinA = Mathf.Sin(angleRad);
+
+                    // 断面円周上の外向き法線と頂点座標
+                    Vector3 radialDir = (right * cosA + up * sinA).normalized;
+                    Vector3 pos = center + radialDir * radius;
+
+                    vertices[ringBase + s] = pos;
+                    normals[ringBase + s]  = radialDir;
+                    uvs[ringBase + s]      = new Vector2(accumulatedDist, vRatio);
+
+                    calcBounds.Encapsulate(pos);
+                }
             }
 
-            if (i > 0) accumulatedDist += Vector3.Distance(center, prevCenter);
-            prevCenter = center;
-
-            int ringBase = i * vertsPerRing;
-            for (int s = 0; s <= segs; s++)
+            for (int i = 0; i < ringCount - 1; i++)
             {
-                float vRatio = (float)s / segs;
-                float angleRad = vRatio * Mathf.PI * 2f;
-                float cosA = Mathf.Cos(angleRad);
-                float sinA = Mathf.Sin(angleRad);
+                int currRing = (ringOffset + i) * vertsPerRing;
+                int nextRing = (ringOffset + i + 1) * vertsPerRing;
 
-                // 断面円周上の外向き法線と頂点座標
-                Vector3 radialDir = (right * cosA + up * sinA).normalized;
-                Vector3 pos = center + radialDir * radius;
+                for (int s = 0; s < segs; s++)
+                {
+                    int v00 = currRing + s;
+                    int v01 = currRing + s + 1;
+                    int v10 = nextRing + s;
+                    int v11 = nextRing + s + 1;
 
-                vertices[ringBase + s] = pos;
-                normals[ringBase + s]  = radialDir;
-                uvs[ringBase + s]      = new Vector2(accumulatedDist, vRatio);
+                    triangles[t++] = v00;
+                    triangles[t++] = v10;
+                    triangles[t++] = v01;
 
-                calcBounds.Encapsulate(pos);
+                    triangles[t++] = v01;
+                    triangles[t++] = v10;
+                    triangles[t++] = v11;
+                }
             }
+
+            ringOffset += ringCount;
         }
 
         _courseWorldBounds = calcBounds;
         _courseBoundingRadius = Mathf.Max(50f, calcBounds.extents.magnitude);
-
-        int t = 0;
-        for (int i = 0; i < ringCount - 1; i++)
-        {
-            int currRing = i * vertsPerRing;
-            int nextRing = (i + 1) * vertsPerRing;
-
-            for (int s = 0; s < segs; s++)
-            {
-                int v00 = currRing + s;
-                int v01 = currRing + s + 1;
-                int v10 = nextRing + s;
-                int v11 = nextRing + s + 1;
-
-                triangles[t++] = v00;
-                triangles[t++] = v10;
-                triangles[t++] = v01;
-
-                triangles[t++] = v01;
-                triangles[t++] = v10;
-                triangles[t++] = v11;
-            }
-        }
 
         Mesh mesh = new Mesh
         {
@@ -823,11 +1304,11 @@ public class CourseMinimapController : MonoBehaviour
         return mesh;
     }
 
-    private void SampleSplineFrame(float distance, out Vector3 center, out Vector3 right, out Vector3 up, out float radius)
+    private void SampleSplineFrame(CourseSpline spline, float distance, out Vector3 center, out Vector3 right, out Vector3 up, out float radius)
     {
-        center = _courseSpline.EvaluatePositionByDistance(distance);
-        right = _courseSpline.EvaluateRightByDistance(distance);
-        up = _courseSpline.EvaluateUpByDistance(distance);
+        center = spline.EvaluatePositionByDistance(distance);
+        right = spline.EvaluateRightByDistance(distance);
+        up = spline.EvaluateUpByDistance(distance);
 
         if (!_applyBankToMesh)
         {
@@ -840,7 +1321,7 @@ public class CourseMinimapController : MonoBehaviour
             }
         }
 
-        radius = _courseSpline.GetTunnelRadiusByDistance(distance) * _roadWidthScale;
+        radius = spline.GetTunnelRadiusByDistance(distance) * _roadWidthScale;
     }
 
     // ──────────────────────────────────────────────
@@ -1014,6 +1495,7 @@ public class CourseMinimapController : MonoBehaviour
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
 
             GameObject rawImgObj = new GameObject("Minimap_RawImage")
             {
@@ -1022,13 +1504,7 @@ public class CourseMinimapController : MonoBehaviour
             rawImgObj.transform.SetParent(canvasObj.transform, false);
             _uiRawImage = rawImgObj.AddComponent<RawImage>();
             _uiRawImage.raycastTarget = false;
-
-            RectTransform rt = _uiRawImage.rectTransform;
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.zero;
-            rt.pivot = Vector2.zero;
-            rt.anchoredPosition = _uiMargin;
-            rt.sizeDelta = _uiSize;
+            UpdateUILayout();
         }
         else
         {
@@ -1039,12 +1515,7 @@ public class CourseMinimapController : MonoBehaviour
         if (_uiRawImage != null)
         {
             _uiRawImage.texture = _renderTexture;
-            RectTransform rt = _uiRawImage.rectTransform;
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.zero;
-            rt.pivot = Vector2.zero;
-            rt.anchoredPosition = _uiMargin;
-            rt.sizeDelta = _uiSize;
+            UpdateUILayout();
         }
     }
 
@@ -1140,9 +1611,7 @@ public class CourseMinimapController : MonoBehaviour
 
             if (_uiRawImage != null)
             {
-                RectTransform rt = _uiRawImage.rectTransform;
-                rt.anchoredPosition = _uiMargin;
-                rt.sizeDelta = _uiSize;
+                UpdateUILayout();
             }
         }
         else
