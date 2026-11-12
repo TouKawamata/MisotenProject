@@ -1,8 +1,12 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 // レース本体（RaceInputProvider／PlayerManager）を介さずに、TrackingRaceInputの判定結果
-// （Horizontal／Boost／Shield／Shortcut）だけを単体でテストするためのデバッグ表示。
+// （Move（左右・上下）／Boost／Shield）だけを単体でテストするためのデバッグ表示。
 // PoseTestシーンのように、PoseLandmarkReceiverはあるがレース関連の仕組みは無いシーンでの動作確認用。
+// Cキーを押すと_calibrationStartDelay秒後にキャリブレーション（直立姿勢の測定）を始める（しゃがみの判定に必要）。
+// Xキーでキャリブレーションの結果を消す（未キャリブレーションの動きを確かめる用）。
 public class TrackingRaceInputDebugViewer : MonoBehaviour
 {
     // 姿勢データの取得元。未指定ならシーン内から自動検索する。
@@ -10,16 +14,26 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     // トラッキング入力の判定に使う調整用パラメータ。
     [SerializeField] private TrackingRaceInputSettings _trackingSettings = new TrackingRaceInputSettings();
 
+    [Header("キャリブレーション")]
+    [Tooltip("Cキーで動かすキャリブレーション。未指定ならシーン内から探し、無ければこのオブジェクトに追加する")]
+    [SerializeField] private PoseCalibrator _calibrator;
+    [Tooltip("Cキーを押してから測定を始めるまでの秒数（まっすぐ立つまでの猶予）")]
+    [SerializeField, Min(0f)] private float _calibrationStartDelay = 1f;
+
+    [Header("見失いの警告")]
+    [Tooltip("状態を表示する TrackingLossMonitor。未指定ならシーン内から探す（無ければ表示しない）")]
+    [SerializeField] private TrackingLossMonitor _lossMonitor;
+
     [Header("デバッグ")]
-    [Tooltip("ONにするとトラッキングの代わりにキーボード入力（A/D、Space、Shift、E）で確認できる")]
+    [Tooltip("ONにするとトラッキングの代わりにキーボード入力（WASD／矢印、Space、左Shift）で確認できる")]
     // ONの場合、トラッキングの代わりにキーボード入力を使う（機材なしでの画面確認用）。
     [SerializeField] private bool _useKeyboardForDebug = false;
 
-    [Tooltip("Boost/Shield/Shortcutが発火したことを表示する秒数")]
-    // トリガー成立時に「TRIGGERED」を緑色で表示し続ける秒数。
+    [Tooltip("Boost/Shieldが発火したことを表示する秒数")]
+    // トリガー成立時に「!」を緑色で表示し続ける秒数。
     [SerializeField] private float _flashDuration = 0.5f;
 
-    [Header("Horizontalグラフ（GameSceneのDebugHudと同じ表示）")]
+    [Header("Moveグラフ")]
     [Tooltip("グラフに表示する履歴の秒数")]
     // グラフに表示する履歴の長さ（秒）。
     [SerializeField, Min(1f)] private float _graphSeconds = 4f;
@@ -28,43 +42,48 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     [SerializeField, Min(10)] private int _graphSamplesPerSecond = 30;
     [Tooltip("ガイド線を引く値（±）。この値を超えた部分はオレンジ色で表示する")]
     // ガイド線の位置（±この値）。超えた部分は色を変えて強調する。
-    [SerializeField, Range(0f, 1f)] private float _horizontalGuide = 0.7f;
+    [FormerlySerializedAs("_horizontalGuide")]
+    [SerializeField, Range(0f, 1f)] private float _graphGuide = 0.7f;
+
+    // 表示欄の位置と大きさ
+    private const float PanelX = 10f;
+    private const float PanelY = 190f;
+    private const float PanelWidth = 360f;
+    private const float PanelHeight = 440f;
 
     // 現在使用している入力元（キーボード or トラッキング）。
     private IRaceInput _input;
-    // [ショートカット廃止 2026-11-07 川又] ショートカットのHeld表示が無くなったため、TrackingRaceInputへのキャストもコメントアウト。
-    // // ショートカットのHeld（継続状態）はIRaceInputには無いTrackingRaceInput独自のプロパティのため、
-    // // それを読むためだけにキャストした参照を持つ（キーボードデバッグ時はnullのまま）。
-    // private TrackingRaceInput _trackingInput;
+    // トラッキング状態の表示用（キーボードデバッグ時はnull）
+    private TrackingRaceInput _trackingInput;
 
     // 各ジェスチャーがトリガー（成立した瞬間）した回数
     private int _boostCount;
     private int _shieldCount;
-    // [ショートカット廃止] private int _shortcutCount;
 
     // 各ジェスチャーが最後にトリガーした時刻（Time.time基準）。表示のフラッシュ判定に使う。
     private float _lastBoostTime = -999f;
     private float _lastShieldTime = -999f;
-    // [ショートカット廃止] private float _lastShortcutTime = -999f;
 
     // 各ジェスチャーの現在の継続状態（ポーズを取り続けているか＝プレス）。
     private bool _boostHeld;
     private bool _shieldHeld;
-    // [ショートカット廃止] private bool _shortcutHeld;
 
-    // 直近フレームで取得したHorizontalの値（表示用）。
-    private float _latestHorizontal;
+    // 直近フレームで取得したMoveの値（表示用）。
+    private Vector2 _latestMove;
 
-    // グラフ用のHorizontal履歴（リングバッファ）。
-    private float[] _horizontalHistory;
+    // グラフ用のMove履歴（リングバッファ）。x・yで書き込み位置は共通。
+    private float[] _xHistory;
+    private float[] _yHistory;
     // 次に書き込む履歴の位置。
     private int _historyWriteIndex;
-    // 記録済みの履歴の数（最大で_horizontalHistory.Length）。
+    // 記録済みの履歴の数（最大で履歴の長さ）。
     private int _historyCount;
     // 前回記録してからの経過時間。一定間隔で記録するために使う。
     private float _historyTimer;
     // グラフ描画用の1x1白テクスチャ（GUI.colorで色を付けて使う）。
     private Texture2D _whiteTexture;
+    // Cキーを押してから測定開始までの残り秒数。待っていないときは負の値
+    private float _calibrationCountdown = -1f;
 
     // 起動時に、使用する入力元（キーボード／トラッキング）を決定する。
     private void Awake()
@@ -83,7 +102,8 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         // 判定：PoseLandmarkReceiverが見つかっているか（見つかっていればトラッキング入力を使う）
         else if (_poseLandmarkReceiver != null)
         {
-            _input = new TrackingRaceInput(_poseLandmarkReceiver, _trackingSettings);
+            _trackingInput = new TrackingRaceInput(_poseLandmarkReceiver, _trackingSettings);
+            _input = _trackingInput;
         }
         // どちらにも当てはまらない場合（Receiverが見つからない）はキーボードにフォールバック
         else
@@ -92,12 +112,27 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
             _input = new KeyboardRaceInput();
         }
 
+        // 判定：キャリブレーションが未設定か（シーン内に無ければこのオブジェクトに追加する）
+        if (_calibrator == null)
+        {
+            _calibrator = FindFirstObjectByType<PoseCalibrator>();
+        }
+
+        if (_calibrator == null && _poseLandmarkReceiver != null)
+        {
+            _calibrator = gameObject.AddComponent<PoseCalibrator>();
+        }
+
+        // 判定：見失いの見張り役が未設定か（シーン内から探す。無くても動く）
+        if (_lossMonitor == null)
+        {
+            _lossMonitor = FindFirstObjectByType<TrackingLossMonitor>();
+        }
+
         // グラフ用の履歴バッファを確保
         int capacity = Mathf.Max(2, Mathf.CeilToInt(_graphSeconds * _graphSamplesPerSecond));
-        _horizontalHistory = new float[capacity];
-
-        // [ショートカット廃止] ショートカットのHeld（プレス）表示のために、TrackingRaceInputであればキャストして保持しておく（キーボード時はnull）
-        // _trackingInput = _input as TrackingRaceInput;
+        _xHistory = new float[capacity];
+        _yHistory = new float[capacity];
     }
 
     // 作成した白テクスチャを破棄する。
@@ -112,16 +147,17 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     // 毎フレーム、入力値を取得して表示用の状態を更新する。
     private void Update()
     {
+        UpdateCalibrationKey();
+
         // 判定：入力元が初期化されているか（未初期化なら何もしない）
         if (_input == null)
         {
             return;
         }
 
-        // Horizontalの現在値を取得（IRaceInputがMove（Vector2）になったため、左右のxを読む）
-        _latestHorizontal = _input.Move.x;
-        // グラフ用に履歴へ記録
-        SampleHorizontal(_latestHorizontal);
+        // Moveの現在値を取得し、グラフ用に履歴へ記録
+        _latestMove = _input.Move;
+        SampleMove(_latestMove);
 
         // 判定：ブーストがこのフレームでトリガーしたか（成立した瞬間だけtrue）
         if (_input.BoostPressed)
@@ -137,81 +173,215 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
             _lastShieldTime = Time.time;
         }
 
-        // [ショートカット廃止] 判定：ショートカットがこのフレームでトリガーしたか
-        // if (_input.ShortcutPressed)
-        // {
-        //     _shortcutCount++;
-        //     _lastShortcutTime = Time.time;
-        // }
-
-        // ブースト・シールドの継続状態はIRaceInputから取得する。
+        // ブースト・シールドの継続状態
         _boostHeld = _input.BoostHeld;
         _shieldHeld = _input.ShieldHeld;
-        // [ショートカット廃止] ショートカットの継続状態はTrackingRaceInput独自のため、キーボードモード（_trackingInputがnull）のときは常にfalse
-        // _shortcutHeld = _trackingInput != null && _trackingInput.IsShortcutPoseActive;
     }
 
-    // 画面左上にデバッグ情報（Source／Horizontal／各ジェスチャーの状態）を表示する。
+    // 画面左にデバッグ情報（入力元・トラッキング状態・キャリブレーション・Move・各ジェスチャー）を表示する。
     private void OnGUI()
     {
-        // デバッグ表示欄のサイズ
-        const int width = 340;
-        const int height = 300;
-        GUI.Box(new Rect(10, 190, width, height), "Race Input Debug");
+        GUI.Box(new Rect(PanelX, PanelY, PanelWidth, PanelHeight), "Race Input Debug");
+        float x = PanelX + 10f;
+        float y = PanelY + 25f;
+        float lineWidth = PanelWidth - 20f;
 
         // 判定：入力元が初期化されていないか（未初期化ならその旨だけ表示して終了）
         if (_input == null)
         {
-            GUI.Label(new Rect(20, 215, width - 20, 20), "入力元が初期化されていません");
+            GUI.Label(new Rect(x, y, lineWidth, 20), "入力元が初期化されていません");
             return;
         }
 
-        // 現在の入力元（トラッキング or キーボード）を表示
-        string sourceLabel = _useKeyboardForDebug ? "Keyboard (Debug)" : "Tracking";
-        GUI.Label(new Rect(20, 215, width - 20, 20), $"Source: {sourceLabel}");
-        // [ショートカット廃止] 判定：キーボードモードかどうか（キーボードモードではショートカットのHeld表示が非対応であることを注記する）
-        // if (_useKeyboardForDebug)
-        // {
-        //     GUI.Label(new Rect(20, 233, width - 20, 20), "※ShortcutのHeldはキーボードデバッグ時は非対応");
-        // }
+        Color originalColor = GUI.color;
 
-        // Horizontalの数値とバー表示
-        GUI.Label(new Rect(20, 253, width - 20, 20), $"Horizontal: {_latestHorizontal:+0.000;-0.000;0.000}");
-        DrawHorizontalBar(new Rect(20, 273, width - 40, 16), _latestHorizontal);
-        // 直近の推移を時系列グラフで表示（GameSceneのDebugHudと同じ表示）
-        DrawHorizontalGraph(new Rect(20, 295, width - 40, 100));
+        // 入力元とトラッキング状態
+        string sourceLabel = _trackingInput != null ? "Tracking" : "Keyboard (Debug)";
+        GUI.Label(new Rect(x, y, lineWidth, 20), $"Source: {sourceLabel}");
+        y += 20f;
+        if (_trackingInput != null)
+        {
+            bool tracking = _trackingInput.IsTracking;
+            string modeLabel = _poseLandmarkReceiver.Is2DMode ? "2D" : "3D";
+            GUI.color = tracking ? Color.green : Color.red;
+            GUI.Label(new Rect(x, y, lineWidth, 20), tracking
+                ? $"Tracking: OK（{modeLabel}、縦横比 {_poseLandmarkReceiver.Aspect:F2}）"
+                : "Tracking: LOST（入力なし扱い）");
+            GUI.color = originalColor;
+            y += 20f;
+        }
 
-        // 各ジェスチャー（Boost/Shield/Shortcut）のHolding状態とTrigger回数を1行ずつ表示
-        DrawGestureRow(20, 405, "Boost", _boostHeld, _boostCount, _lastBoostTime);
-        DrawGestureRow(20, 430, "Shield", _shieldHeld, _shieldCount, _lastShieldTime);
-        // [ショートカット廃止] DrawGestureRow(20, 455, "Shortcut (Banzai)", _shortcutHeld, _shortcutCount, _lastShortcutTime);
+        // 見失いの警告の状態
+        DrawLossWarningStatus(x, y, lineWidth);
+        y += 20f;
+
+        // キャリブレーションの状態
+        DrawCalibrationStatus(x, y, lineWidth);
+        y += 40f;
+
+        // Moveの数値と、上下左右のスティック表示・x/yのグラフ
+        GUI.Label(new Rect(x, y, lineWidth, 20), $"Move: x {_latestMove.x:+0.000;-0.000;0.000}  y {_latestMove.y:+0.000;-0.000;0.000}  |{_latestMove.magnitude:F2}|");
+        y += 22f;
+
+        const float stickSize = 120f;
+        DrawStick(new Rect(x, y, stickSize, stickSize), _latestMove);
+        float graphX = x + stickSize + 10f;
+        float graphWidth = lineWidth - stickSize - 10f;
+        const float graphHeight = 55f;
+        DrawGraph(new Rect(graphX, y, graphWidth, graphHeight), _xHistory, "x");
+        DrawGraph(new Rect(graphX, y + graphHeight + 10f, graphWidth, graphHeight), _yHistory, "y");
+        y += stickSize + 12f;
+
+        // 各ジェスチャー（Boost/Shield）のHolding状態とTrigger回数を1行ずつ表示
+        DrawGestureRow(x, y, "Boost", _boostHeld, _boostCount, _lastBoostTime);
+        DrawGestureRow(x, y + 25f, "Shield", _shieldHeld, _shieldCount, _lastShieldTime);
     }
 
-    // Horizontalの値を、中央（直立＝0）を基準にした横棒グラフとして描画する。
-    private void DrawHorizontalBar(Rect area, float value)
+    // 見失いの警告（TrackingLossMonitor）の状態を1行で表示する。
+    private void DrawLossWarningStatus(float x, float y, float width)
     {
-        // バーの背景
-        GUI.Box(area, GUIContent.none);
+        // 判定：見張り役が無いか（無ければその旨だけ表示）
+        if (_lossMonitor == null)
+        {
+            GUI.Label(new Rect(x, y, width, 20), "Warning: Monitorなし");
+            return;
+        }
 
-        // 表示上も-1～1にクランプしておく（念のため）
-        float clamped = Mathf.Clamp(value, -1f, 1f);
-        // バー領域の中心X座標（Horizontal=0の位置）
-        float centerX = area.x + area.width * 0.5f;
-        // 中心から端までの幅
-        float halfWidth = area.width * 0.5f;
-        // 現在値に応じたマーカーのX座標
-        float markerX = centerX + halfWidth * clamped;
+        Color originalColor = GUI.color;
+        string label;
+        // 判定：どの状態か
+        if (_lossMonitor.State == TrackingLossState.Disconnected)
+        {
+            GUI.color = Color.red;
+            label = $"Warning: 接続なし（{_lossMonitor.LostDuration:F1}秒）";
+        }
+        else if (_lossMonitor.State == TrackingLossState.PersonLost)
+        {
+            GUI.color = Color.red;
+            label = $"Warning: 人物なし（{_lossMonitor.LostDuration:F1}秒）";
+        }
+        else if (_lossMonitor.LostDuration > 0f)
+        {
+            GUI.color = Color.yellow;
+            label = $"Warning: なし（検出なし {_lossMonitor.LostDuration:F1}秒）";
+        }
+        else
+        {
+            label = "Warning: なし";
+        }
 
-        // 中央線（直立の基準位置）
-        GUI.Box(new Rect(centerX - 1, area.y, 2, area.height), GUIContent.none);
-
-        // 現在値のマーカー
-        float markerWidth = 6f;
-        GUI.Box(new Rect(markerX - markerWidth * 0.5f, area.y, markerWidth, area.height), GUIContent.none);
+        GUI.Label(new Rect(x, y, width, 20), label);
+        GUI.color = originalColor;
     }
 
-    // Horizontalの値を一定間隔で履歴（リングバッファ）に記録する。
-    private void SampleHorizontal(float value)
+    // Cキーが押されたら_calibrationStartDelay秒待ってからキャリブレーションを始める（テスト用）。
+    // 待っている間にもう一度押すと、待ち時間を最初からやり直す。
+    // Xキーでキャリブレーションの結果を消す（開始待ち・測定中なら中止する）。
+    private void UpdateCalibrationKey()
+    {
+        Keyboard keyboard = Keyboard.current;
+
+        // 判定：Xキーが押されたか（押されたら開始待ち・測定を中止し、結果を消して未キャリブレーションに戻す）
+        if (keyboard != null && keyboard.xKey.wasPressedThisFrame)
+        {
+            _calibrationCountdown = -1f;
+            // 判定：キャリブレーションがあるか（あれば測定中のものを中止する）
+            if (_calibrator != null)
+            {
+                _calibrator.CancelCalibration();
+            }
+            PoseCalibration.Clear();
+            return;
+        }
+
+        // 判定：キャリブレーションが無いか（無ければ何もしない）
+        if (_calibrator == null)
+        {
+            return;
+        }
+
+        // 判定：Cキーが押されたか（押されたらカウントダウンを始める。測定中なら中止してから待ち直す）
+        if (keyboard != null && keyboard.cKey.wasPressedThisFrame)
+        {
+            _calibrator.CancelCalibration();
+            _calibrationCountdown = _calibrationStartDelay;
+        }
+
+        // 判定：カウントダウン中か
+        if (_calibrationCountdown < 0f)
+        {
+            return;
+        }
+
+        _calibrationCountdown -= Time.unscaledDeltaTime;
+        // 判定：待ち時間が終わったか（終わったら測定を始める）
+        if (_calibrationCountdown <= 0f)
+        {
+            _calibrationCountdown = -1f;
+            _calibrator.StartCalibration();
+        }
+    }
+
+    // キャリブレーションの状態（開始待ち・測定中・済み・未）を2行で表示する。
+    private void DrawCalibrationStatus(float x, float y, float width)
+    {
+        Color originalColor = GUI.color;
+
+        // 判定：開始待ち（Cキーを押した後のカウントダウン中）か
+        if (_calibrationCountdown >= 0f)
+        {
+            GUI.color = Color.yellow;
+            GUI.Label(new Rect(x, y, width, 20), $"Calibration: 開始まで {_calibrationCountdown:F1}秒（まっすぐ立つ）");
+        }
+        // 判定：測定中か
+        else if (_calibrator != null && _calibrator.IsCalibrating)
+        {
+            GUI.color = Color.yellow;
+            GUI.Label(new Rect(x, y, width, 20), $"Calibration: 測定中 {_calibrator.ElapsedTime:F1} / {_calibrator.Duration:F1}秒（動かない）");
+        }
+        // 判定：キャリブレーション済みか
+        else if (PoseCalibration.HasValue)
+        {
+            GUI.color = Color.green;
+            GUI.Label(new Rect(x, y, width, 20), $"Calibration: 済（肩 {PoseCalibration.ShoulderHeight:F3}、胴 {PoseCalibration.TorsoLength:F3}）");
+        }
+        else
+        {
+            GUI.color = new Color(1f, 0.65f, 0f);
+            GUI.Label(new Rect(x, y, width, 20), "Calibration: 未（しゃがみ＝下は出ません）");
+        }
+
+        GUI.color = originalColor;
+
+        // 直近の失敗理由、またはキー操作の案内
+        string sub = _calibrator != null && !string.IsNullOrEmpty(_calibrator.LastFailureReason)
+            ? $"失敗：{_calibrator.LastFailureReason}"
+            : $"Cキーで{_calibrationStartDelay:F1}秒後にキャリブレーション / Xキーでリセット";
+        GUI.Label(new Rect(x, y + 18f, width, 20), sub);
+    }
+
+    // Moveを、中央（ニュートラル）を基準にした上下左右のスティックとして描画する。
+    private void DrawStick(Rect area, Vector2 move)
+    {
+        DrawRect(area, new Color(0f, 0f, 0f, 0.65f));
+
+        // 中心の十字線
+        Color lineColor = new Color(1f, 1f, 1f, 0.25f);
+        DrawRect(new Rect(area.center.x, area.y, 1f, area.height), lineColor);
+        DrawRect(new Rect(area.x, area.center.y, area.width, 1f), lineColor);
+
+        // 現在値の点（上が+y）
+        Vector2 clamped = Vector2.ClampMagnitude(move, 1f);
+        float half = area.width * 0.5f;
+        Vector2 point = new Vector2(area.center.x + clamped.x * half, area.center.y - clamped.y * half);
+        const float dotSize = 8f;
+        // 判定：ガイドを超えているか（超えていればオレンジ、それ以外は緑）
+        Color dotColor = clamped.magnitude >= _graphGuide ? new Color(1f, 0.75f, 0.1f) : Color.green;
+        DrawRect(new Rect(point.x - dotSize * 0.5f, point.y - dotSize * 0.5f, dotSize, dotSize), dotColor);
+    }
+
+    // Moveの値を一定間隔で履歴（リングバッファ）に記録する。
+    private void SampleMove(Vector2 value)
     {
         float interval = 1f / _graphSamplesPerSecond;
         _historyTimer += Time.unscaledDeltaTime;
@@ -221,14 +391,15 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         {
             _historyTimer -= interval;
 
-            _horizontalHistory[_historyWriteIndex] = value;
-            _historyWriteIndex = (_historyWriteIndex + 1) % _horizontalHistory.Length;
-            _historyCount = Mathf.Min(_historyCount + 1, _horizontalHistory.Length);
+            _xHistory[_historyWriteIndex] = value.x;
+            _yHistory[_historyWriteIndex] = value.y;
+            _historyWriteIndex = (_historyWriteIndex + 1) % _xHistory.Length;
+            _historyCount = Mathf.Min(_historyCount + 1, _xHistory.Length);
         }
     }
 
-    // Horizontalの履歴を時系列グラフとして描画する（上が+1、下が-1、右端が最新）。
-    private void DrawHorizontalGraph(Rect rect)
+    // 履歴を時系列グラフとして描画する（上が+1、下が-1、右端が最新）。
+    private void DrawGraph(Rect rect, float[] history, string label)
     {
         // 背景
         DrawRect(rect, new Color(0f, 0f, 0f, 0.65f));
@@ -236,38 +407,37 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         // 0の基準線
         DrawHorizontalLine(rect, 0f, new Color(1f, 1f, 1f, 0.25f));
         // ±ガイド線
-        DrawHorizontalLine(rect, _horizontalGuide, new Color(1f, 0.65f, 0f, 0.75f));
-        DrawHorizontalLine(rect, -_horizontalGuide, new Color(1f, 0.65f, 0f, 0.75f));
+        DrawHorizontalLine(rect, _graphGuide, new Color(1f, 0.65f, 0f, 0.75f));
+        DrawHorizontalLine(rect, -_graphGuide, new Color(1f, 0.65f, 0f, 0.75f));
 
         // 判定：線を描けるだけの履歴がたまっているか
         if (_historyCount >= 2)
         {
-            float columnWidth = rect.width / Mathf.Max(1, _horizontalHistory.Length - 1);
+            float columnWidth = rect.width / Mathf.Max(1, history.Length - 1);
             // 判定：履歴が一周しているか（一周していれば書き込み位置が最古のデータ）
-            int firstIndex = _historyCount == _horizontalHistory.Length ? _historyWriteIndex : 0;
+            int firstIndex = _historyCount == history.Length ? _historyWriteIndex : 0;
 
             for (int i = 0; i < _historyCount; i++)
             {
-                int index = (firstIndex + i) % _horizontalHistory.Length;
-                float value = Mathf.Clamp(_horizontalHistory[index], -1f, 1f);
+                int index = (firstIndex + i) % history.Length;
+                float value = Mathf.Clamp(history[index], -1f, 1f);
 
-                float x = rect.x + i * columnWidth;
+                float columnX = rect.x + i * columnWidth;
                 float centerY = rect.center.y;
                 float valueY = centerY - value * rect.height * 0.5f;
 
                 // 判定：ガイド線を超えているか（超えていればオレンジ、それ以外は緑）
-                Color color = Mathf.Abs(value) >= _horizontalGuide ? new Color(1f, 0.75f, 0.1f) : Color.green;
+                Color color = Mathf.Abs(value) >= _graphGuide ? new Color(1f, 0.75f, 0.1f) : Color.green;
 
                 // 0の位置から値の位置までの縦線を1本描く
                 float top = Mathf.Min(centerY, valueY);
                 float height = Mathf.Max(1f, Mathf.Abs(valueY - centerY));
-                DrawRect(new Rect(x, top, Mathf.Max(1f, columnWidth), height), color);
+                DrawRect(new Rect(columnX, top, Mathf.Max(1f, columnWidth), height), color);
             }
         }
 
-        // 上端・下端の目盛りラベル
-        GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 80f, 20f), "+1.0");
-        GUI.Label(new Rect(rect.x + 4f, rect.yMax - 20f, 80f, 20f), "-1.0");
+        // 軸の名前
+        GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, 40f, 20f), label);
     }
 
     // グラフ内の指定した値の高さに横線を引く。
@@ -297,7 +467,7 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
 
     // 1つのジェスチャーについて、Holding（プレス中かどうか）とTrigger回数を1行で表示する。
     // held: ポーズを取り続けている間ずっとtrue（プレス）。lastTriggerTime: ポーズが成立した瞬間（トリガー）の時刻。
-    private void DrawGestureRow(int x, int y, string label, bool held, int triggerCount, float lastTriggerTime)
+    private void DrawGestureRow(float x, float y, string label, bool held, int triggerCount, float lastTriggerTime)
     {
         // 判定：直近のトリガーから_flashDuration秒以内か（以内ならTRIGGERED表示を点灯させる）
         bool isFlashing = Time.time - lastTriggerTime <= _flashDuration;

@@ -1,29 +1,34 @@
 using UnityEngine;
 
-// PoseLandmarkReceiverが受信した姿勢（MediaPipe Pose準拠の33点）からレース入力を作るIRaceInput実装。
-// Horizontalは上半身の左右の傾き角度から連続値を作る。IRaceInput.Moveは、そのHorizontalをxに入れたもの（上下のyは未対応で0）。
-// （2026-11-07 川又：IRaceInputがHorizontal（float）からMove（Vector2、大きさ0～1）に変わったため、Moveを追加。
-//   上下の身体動作の割り当てはトラッキング担当で検討予定。ショートカットは仕様から廃止になったため、関連処理をコメントアウトしている）
-// BoostPressed/ShieldPressed/ShortcutPressedは「ポーズが成立したフレームで1回だけtrue」になる
-// トリガー（KeyboardRaceInputのwasPressedThisFrameと同じ扱い）。
-// BoostHeld/ShieldHeldはポーズを取り続けている間ずっとtrueになる「プレス（継続状態）」。
-// ショートカットの継続状態はIRaceInputに無いため、IsShortcutPoseActiveとして独自に公開している。
+// PoseLandmarkReceiverが受信した姿勢からレース入力を作るIRaceInput実装。
+// 判定にはReceiver.NormalizedLandmarks（縦横比をそろえた姿勢空間。2D・3Dモード共通でMediaPipeの並び）を使う。
 //
-// 想定しているポーズ（すべて上半身のみで完結）
-//  - Boost   : 空手の構えのように、両手首を腰〜肩の中間あたりの高さで体の横に引く（腰そのものの高さだと、腕を下げただけの姿勢を誤検知するため）
-//  - Shield  : 片手（左右どちらでも可）を胸の前で水平に構える（手首が肘より体の中心側にある状態）
-//  - Shortcut: バンザイ（両手首を頭より高く上げる）
+// 移動（Move）
+//  - x（左右）：上半身の左右の傾き角度から連続値を作る。
+//  - y（上）  ：両手を上に上げる。両手首が鼻より高いほど大きくなる（手首が映らないときは肘で代用）。
+//  - y（下）  ：しゃがむ。キャリブレーション（PoseCalibration、Entryシーンで測定）の直立時の肩の高さから、
+//               どれだけ肩が下がったかで決める。キャリブレーションしていないときは下は0のまま。
+//  - xとyを合わせたベクトルの大きさは1以下に制限する（IRaceInput.Moveの約束）。8方向への丸めは飛行制御側で行う。
+//
+// ボタン
+//  - BoostPressed/ShieldPressedは「ポーズが成立したフレームで1回だけtrue」になるトリガー。
+//  - BoostHeld/ShieldHeldはポーズを取り続けている間ずっとtrueになる「プレス（継続状態）」。
+//  - Boost  : 空手の構えのように、両手首を腰〜肩の中間あたりの高さで体の横に引く（腰そのものの高さだと、腕を下げただけの姿勢を誤検知するため）
+//  - Shield : 片手（左右どちらでも可）を胸の前で水平に構える（手首が肘より体の中心側にある状態）
+//
+// トラッキングが途切れた（人物が映らない）ときは、Moveを0、ボタンをすべて離した扱いにする。
+// 2026-11-07 川又：IRaceInputのHorizontal→Move（Vector2）変更と、ショートカット廃止への暫定対応。
+// 2026-11-11：上下の入力（バンザイ／しゃがみ）、2Dモード・縦横比・トラッキング途切れへの対応。ショートカットの処理は削除。
 public class TrackingRaceInput : IRaceInput {
-	// MediaPipe Poseのランドマーク番号（PoseLandmarkReceiver.Landmarksのインデックスに対応）
-	private const int Nose = 0; // 鼻
-	private const int LeftShoulder = 11; // 左肩
-	private const int RightShoulder = 12; // 右肩
-	private const int LeftElbow = 13; // 左肘
-	private const int RightElbow = 14; // 右肘
-	private const int LeftWrist = 15; // 左手首
-	private const int RightWrist = 16; // 右手首
-	private const int LeftHip = 23; // 左腰
-	private const int RightHip = 24; // 右腰
+	private const int Nose = PoseLandmarkIndex.Nose;
+	private const int LeftShoulder = PoseLandmarkIndex.LeftShoulder;
+	private const int RightShoulder = PoseLandmarkIndex.RightShoulder;
+	private const int LeftElbow = PoseLandmarkIndex.LeftElbow;
+	private const int RightElbow = PoseLandmarkIndex.RightElbow;
+	private const int LeftWrist = PoseLandmarkIndex.LeftWrist;
+	private const int RightWrist = PoseLandmarkIndex.RightWrist;
+	private const int LeftHip = PoseLandmarkIndex.LeftHip;
+	private const int RightHip = PoseLandmarkIndex.RightHip;
 
 	// 姿勢データの取得元
 	private readonly PoseLandmarkReceiver _receiver;
@@ -33,25 +38,23 @@ public class TrackingRaceInput : IRaceInput {
 	// 直近でEnsureUpdatedForCurrentFrameを実行したUnityのフレーム番号。同一フレーム内の再計算を防ぐために使う。
 	private int _lastEvaluatedFrame = -1;
 
-	// Horizontalの平滑化用に保持している現在値（毎フレーム目標値へ少しずつ近づける）
+	// 平滑化用に保持している現在値（毎フレーム目標値へ少しずつ近づける）
 	private float _smoothedHorizontal;
-	// Horizontalプロパティが返す、このフレーム用に計算済みの値
-	private float _cachedHorizontal;
+	private float _smoothedVertical;
+	// Moveプロパティが返す、このフレーム用に計算済みの値
+	private Vector2 _cachedMove;
 
 	// 各ポーズの「前フレームでの継続状態」。今フレームの状態と比較してPressed（トリガー）の立ち上がりを検出するために使う。
 	private bool _previousBoostActive;
 	private bool _previousShieldActive;
-	// [ショートカット廃止] private bool _previousShortcutActive;
 
-	// 各ポーズが成立した瞬間だけtrueになる値（トリガー）。IRaceInputのBoostPressed等が返す。
+	// 各ポーズが成立した瞬間だけtrueになる値（トリガー）。
 	private bool _cachedBoostPressed;
 	private bool _cachedShieldPressed;
-	// [ショートカット廃止] private bool _cachedShortcutPressed;
 
-	// 各ポーズを取り続けている間ずっとtrueになる値（プレス）。BoostHeld等が返す。
+	// 各ポーズを取り続けている間ずっとtrueになる値（プレス）。
 	private bool _cachedBoostHeld;
 	private bool _cachedShieldHeld;
-	// [ショートカット廃止] private bool _cachedShortcutHeld;
 
 	// receiver: 姿勢データの取得元。settings: 判定用パラメータ（nullならデフォルト値で生成する）。
 	public TrackingRaceInput(PoseLandmarkReceiver receiver, TrackingRaceInputSettings settings) {
@@ -59,19 +62,11 @@ public class TrackingRaceInput : IRaceInput {
 		_settings = settings ?? new TrackingRaceInputSettings();
 	}
 
-	// 左右の傾きから求めた操舵値（-1～1）。直立時はできるだけ0に近くなる。
-	public float Horizontal {
-		get {
-			EnsureUpdatedForCurrentFrame();
-			return _cachedHorizontal;
-		}
-	}
-
-	// IRaceInputの移動入力。xは左右の傾き（Horizontal）、yは上下（未対応のため0）。大きさは0～1に制限する。
+	// 移動の入力。x：左右の傾き、y：バンザイ（＋）／しゃがみ（－）。大きさは0～1。
 	public Vector2 Move {
 		get {
 			EnsureUpdatedForCurrentFrame();
-			return Vector2.ClampMagnitude(new Vector2(_cachedHorizontal, 0f), 1f);
+			return _cachedMove;
 		}
 	}
 
@@ -91,14 +86,6 @@ public class TrackingRaceInput : IRaceInput {
 		}
 	}
 
-	// [ショートカット廃止] ショートカットのポーズ（バンザイ）が成立した瞬間だけtrue。
-	// public bool ShortcutPressed {
-	// 	get {
-	// 		EnsureUpdatedForCurrentFrame();
-	// 		return _cachedShortcutPressed;
-	// 	}
-	// }
-
 	// ブーストのポーズを取り続けている間ずっとtrue（プレス）。ポーズを解くとfalseになりブーストが終了する。
 	public bool BoostHeld {
 		get {
@@ -115,15 +102,10 @@ public class TrackingRaceInput : IRaceInput {
 		}
 	}
 
-	// [ショートカット廃止] ショートカット（バンザイ）のポーズを取り続けている間ずっとtrue（プレス）。IRaceInputには無い独自の拡張。
-	// public bool IsShortcutPoseActive {
-	// 	get {
-	// 		EnsureUpdatedForCurrentFrame();
-	// 		return _cachedShortcutHeld;
-	// 	}
-	// }
+	// トラッキング中か（人物が映っているか）。デバッグ表示用。
+	public bool IsTracking => _receiver != null && _receiver.IsTracking;
 
-	// 1フレームにつき1回だけ全ポーズ・Horizontalを評価し、結果をキャッシュする。
+	// 1フレームにつき1回だけ全ポーズ・Moveを評価し、結果をキャッシュする。
 	// 同じフレーム内で複数回プロパティを参照しても、判定結果が変わらないようにするための仕組み。
 	private void EnsureUpdatedForCurrentFrame() {
 		int frame = Time.frameCount;
@@ -134,79 +116,140 @@ public class TrackingRaceInput : IRaceInput {
 
 		_lastEvaluatedFrame = frame;
 
-		// Horizontalを計算
-		_cachedHorizontal = EvaluateHorizontal();
+		// トラッキングが途切れているときは、すべての判定を「入力なし」として扱う
+		bool tracking = IsTracking;
+
+		// 移動：左右・上下の目標値を求めて平滑化し、大きさを1以下にする
+		float targetHorizontal = tracking ? EvaluateHorizontal() : 0f;
+		float targetVertical = tracking ? EvaluateVertical() : 0f;
+		_smoothedHorizontal = Smooth(_smoothedHorizontal, targetHorizontal, _settings.horizontalSmoothingTime);
+		_smoothedVertical = Smooth(_smoothedVertical, targetVertical, _settings.verticalSmoothingTime);
+		_cachedMove = Vector2.ClampMagnitude(new Vector2(_smoothedHorizontal, _smoothedVertical), 1f);
 
 		// ブースト：今フレームの成立状態を求め、トリガー（立ち上がり）とプレス（継続状態）の両方を更新
-		bool boostActive = EvaluateBoost();
+		bool boostActive = tracking && EvaluateBoost();
 		_cachedBoostPressed = boostActive && !_previousBoostActive; // 前フレームは不成立で今フレームだけ成立＝立ち上がり
 		_cachedBoostHeld = boostActive;
 		_previousBoostActive = boostActive;
 
 		// シールド：ブーストと同様の手順
-		bool shieldActive = EvaluateShield();
+		bool shieldActive = tracking && EvaluateShield();
 		_cachedShieldPressed = shieldActive && !_previousShieldActive;
 		_cachedShieldHeld = shieldActive;
 		_previousShieldActive = shieldActive;
-
-		// [ショートカット廃止] ショートカット：ブーストと同様の手順
-		// bool shortcutActive = EvaluateShortcut();
-		// _cachedShortcutPressed = shortcutActive && !_previousShortcutActive;
-		// _cachedShortcutHeld = shortcutActive;
-		// _previousShortcutActive = shortcutActive;
 	}
 
-	// 上半身の左右の傾き角度から、Horizontal（-1～1）を計算する。
+	// 指数平滑化：時定数(smoothingTime)に応じて目標値へ滑らかに近づける。0以下なら平滑化なしで目標値をそのまま使う。
+	private static float Smooth(float current, float target, float smoothingTime) {
+		// 判定：平滑化を行うかどうか
+		if (smoothingTime <= 0f) {
+			return target;
+		}
+
+		float t = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.001f, smoothingTime));
+		return Mathf.Lerp(current, target, t);
+	}
+
+	// デッドゾーン〜最大値の範囲を0～1に正規化し、カーブ（べき乗）をかける。
+	private static float ApplyResponse(float value, float deadZone, float max, float curve) {
+		// 判定：デッドゾーン以下か（以下なら0＝ノイズ対策）
+		if (value <= deadZone) {
+			return 0f;
+		}
+
+		float range = Mathf.Max(0.0001f, max - deadZone);
+		float t = Mathf.Clamp01((value - deadZone) / range);
+		return Mathf.Pow(t, curve);
+	}
+
+	// 上半身の左右の傾き角度から、左右の入力（-1～1）を計算する。
 	private float EvaluateHorizontal() {
-		// 傾きが取得できない場合の初期値（0＝直立扱い）
-		float targetHorizontal = 0f;
-
-		// 判定：肩・腰の4点すべてが十分な信頼度で検出できているか（できていなければ傾き計算をスキップし0のまま扱う）
-		if (_receiver != null
-			&& IsVisible(LeftShoulder) && IsVisible(RightShoulder)
-			&& IsVisible(LeftHip) && IsVisible(RightHip)) {
-			// 腰の中点から肩の中点へ向かうベクトル（背骨の向き）
-			Vector3 spine = GetMidShoulder() - GetMidHip();
-
-			// 直立時は0度。左右に傾くとspine.x（左右方向）が出てくるので、そこから傾き角度を求める。
-			float tiltDeg = Mathf.Atan2(spine.x, spine.y) * Mathf.Rad2Deg;
-			float absDeg = Mathf.Abs(tiltDeg);
-
-			// 判定：デッドゾーンより大きく傾いているか（デッドゾーン以下ならHorizontalは0のまま＝直立時のノイズ対策）
-			if (absDeg > _settings.tiltDeadZoneAngle) {
-				// デッドゾーン〜最大角度の範囲を0～1に正規化
-				float range = Mathf.Max(0.01f, _settings.maxTiltAngle - _settings.tiltDeadZoneAngle);
-				float t = Mathf.Clamp01((absDeg - _settings.tiltDeadZoneAngle) / range);
-				// 0～1の値にカーブ（べき乗）をかけ、中間域での出やすさを調整
-				float curved = Mathf.Pow(t, _settings.tiltResponseCurve);
-				// 元の傾きの符号（左右どちらに傾いたか）を掛け戻す
-				targetHorizontal = Mathf.Sign(tiltDeg) * curved;
-			}
-
-			// 判定：左右反転設定がONか（鏡像設定やカメラ向きの都合で符号を反転したい場合用）
-			if (_settings.invertHorizontal) {
-				targetHorizontal = -targetHorizontal;
-			}
+		// 判定：肩・腰の4点すべてが十分な信頼度で検出できているか（できていなければ0＝直立扱い）
+		if (!IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
+			|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
+			return 0f;
 		}
 
-		// 判定：平滑化を行うかどうか（0以下なら平滑化なしで目標値をそのまま採用）
-		if (_settings.horizontalSmoothingTime <= 0f) {
-			_smoothedHorizontal = targetHorizontal;
-		} else {
-			// 指数平滑化：時定数(horizontalSmoothingTime)に応じて目標値へ滑らかに近づける
-			float t = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.001f, _settings.horizontalSmoothingTime));
-			_smoothedHorizontal = Mathf.Lerp(_smoothedHorizontal, targetHorizontal, t);
+		// 腰の中点から肩の中点へ向かうベクトル（背骨の向き）
+		Vector3 spine = GetMidShoulder() - GetMidHip();
+
+		// 直立時は0度。左右に傾くとspine.x（左右方向）が出てくるので、そこから傾き角度を求める。
+		float tiltDeg = Mathf.Atan2(spine.x, spine.y) * Mathf.Rad2Deg;
+		float value = Mathf.Sign(tiltDeg) * ApplyResponse(Mathf.Abs(tiltDeg), _settings.tiltDeadZoneAngle, _settings.maxTiltAngle, _settings.tiltResponseCurve);
+
+		// 判定：左右反転設定がONか（鏡像設定やカメラ向きの都合で符号を反転したい場合用）
+		return _settings.invertHorizontal ? -value : value;
+	}
+
+	// 上下の入力（-1～1）を計算する。上＝バンザイ、下＝しゃがみ。両方成立したときは差し引きする。
+	private float EvaluateVertical() {
+		float value = EvaluateRaiseHands() - EvaluateCrouch();
+		// 判定：上下反転設定がONか
+		return _settings.invertVertical ? -value : value;
+	}
+
+	// 上（0～1）：両手を上げているほど大きい。低い方の手の高さで決める（両手とも上げて初めて値が出る）。
+	private float EvaluateRaiseHands() {
+		// 判定：鼻・肩・腰が見えているか（胴の長さと基準の高さに使う）
+		if (!IsVisible(Nose) || !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
+			|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
+			return 0f;
 		}
 
-		// 念のため-1～1にクランプして返す
-		return Mathf.Clamp(_smoothedHorizontal, -1f, 1f);
+		float torsoLength = GetTorsoLength();
+		// 判定：胴の長さが極端に小さい（＝検出が不安定）場合は0扱いにする
+		if (torsoLength <= 0.0001f) {
+			return 0f;
+		}
+
+		// 判定：左右の腕の高さが取れるか（手首も肘も見えていない腕があれば0）
+		if (!TryGetArmHeight(LeftWrist, LeftElbow, out float leftHeight) || !TryGetArmHeight(RightWrist, RightElbow, out float rightHeight)) {
+			return 0f;
+		}
+
+		// 低い方の手が、鼻の高さからどれだけ上にあるか（胴の長さに対する比率）
+		float raise = (Mathf.Min(leftHeight, rightHeight) - GetLandmark(Nose).y) / torsoLength;
+		return ApplyResponse(raise, _settings.raiseStartRatio, _settings.raiseFullRatio, _settings.verticalResponseCurve);
+	}
+
+	// 腕の高さ。手首が見えていれば手首、手を上げすぎて手首が映らないときは肘で代用する。
+	private bool TryGetArmHeight(int wristIndex, int elbowIndex, out float height) {
+		// 判定：手首が見えているか
+		if (IsVisible(wristIndex)) {
+			height = GetLandmark(wristIndex).y;
+			return true;
+		}
+
+		// 判定：肘が見えているか
+		if (IsVisible(elbowIndex)) {
+			height = GetLandmark(elbowIndex).y;
+			return true;
+		}
+
+		height = 0f;
+		return false;
+	}
+
+	// 下（0～1）：キャリブレーションした直立時の肩の高さから、どれだけ肩が下がったか（直立時の胴の長さに対する比率）。
+	private float EvaluateCrouch() {
+		// 判定：キャリブレーション済みか（未測定なら基準が無いので0）
+		if (!PoseCalibration.HasValue || PoseCalibration.TorsoLength <= 0.0001f) {
+			return 0f;
+		}
+
+		// 判定：肩が見えているか
+		if (!IsVisible(LeftShoulder) || !IsVisible(RightShoulder)) {
+			return 0f;
+		}
+
+		float drop = (PoseCalibration.ShoulderHeight - GetMidShoulder().y) / PoseCalibration.TorsoLength;
+		return ApplyResponse(drop, _settings.crouchDeadZoneRatio, _settings.crouchFullRatio, _settings.verticalResponseCurve);
 	}
 
 	// ブースト（空手の構え：両手首を腰〜肩の中間あたりの高さで体の横に引く）が成立しているかどうかを判定する。
 	private bool EvaluateBoost() {
 		// 判定：手首・腰・肩のランドマークが揃っているか（欠けていれば未成立扱い）
-		if (_receiver == null
-			|| !IsVisible(LeftWrist) || !IsVisible(RightWrist)
+		if (!IsVisible(LeftWrist) || !IsVisible(RightWrist)
 			|| !IsVisible(LeftHip) || !IsVisible(RightHip)
 			|| !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)) {
 			return false;
@@ -225,7 +268,7 @@ public class TrackingRaceInput : IRaceInput {
 	}
 
 	// 片手が「腰〜肩の中間あたりの高さで体の横に構えている」状態かどうかを判定する（ブースト判定の左右共通処理）。
-	// MediaPipeの腰ランドマークは股関節付近のため、腰の高さそのものを基準にすると腕を下げただけの姿勢を誤検知してしまう。
+	// 腰ランドマークは股関節付近のため、腰の高さそのものを基準にすると腕を下げただけの姿勢を誤検知してしまう。
 	// そのためboostHeightRatioで腰〜肩の間を補間した高さを基準点として使う。
 	private bool IsHandChamberedAtWaist(int wristIndex, int hipIndex, int shoulderIndex, float torsoLength) {
 		Vector3 wrist = GetLandmark(wristIndex);
@@ -247,7 +290,7 @@ public class TrackingRaceInput : IRaceInput {
 	// シールド（片手を胸の前で水平に構える）が成立しているかどうかを判定する。
 	private bool EvaluateShield() {
 		// 判定：肩・腰のランドマークが揃っているか（欠けていれば未成立扱い）
-		if (_receiver == null || !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
+		if (!IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
 			|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
 			return false;
 		}
@@ -293,32 +336,6 @@ public class TrackingRaceInput : IRaceInput {
 		return atChestHeight && forearmLevel && isInwardOfElbow;
 	}
 
-	// [ショートカット廃止] ショートカット（バンザイ：両手首を頭より高く上げる）が成立しているかどうかを判定する。
-	// private bool EvaluateShortcut() {
-	// 	// 判定：鼻・手首・肩・腰のランドマークが揃っているか（欠けていれば未成立扱い）
-	// 	if (_receiver == null
-	// 		|| !IsVisible(Nose) || !IsVisible(LeftWrist) || !IsVisible(RightWrist)
-	// 		|| !IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
-	// 		|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
-	// 		return false;
-	// 	}
-	//
-	// 	// しきい値の基準となる胴の長さ
-	// 	float torsoLength = GetTorsoLength();
-	// 	// 判定：胴の長さが極端に小さい（＝検出が不安定）場合は未成立扱いにする
-	// 	if (torsoLength <= 0.0001f) {
-	// 		return false;
-	// 	}
-	//
-	// 	// 鼻の高さと、そこからどれだけ上なら「上げている」とみなすかのマージン
-	// 	float noseY = GetLandmark(Nose).y;
-	// 	float margin = torsoLength * _settings.shortcutRaiseMarginRatio;
-	//
-	// 	// 判定：両方の手首が「鼻の高さ＋マージン」より高い位置にあるか（両手とも満たして初めて成立）
-	// 	return GetLandmark(LeftWrist).y >= noseY + margin
-	// 		&& GetLandmark(RightWrist).y >= noseY + margin;
-	// }
-
 	// 左肩・右肩の中点座標を返す。
 	private Vector3 GetMidShoulder() {
 		return (GetLandmark(LeftShoulder) + GetLandmark(RightShoulder)) * 0.5f;
@@ -330,8 +347,9 @@ public class TrackingRaceInput : IRaceInput {
 	}
 
 	// 肩の中点から腰の中点までの距離（胴の長さ）。各種しきい値をスケールに依存しない比率で扱うための基準値。
+	// 2Dモードにはzが無いため、どちらのモードでも画面上（x, y）の距離で測る（PoseCalibratorと同じ測り方）。
 	private float GetTorsoLength() {
-		return Vector3.Distance(GetMidShoulder(), GetMidHip());
+		return Vector2.Distance(GetMidShoulder(), GetMidHip());
 	}
 
 	// 「胸の高さ」を、肩の高さから胴の長さに比例した分だけ下げた位置として計算する。
@@ -339,9 +357,9 @@ public class TrackingRaceInput : IRaceInput {
 		return GetMidShoulder().y - torsoLength * _settings.chestHeightOffsetRatio;
 	}
 
-	// 指定インデックスのランドマークの座標を取得する。範囲外や未受信の場合はVector3.zeroを返す。
+	// 指定インデックスのランドマークの座標（姿勢空間）を取得する。範囲外や未受信の場合はVector3.zeroを返す。
 	private Vector3 GetLandmark(int index) {
-		PoseLandmark[] landmarks = _receiver.Landmarks;
+		PoseLandmark[] landmarks = _receiver != null ? _receiver.NormalizedLandmarks : null;
 		// 判定：ランドマーク配列が存在し、かつインデックスが範囲内か
 		if (landmarks == null || index < 0 || index >= landmarks.Length) {
 			return Vector3.zero;
@@ -352,7 +370,7 @@ public class TrackingRaceInput : IRaceInput {
 
 	// 指定インデックスのランドマークが、設定された信頼度（minVisibility）以上で検出されているかを判定する。
 	private bool IsVisible(int index) {
-		PoseLandmark[] landmarks = _receiver.Landmarks;
+		PoseLandmark[] landmarks = _receiver != null ? _receiver.NormalizedLandmarks : null;
 		// 判定：ランドマーク配列が存在し、かつインデックスが範囲内か（範囲外なら未検出扱い）
 		if (landmarks == null || index < 0 || index >= landmarks.Length) {
 			return false;

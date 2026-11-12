@@ -587,9 +587,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5a2b73051674a24f9d69d951909f52e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoseLandmarkReceiver
-  targetAddress: /pose/landmarks3d
-  scale: {x: 3, y: 3, z: 2}
-  mirrorX: 1
+  _address3d: /pose/landmarks3d
+  _address2d: /pose/landmarks
+  _frameSizeAddress: /pose/frame_size
+  _scale: {x: 3, y: 3, z: 2}
+  _mirrorX: 1
+  _defaultAspect: 1.3333334
+  _lostTimeout: 0.3
+  _disconnectTimeout: 1
 --- !u!114 &1782884703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -667,6 +672,13 @@ MonoBehaviour:
     tiltResponseCurve: 0.6
     horizontalSmoothingTime: 0.1
     invertHorizontal: 0
+    raiseStartRatio: 0.1
+    raiseFullRatio: 0.6
+    crouchDeadZoneRatio: 0.08
+    crouchFullRatio: 0.35
+    verticalResponseCurve: 0.6
+    verticalSmoothingTime: 0.1
+    invertVertical: 0
     boostHeightRatio: 0.5
     boostHeightToleranceRatio: 0.25
     boostHorizontalToleranceRatio: 0.3
@@ -674,10 +686,15 @@ MonoBehaviour:
     shieldHeightToleranceRatio: 0.3
     shieldForearmLevelToleranceRatio: 0.3
     shieldInwardMarginRatio: 0.1
-    shortcutRaiseMarginRatio: 0.15
     minVisibility: 0.5
+  _calibrator: {fileID: 0}
+  _calibrationStartDelay: 1
+  _lossMonitor: {fileID: 0}
   _useKeyboardForDebug: 0
   _flashDuration: 0.5
+  _graphSeconds: 4
+  _graphSamplesPerSecond: 30
+  _graphGuide: 0.7
 --- !u!4 &1994966581
 Transform:
   m_ObjectHideFlags: 0
@@ -685,6 +702,64 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1994966579}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2039755547
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2039755549}
+  - component: {fileID: 2039755548}
+  m_Layer: 0
+  m_Name: TrackingLossWarning
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2039755548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2039755547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e24d5c13db4ef4041a39c11d9f707c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrackingLossWarningView
+  _monitor: {fileID: 0}
+  _personLostMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
+  _disconnectedMessage: "\u30AB\u30E1\u30E9\u3068\u306E\u63A5\u7D9A\u304C\u5207\u308C\u3066\u3044\u307E\u3059\n<size=60%>\u30B9\u30BF\u30C3\u30D5\u3092\u547C\u3093\u3067\u304F\u3060\u3055\u3044</size>"
+  _font: {fileID: 11400000, guid: 9221eccd98eea8f47bef7a9b3c407060, type: 2}
+  _fontSize: 64
+  _textColor: {r: 1, g: 1, b: 1, a: 1}
+  _bandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
+  _bandHeight: 220
+  _sortingOrder: 1000
+  _fadeDuration: 0.2
+  _blinkPeriod: 1.2
+  _blinkMinAlpha: 0.4
+  _canvasGroup: {fileID: 0}
+  _messageText: {fileID: 0}
+--- !u!4 &2039755549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2039755547}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -703,3 +778,4 @@ SceneRoots:
   - {fileID: 1366980085}
   - {fileID: 821596021}
   - {fileID: 1994966581}
+  - {fileID: 2039755549}

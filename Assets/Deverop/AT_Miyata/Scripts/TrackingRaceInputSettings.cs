@@ -23,6 +23,31 @@ public class TrackingRaceInputSettings
     [Tooltip("ONで左右の符号を反転する（鏡像設定やカメラ向きに応じた調整用）")]
     public bool invertHorizontal = false;
 
+    [Header("Vertical 上（バンザイ：両手を頭上に上げる）")]
+    [Tooltip("低い方の手が鼻よりこの分だけ高くなると、上の入力が出始める（胴の長さに対する比率）")]
+    public float raiseStartRatio = 0.1f;
+
+    [Tooltip("低い方の手が鼻よりこの分だけ高くなると、上の入力が1.0になる（胴の長さに対する比率）")]
+    public float raiseFullRatio = 0.6f;
+
+    [Header("Vertical 下（しゃがむ。Entryシーンのキャリブレーションが必要）")]
+    [Tooltip("直立時（キャリブレーション）からこの分だけ肩が下がるまでは0として扱う（胴の長さに対する比率。立っているときのぶれ対策）")]
+    public float crouchDeadZoneRatio = 0.08f;
+
+    [Tooltip("直立時からこの分だけ肩が下がると、下の入力が1.0になる（胴の長さに対する比率）")]
+    public float crouchFullRatio = 0.35f;
+
+    [Header("Vertical 共通")]
+    [Tooltip("1.0で線形。1より小さいと中間域で早めに値が出やすくなる（上・下の両方に使う）")]
+    [Range(0.3f, 1f)]
+    public float verticalResponseCurve = 0.6f;
+
+    [Tooltip("上下の値の変化を滑らかにする時定数（秒）。0で平滑化なし")]
+    public float verticalSmoothingTime = 0.01f;
+
+    [Tooltip("ONで上下の符号を反転する")]
+    public bool invertVertical = false;
+
     [Header("Boost（空手の構え：両手を腰の横で引く）")]
     [Tooltip("判定に使う高さの位置。0で腰（股関節）の高さ、1で肩の高さ（MediaPipeの腰は股関節付近のため、0のままだと腕を下に伸ばしただけで誤検知しやすい）")]
     [Range(0f, 1f)]
@@ -47,10 +72,6 @@ public class TrackingRaceInputSettings
 
     [Tooltip("手首が肘よりも体の中心側にどれだけ寄っていれば良いかのマージン（胴の長さに対する比率）")]
     public float shieldInwardMarginRatio = 0.1f;
-
-    [Header("Shortcut（バンザイ：両手を頭上に上げる）")]
-    [Tooltip("手首が鼻より高いと判定するための最小マージン（胴の長さに対する比率）")]
-    public float shortcutRaiseMarginRatio = 0.15f;
 
     [Header("共通")]
     [Tooltip("この信頼度を下回るランドマークは未検出として扱う")]
