@@ -11976,11 +11976,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
       propertyPath: m_LocalScale.x
-      value: 8.28
+      value: 12.98
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
       propertyPath: m_LocalScale.y
-      value: 12.13
+      value: 13.99
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12023,8 +12023,16 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
+      propertyPath: _duration
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
       propertyPath: _extraSpeed
       value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400001, guid: e4c48930505c46859f71b1cbbeab9a01, type: 3}
+      propertyPath: _particleSize
+      value: 0.008
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13583,6 +13591,22 @@ PrefabInstance:
     - target: {fileID: 11400000, guid: eeb2a41870474781b9fb1d524ef2034f, type: 3}
       propertyPath: _slowMultiplier
       value: 0.118
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400001, guid: eeb2a41870474781b9fb1d524ef2034f, type: 3}
+      propertyPath: _particleSize
+      value: 0.008
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400001, guid: eeb2a41870474781b9fb1d524ef2034f, type: 3}
+      propertyPath: _slowDownColor.b
+      value: 1.5336024
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400001, guid: eeb2a41870474781b9fb1d524ef2034f, type: 3}
+      propertyPath: _slowDownColor.g
+      value: 0.020255046
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400001, guid: eeb2a41870474781b9fb1d524ef2034f, type: 3}
+      propertyPath: _slowDownColor.r
+      value: 0.8058859
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
