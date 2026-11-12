@@ -622,9 +622,9 @@ MonoBehaviour:
   _frontShell: {fileID: 977394030160389999}
   _backShell: {fileID: 5835013902339143918}
   _bodyCollider: {fileID: 0}
+  _jammerLauncher: {fileID: 4560963151100089494}
   _showDebugLogs: 1
   _inputProvider: {fileID: 6976442047495844702}
-  _jammerLauncher: {fileID: 4560963151100089494}
 --- !u!114 &6976442047495844702
 MonoBehaviour:
   m_ObjectHideFlags: 0

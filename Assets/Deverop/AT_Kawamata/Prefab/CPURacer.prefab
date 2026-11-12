@@ -383,6 +383,7 @@ GameObject:
   - component: {fileID: -7268944218637680035}
   - component: {fileID: 6281600909184474877}
   - component: {fileID: 3982409415172206294}
+  - component: {fileID: 6747192323898554032}
   m_Layer: 6
   m_Name: CPURacer
   m_TagString: Untagged
@@ -474,12 +475,12 @@ MonoBehaviour:
   _boost: {fileID: 6537497690453878865}
   _shield: {fileID: -7268944218637680035}
   _defaultProfile: {fileID: 11400000, guid: de9080cdca3819d4ebb124d65d3dd9c9, type: 2}
-  _shortcutProfile: {fileID: 11400000, guid: 4489856c7d464b14ca8c5f08475eb6d9, type: 2}
   _boostHitProfile: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
   _boostHitDetector: {fileID: 4829983956148760436}
   _frontShell: {fileID: 977394030160389999}
   _backShell: {fileID: 5835013902339143918}
   _bodyCollider: {fileID: 0}
+  _jammerLauncher: {fileID: 6747192323898554032}
   _showDebugLogs: 0
   _inputSource: {fileID: 0}
 --- !u!114 &4748799226068538865
@@ -553,6 +554,43 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShieldPresentation
   _playerManager: {fileID: -3036962201299618520}
   _backShellView: {fileID: 3044176943503039356}
+--- !u!114 &3982409415172206294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc16a2b63ddf4f72996f2402b654fb19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CpuBoostTackleEffect
+  _effectPrefab: {fileID: 11400000, guid: 2cfffe5659a04f86a6747fbee48d34c9, type: 3}
+  _localOffset: {x: 0, y: 1, z: 2}
+--- !u!114 &6747192323898554032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72f9af4facf56794db42a75e527b0191, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JammerLauncher
+  _profile: {fileID: 11400000, guid: f0cfc1c3943adc042ace366d501d5c34, type: 2}
+  _types:
+  - {fileID: 11400000, guid: 065159a1d20bf104a9e4a8d5ba6a09b2, type: 2}
+  - {fileID: 11400000, guid: 677e78db6484b714aaece617c79780eb, type: 2}
+  - {fileID: 11400000, guid: ab0dd08ce9cfbca409479a591c0cff53, type: 2}
+  - {fileID: 11400000, guid: 4389ad731f870e84c9db182c1a9ed8ea, type: 2}
+  - {fileID: 11400000, guid: 0b9dcfe97e13dc049873e2fb7f75d732, type: 2}
+  - {fileID: 11400000, guid: d05df263716ab244489965aaa20657fb, type: 2}
+  _currentTypeIndex: 0
+  _ringTargets: []
+  _showDebugLogs: 1
 --- !u!1001 &1738267748168641387
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -709,17 +747,3 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8765462827801239113, guid: 2646f675400cddc4da0f61bac9a66d3a, type: 3}
   m_PrefabInstance: {fileID: 8328177166505456134}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3982409415172206294
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6929844204703215832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc16a2b63ddf4f72996f2402b654fb19, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::CpuBoostTackleEffect
-  _effectPrefab: {fileID: 11400000, guid: 2cfffe5659a04f86a6747fbee48d34c9, type: 3}
-  _localOffset: {x: 0, y: 1, z: 2}
