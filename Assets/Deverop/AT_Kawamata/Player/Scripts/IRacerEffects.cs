@@ -15,12 +15,18 @@ public interface IRacerEffects
     // ブーストを発動できない間か（発動中なら、レーサーがブーストを止める）。
     bool IsBoostLocked { get; }
 
+    // 視界反転の向き。効果が無ければNone。複数の効果が重なったら、向きを合わせる（左右＋上下なら両方）。
+    EViewFlip ViewFlip { get; }
+
     // multiplier：最高速度の倍率。fadeDuration：倍率を切り替える秒数（急に速度が変わらないようにする。外れたときも同じ秒数で戻す）。
     void SetMaxSpeedMultiplier(object source, float multiplier, float duration, float fadeDuration = 0f);
 
     void SetLateralMultiplier(object source, float multiplier, float duration, float fadeDuration = 0f);
 
     void LockBoost(object source, float duration);
+
+    // 視界を反転する。Playerは画面、CPUは移動の入力が反転する。
+    void SetViewFlip(object source, EViewFlip flip, float duration);
 
     // sourceがかけた効果を、種類に関係なくすべて外す。
     void Remove(object source);

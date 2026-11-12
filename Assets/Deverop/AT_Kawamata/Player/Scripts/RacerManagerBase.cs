@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // レーサー（Player／CPU）に関する機能の窓口の共通部分。入力を1回だけ読み、Boost/Shieldの入力をハンドリングし、
@@ -11,8 +12,9 @@ using UnityEngine;
 // シールド中は後方（BackShell。ブースト中の相手から当てられると防ぐ）だけを有効にする。
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
 // コースギミックとの接触は、飛行のTickの直後にRacerGimmickSensorが判定し、ギミック（CourseGimmickBase）へIGimmickRacerとして自分を渡す。
-// ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止）はRacerEffectsに集め、最高速度などに掛ける。
-public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer
+// ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止・視界反転）はRacerEffectsに集め、最高速度などに掛ける。
+// 妨害弾は当てられる側（IJammerHitReceiver）だけを持つ。撃つ側はPlayerのJammerLauncher。
+public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer, IJammerHitReceiver
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -92,6 +94,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // コースギミックが自分に効果を出した瞬間（CourseGimmickBase.NotifyActivatedから）。画面の演出（GimmickPresentationBase）が型で絞って受ける。
     public event Action<CourseGimmickBase> GimmickActivated;
 
+    // 妨害弾が当たって、効果を受けた瞬間（シールドで防いだときは出ない。そのときはShieldBlockedが出る）。引数は弾の種類。
+    public event Action<JammerTypeProfile> JammerHit;
+
     // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
     public FlightTuningProfile CurrentProfile { get; private set; }
 
@@ -142,6 +147,17 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     // 防いだ後、シールドが再び使えるようになるまでの残り秒数。使えない間でなければ0。
     public float ShieldBrokenRemainingTime => _shield.BrokenRemainingTime;
+
+    // 参加者全員（自分も含む）のRacerData。CPUの入力・妨害弾が周りのレーサーを見るのに使う。RaceManagerがInitializeの前に渡す。
+    public IReadOnlyList<IReadOnlyRacerData> Racers { get; private set; } = Array.Empty<IReadOnlyRacerData>();
+
+    // 視界反転の効果がかかっている間、同じ軸の移動の入力を反転するか。Playerは画面を反転する（ViewFlipPresentation）ので反転しない。
+    protected virtual bool InvertsMoveOnViewFlip => true;
+
+    public void SetRacers(IReadOnlyList<IReadOnlyRacerData> racers)
+    {
+        Racers = racers ?? Array.Empty<IReadOnlyRacerData>();
+    }
 
     // 入力元の初期化（Initializeの中で呼ぶ）。
     protected abstract void InitializeInput();
@@ -309,6 +325,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         // Moveは入力側で大きさ0～1に制限済み（IRaceInputの約束）なので、ここでは正規化し直さない。
         bool canControl = !_stun.IsStunned;
         Vector2 move = canControl && _steeringLockTimer <= 0f ? input.Move : Vector2.zero;
+        if (InvertsMoveOnViewFlip)
+        {
+            move = ApplyViewFlip(move, _effects.ViewFlip);
+        }
 
         // ブースト禁止の効果がかかったら、発動中でも止める（押し続けていても、禁止の間は再発動しない）。
         if (_effects.IsBoostLocked)
@@ -461,6 +481,53 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     void IGimmickRacer.NotifyGimmickActivated(CourseGimmickBase gimmick)
     {
         GimmickActivated?.Invoke(gimmick);
+    }
+
+    // 妨害弾が当たったとき、JammerProjectileから呼ばれる。
+    // ゴール後・無敵中 → 無視、シールド中で防げる種類 → 防いでシールドが消える（種類の設定がONなら、前へ押し出して加速する）、
+    // それ以外 → 種類ごとの効果を受ける（防げない種類なら、シールドを張っていても効果を受け、シールドは残る）。
+    // JammerProjectile専用の入口なので、IJammerHitReceiverとしてだけ呼べるよう明示的に実装する。
+    EJammerHitResult IJammerHitReceiver.ReceiveJammerHit(JammerTypeProfile type)
+    {
+        if (!_isInitialized || _isFinished || _stun.IsInvincible || type == null)
+        {
+            return EJammerHitResult.Ignored;
+        }
+
+        IGimmickRacer racer = this;
+        if (type.CanBeBlockedByShield && _shield.IsActive && racer.TryBlockWithShield())
+        {
+            if (type.PushOnBlock)
+            {
+                float pushDistance = LateralPush.GetDistanceForInitialSpeed(type.BlockPushSpeed, type.BlockPushDuration);
+                _flightController.ApplyForwardPush(pushDistance, type.BlockPushDuration);
+                ShieldBlockPushStarted?.Invoke(type.BlockPushSpeed, type.BlockPushDuration);
+            }
+
+            Log($"シールドで妨害弾（{type.DisplayName}）を防いだ{(type.PushOnBlock ? $" 初速 {type.BlockPushSpeed:F1}m/s で加速" : "")}");
+            return EJammerHitResult.Blocked;
+        }
+
+        type.ApplyToRacer(racer);
+        JammerHit?.Invoke(type);
+        Log($"妨害弾（{type.DisplayName}）を当てられた");
+        return EJammerHitResult.Hit;
+    }
+
+    // 視界反転の向きに合わせて、移動の入力を反転する（CPU用）。
+    private static Vector2 ApplyViewFlip(Vector2 move, EViewFlip flip)
+    {
+        if ((flip & EViewFlip.Horizontal) != 0)
+        {
+            move.x = -move.x;
+        }
+
+        if ((flip & EViewFlip.Vertical) != 0)
+        {
+            move.y = -move.y;
+        }
+
+        return move;
     }
 
     // ブーストとシールドは同時に使えない。片方を使っている間は、もう片方の「押した」入力を受け付けない（先に押した方を優先）。
