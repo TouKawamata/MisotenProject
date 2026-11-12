@@ -15,10 +15,13 @@ using UnityEngine;
 //  - BoostHeld/ShieldHeldはポーズを取り続けている間ずっとtrueになる「プレス（継続状態）」。
 //  - Boost  : 空手の構えのように、両手首を腰〜肩の中間あたりの高さで体の横に引く（腰そのものの高さだと、腕を下げただけの姿勢を誤検知するため）
 //  - Shield : 片手（左右どちらでも可）を胸の前で水平に構える（手首が肘より体の中心側にある状態）
+//  - Jammer : 片手（左右どちらでも可）をカメラに向けて前に突き出す。正面から見ると手首・肘・肩が重なって見えることで判定する。
+//             JammerPressedだけ（Heldは無い）。ポーズがjammerHoldTime続いたら1回だけtrue。腕を戻すまで次は撃てない。
 //
 // トラッキングが途切れた（人物が映らない）ときは、Moveを0、ボタンをすべて離した扱いにする。
 // 2026-11-07 川又：IRaceInputのHorizontal→Move（Vector2）変更と、ショートカット廃止への暫定対応。
 // 2026-11-11：上下の入力（バンザイ／しゃがみ）、2Dモード・縦横比・トラッキング途切れへの対応。ショートカットの処理は削除。
+// 2026-11-12：妨害弾（JammerPressed）を追加。シールドに「前腕が画面上である程度の長さに見える」条件を追加（突き出した腕でシールドが出ないように）。
 public class TrackingRaceInput : IRaceInput {
 	private const int Nose = PoseLandmarkIndex.Nose;
 	private const int LeftShoulder = PoseLandmarkIndex.LeftShoulder;
@@ -55,6 +58,21 @@ public class TrackingRaceInput : IRaceInput {
 	// 各ポーズを取り続けている間ずっとtrueになる値（プレス）。
 	private bool _cachedBoostHeld;
 	private bool _cachedShieldHeld;
+
+	// 妨害弾：このフレームで撃つか（トリガー）
+	private bool _cachedJammerPressed;
+	// 妨害弾のポーズが今フレームで成立しているか（デバッグ表示用）
+	private bool _jammerPoseActive;
+	// 妨害弾のポーズが続いている秒数（成立までの待ちに使う）
+	private float _jammerPoseTime;
+	// 妨害弾のポーズを解いている秒数（次を撃てるようにするまでの待ちに使う）
+	private float _jammerReleaseTime;
+	// 次の妨害弾を撃てる状態か（撃ったらfalse、腕を戻してjammerReleaseTimeたったらtrue）
+	private bool _jammerArmed = true;
+
+	// 妨害弾の判定の途中経過（デバッグ表示用）
+	private JammerArmDebug _leftJammerDebug;
+	private JammerArmDebug _rightJammerDebug;
 
 	// receiver: 姿勢データの取得元。settings: 判定用パラメータ（nullならデフォルト値で生成する）。
 	public TrackingRaceInput(PoseLandmarkReceiver receiver, TrackingRaceInputSettings settings) {
@@ -102,6 +120,38 @@ public class TrackingRaceInput : IRaceInput {
 		}
 	}
 
+	// 妨害弾のポーズ（片手を前に突き出す）がjammerHoldTime続いたフレームで1回だけtrue。腕を戻すまで次はtrueにならない。
+	public bool JammerPressed {
+		get {
+			EnsureUpdatedForCurrentFrame();
+			return _cachedJammerPressed;
+		}
+	}
+
+	// 妨害弾のポーズを取っているか（デバッグ表示用。IRaceInputには無い）
+	public bool JammerPoseActive {
+		get {
+			EnsureUpdatedForCurrentFrame();
+			return _jammerPoseActive;
+		}
+	}
+
+	// 妨害弾の判定の途中経過・左腕（デバッグ表示用）
+	public JammerArmDebug LeftJammerDebug {
+		get {
+			EnsureUpdatedForCurrentFrame();
+			return _leftJammerDebug;
+		}
+	}
+
+	// 妨害弾の判定の途中経過・右腕（デバッグ表示用）
+	public JammerArmDebug RightJammerDebug {
+		get {
+			EnsureUpdatedForCurrentFrame();
+			return _rightJammerDebug;
+		}
+	}
+
 	// トラッキング中か（人物が映っているか）。デバッグ表示用。
 	public bool IsTracking => _receiver != null && _receiver.IsTracking;
 
@@ -137,6 +187,97 @@ public class TrackingRaceInput : IRaceInput {
 		_cachedShieldPressed = shieldActive && !_previousShieldActive;
 		_cachedShieldHeld = shieldActive;
 		_previousShieldActive = shieldActive;
+
+		// 妨害弾：ポーズが続いた時間・解いた時間で、1回だけ撃つ
+		UpdateJammer(tracking);
+	}
+
+	// 妨害弾の判定を進める。時間はtimeScaleの影響を受けないようにunscaledDeltaTimeで数える（ヒットストップ中も止まらない）。
+	private void UpdateJammer(bool tracking) {
+		_cachedJammerPressed = false;
+		_jammerPoseActive = tracking && EvaluateJammer();
+		float deltaTime = Time.unscaledDeltaTime;
+
+		// 判定：ポーズを取っているか
+		if (_jammerPoseActive) {
+			_jammerPoseTime += deltaTime;
+			_jammerReleaseTime = 0f;
+
+			// 判定：撃てる状態で、ポーズがjammerHoldTime続いたか（続いたら1回だけ撃つ）
+			if (_jammerArmed && _jammerPoseTime >= _settings.jammerHoldTime) {
+				_cachedJammerPressed = true;
+				_jammerArmed = false;
+			}
+			return;
+		}
+
+		_jammerPoseTime = 0f;
+		_jammerReleaseTime += deltaTime;
+		// 判定：腕を戻してjammerReleaseTimeたったか（たったら次を撃てるようにする）
+		if (_jammerReleaseTime >= _settings.jammerReleaseTime) {
+			_jammerArmed = true;
+		}
+	}
+
+	// 妨害弾のポーズ（片手を前に突き出す）が成立しているか。左右どちらかの腕で成立すればよい。
+	private bool EvaluateJammer() {
+		_leftJammerDebug = default;
+		_rightJammerDebug = default;
+
+		// 判定：肩・腰のランドマークが揃っているか（胴の長さに使う）
+		if (!IsVisible(LeftShoulder) || !IsVisible(RightShoulder)
+			|| !IsVisible(LeftHip) || !IsVisible(RightHip)) {
+			return false;
+		}
+
+		float torsoLength = GetTorsoLength();
+		// 判定：胴の長さが極端に小さい（＝検出が不安定）場合は未成立扱いにする
+		if (torsoLength <= 0.0001f) {
+			return false;
+		}
+
+		_leftJammerDebug = EvaluateJammerArm(LeftShoulder, LeftElbow, LeftWrist, torsoLength);
+		_rightJammerDebug = EvaluateJammerArm(RightShoulder, RightElbow, RightWrist, torsoLength);
+		return _leftJammerDebug.Active || _rightJammerDebug.Active;
+	}
+
+	// 片腕が前に突き出されているか。腕がカメラを向くと、正面からは手首・肘・肩が重なって見えることを使う。
+	private JammerArmDebug EvaluateJammerArm(int shoulderIndex, int elbowIndex, int wristIndex, float torsoLength) {
+		JammerArmDebug result = default;
+
+		// 条件1：肩・肘・手首が見えているか。腕がカメラを向くと関節が重なって信頼度が下がるため、このポーズだけ低めのしきい値を使う
+		if (!IsVisible(shoulderIndex, _settings.jammerMinVisibility)
+			|| !IsVisible(elbowIndex, _settings.jammerMinVisibility)
+			|| !IsVisible(wristIndex, _settings.jammerMinVisibility)) {
+			return result;
+		}
+
+		Vector3 shoulder = GetLandmark(shoulderIndex);
+		Vector3 elbow = GetLandmark(elbowIndex);
+		Vector3 wrist = GetLandmark(wristIndex);
+
+		result.Valid = true;
+		// 画面上（x, y）の距離。胴の長さに対する比率
+		result.WristRatio = Vector2.Distance(wrist, shoulder) / torsoLength;
+		result.ElbowRatio = Vector2.Distance(elbow, shoulder) / torsoLength;
+
+		// 条件2：手首が肩の近くに重なって見えるか
+		bool wristNear = result.WristRatio <= _settings.jammerWristRadiusRatio;
+		// 条件3：肘も肩の近くに重なって見えるか（手で顔や肩を触ったときは肘が下がっているので、ここで区別する）
+		bool elbowNear = result.ElbowRatio <= _settings.jammerElbowRadiusRatio;
+
+		// 条件4（3Dモードのみ）：手首が肩より手前（カメラ側）に出ているか。2Dモードにはzが無いので見ない
+		bool forward = true;
+		// 判定：奥行きを使う設定で、3Dモードか
+		if (_settings.jammerUseDepth && !_receiver.Is2DMode) {
+			result.HasDepth = true;
+			// zは手前が正。MediaPipeのzは映像の幅の単位なので、縦横比を掛けてx, yと同じ単位（映像の高さ）にそろえる
+			result.DepthRatio = (wrist.z - shoulder.z) * _receiver.Aspect / torsoLength;
+			forward = result.DepthRatio >= _settings.jammerDepthRatio;
+		}
+
+		result.Active = wristNear && elbowNear && forward;
+		return result;
 	}
 
 	// 指数平滑化：時定数(smoothingTime)に応じて目標値へ滑らかに近づける。0以下なら平滑化なしで目標値をそのまま使う。
@@ -332,8 +473,11 @@ public class TrackingRaceInput : IRaceInput {
 		float elbowDistanceFromCenter = Mathf.Abs(elbow.x - centerX);
 		bool isInwardOfElbow = elbowDistanceFromCenter - wristDistanceFromCenter >= torsoLength * _settings.shieldInwardMarginRatio;
 
-		// 判定：3条件すべてを満たしたときだけ「シールド姿勢」とみなす
-		return atChestHeight && forearmLevel && isInwardOfElbow;
+		// 条件4：前腕が画面上である程度の長さに見えるか（腕を前に突き出すと前腕が縮んで見えて条件2を満たしてしまうため、妨害弾のポーズと区別する）
+		bool forearmVisibleLength = Vector2.Distance(wrist, elbow) >= torsoLength * _settings.shieldMinForearmRatio;
+
+		// 判定：4条件すべてを満たしたときだけ「シールド姿勢」とみなす
+		return atChestHeight && forearmLevel && isInwardOfElbow && forearmVisibleLength;
 	}
 
 	// 左肩・右肩の中点座標を返す。
@@ -370,6 +514,11 @@ public class TrackingRaceInput : IRaceInput {
 
 	// 指定インデックスのランドマークが、設定された信頼度（minVisibility）以上で検出されているかを判定する。
 	private bool IsVisible(int index) {
+		return IsVisible(index, _settings.minVisibility);
+	}
+
+	// 指定インデックスのランドマークが、指定した信頼度以上で検出されているかを判定する。
+	private bool IsVisible(int index, float minVisibility) {
 		PoseLandmark[] landmarks = _receiver != null ? _receiver.NormalizedLandmarks : null;
 		// 判定：ランドマーク配列が存在し、かつインデックスが範囲内か（範囲外なら未検出扱い）
 		if (landmarks == null || index < 0 || index >= landmarks.Length) {
@@ -377,6 +526,16 @@ public class TrackingRaceInput : IRaceInput {
 		}
 
 		// 判定：信頼度が設定値以上あるか
-		return landmarks[index].Visibility >= _settings.minVisibility;
+		return landmarks[index].Visibility >= minVisibility;
 	}
+}
+
+// 妨害弾の判定の途中経過（片腕分。デバッグ表示用）。
+public struct JammerArmDebug {
+	public bool Valid;       // 肩・肘・手首が見えていて、距離を測れたか
+	public float WristRatio; // 手首と肩の画面上の距離（胴の長さに対する比率）
+	public float ElbowRatio; // 肘と肩の画面上の距離（胴の長さに対する比率）
+	public bool HasDepth;    // 奥行き（z）を見たか（3Dモードで、jammerUseDepthがONのとき）
+	public float DepthRatio; // 手首が肩よりどれだけ手前か（胴の長さに対する比率）
+	public bool Active;      // この腕でポーズが成立しているか
 }

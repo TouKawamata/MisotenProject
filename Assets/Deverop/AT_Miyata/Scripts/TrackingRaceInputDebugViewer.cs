@@ -49,7 +49,7 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     private const float PanelX = 10f;
     private const float PanelY = 190f;
     private const float PanelWidth = 360f;
-    private const float PanelHeight = 440f;
+    private const float PanelHeight = 510f;
 
     // 現在使用している入力元（キーボード or トラッキング）。
     private IRaceInput _input;
@@ -59,14 +59,18 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     // 各ジェスチャーがトリガー（成立した瞬間）した回数
     private int _boostCount;
     private int _shieldCount;
+    private int _jammerCount;
 
     // 各ジェスチャーが最後にトリガーした時刻（Time.time基準）。表示のフラッシュ判定に使う。
     private float _lastBoostTime = -999f;
     private float _lastShieldTime = -999f;
+    private float _lastJammerTime = -999f;
 
     // 各ジェスチャーの現在の継続状態（ポーズを取り続けているか＝プレス）。
     private bool _boostHeld;
     private bool _shieldHeld;
+    // 妨害弾のポーズを取っているか（妨害弾はHeldが無いので、トラッキングのときだけ表示する）
+    private bool _jammerPoseActive;
 
     // 直近フレームで取得したMoveの値（表示用）。
     private Vector2 _latestMove;
@@ -173,9 +177,17 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
             _lastShieldTime = Time.time;
         }
 
-        // ブースト・シールドの継続状態
+        // 判定：妨害弾がこのフレームで撃たれたか
+        if (_input.JammerPressed)
+        {
+            _jammerCount++;
+            _lastJammerTime = Time.time;
+        }
+
+        // ブースト・シールドの継続状態、妨害弾のポーズ
         _boostHeld = _input.BoostHeld;
         _shieldHeld = _input.ShieldHeld;
+        _jammerPoseActive = _trackingInput != null && _trackingInput.JammerPoseActive;
     }
 
     // 画面左にデバッグ情報（入力元・トラッキング状態・キャリブレーション・Move・各ジェスチャー）を表示する。
@@ -232,9 +244,38 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         DrawGraph(new Rect(graphX, y + graphHeight + 10f, graphWidth, graphHeight), _yHistory, "y");
         y += stickSize + 12f;
 
-        // 各ジェスチャー（Boost/Shield）のHolding状態とTrigger回数を1行ずつ表示
+        // 各ジェスチャー（Boost/Shield/Jammer）のHolding状態とTrigger回数を1行ずつ表示
         DrawGestureRow(x, y, "Boost", _boostHeld, _boostCount, _lastBoostTime);
         DrawGestureRow(x, y + 25f, "Shield", _shieldHeld, _shieldCount, _lastShieldTime);
+        DrawGestureRow(x, y + 50f, "Jammer", _jammerPoseActive, _jammerCount, _lastJammerTime);
+
+        // 妨害弾の判定の途中経過（左右の腕。しきい値の調整用）
+        if (_trackingInput != null)
+        {
+            DrawJammerArm(x, y + 72f, lineWidth, "L", _trackingInput.LeftJammerDebug);
+            DrawJammerArm(x, y + 92f, lineWidth, "R", _trackingInput.RightJammerDebug);
+        }
+    }
+
+    // 妨害弾の判定の途中経過（手首・肘と肩の距離、奥行き）を1行で表示する。条件を満たした値は緑、満たさない値は白。
+    private void DrawJammerArm(float x, float y, float width, string label, JammerArmDebug arm)
+    {
+        Color originalColor = GUI.color;
+
+        // 判定：肩・肘・手首が見えていて、距離を測れたか（測れなければその旨だけ表示）
+        if (!arm.Valid)
+        {
+            GUI.color = Color.gray;
+            GUI.Label(new Rect(x, y, width, 20), $"  {label}: 腕が見えない");
+            GUI.color = originalColor;
+            return;
+        }
+
+        string depth = arm.HasDepth ? $"  z {arm.DepthRatio:+0.00;-0.00;0.00}/{_trackingSettings.jammerDepthRatio:F2}" : "  z -";
+        GUI.color = arm.Active ? Color.green : Color.white;
+        GUI.Label(new Rect(x, y, width, 20),
+            $"  {label}: 手首 {arm.WristRatio:F2}/{_trackingSettings.jammerWristRadiusRatio:F2}  肘 {arm.ElbowRatio:F2}/{_trackingSettings.jammerElbowRadiusRatio:F2}{depth}");
+        GUI.color = originalColor;
     }
 
     // 見失いの警告（TrackingLossMonitor）の状態を1行で表示する。

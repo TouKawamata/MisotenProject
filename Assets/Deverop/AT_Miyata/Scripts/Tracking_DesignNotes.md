@@ -18,13 +18,14 @@
 - `IRaceInput`（2026-11-07 に変更）：
   - `Vector2 Move`：x が右＋／左－、y が上＋／下－。**大きさは0～1に制限して渡す**（`Vector2.ClampMagnitude`）。向きと強さはそのまま渡し、8方向への丸めは飛行制御側（`MoveDirectionResolver`）が行う。デッドゾーン・ぶれの除去は入力側の仕事。
   - `BoostPressed / BoostHeld / ShieldPressed / ShieldHeld`。Pressed は成立した1フレームだけ true、Held は続けている間 true。
+  - `JammerPressed`（2026-11-12 に develop で追加。妨害弾の発射）：初期値が `=> false` の既定の実装。発射間隔・残弾は `JammerLauncher` 側が管理する。キーボードは Q。
   - ショートカットは仕様から廃止（`ShortcutPressed` は無い）。
 
 ## 構成（`AT_Miyata/Scripts/`）
 ```
 PoseLandmarkReceiver.cs           OSC受信。2D/3Dを33点の並びにそろえ、縦横比を補正。IsTracking（見失い判定）
                                   PoseLandmark（構造体）・PoseLandmarkIndex（関節番号の定数）もここ
-TrackingRaceInput.cs              IRaceInput実装。Move（傾き・バンザイ・しゃがみ）とBoost/Shieldの判定
+TrackingRaceInput.cs              IRaceInput実装。Move（傾き・バンザイ・しゃがみ）とBoost/Shield/Jammerの判定
 TrackingRaceInputSettings.cs      判定の調整値（Serializable。Bootstrapper・DebugViewerのInspectorで編集）
 TrackingRaceInputBootstrapper.cs  起動時に RaceInputProvider の入力元を差し替える
 PoseCalibration.cs                キャリブレーション結果（static。シーンをまたいで残る）
@@ -77,7 +78,14 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 
 ### ボタン
 - **Boost**：空手の構え。両手首が「腰〜肩を `boostHeightRatio` で補間した高さ」の近くで、体の横にある。MediaPipe の腰は股関節付近なので、腰の高さそのものを基準にすると腕を下げただけで成立してしまうため。
-- **Shield**：片手（どちらでも）を胸の前で水平に構える。手首が胸の高さ・前腕が水平・手首が肘より体の中心側、の3条件。
+- **Shield**：片手（どちらでも）を胸の前で水平に構える。手首が胸の高さ・前腕が水平・手首が肘より体の中心側・**前腕が画面上で `shieldMinForearmRatio`（0.3）以上の長さに見える**、の4条件。4つめは、前に突き出した腕（Jammer）は前腕が縮んで見えて「水平」を満たしてしまうため。
+- **Jammer**（`JammerPressed`）：片手（どちらでも）をカメラに向けて前に突き出す。正面からは手首・肘・肩が重なって見えることを使う。片腕ごとに：
+  1. 肩・肘・手首の信頼度が `jammerMinVisibility`（0.3）以上（腕がカメラを向くと関節が重なって信頼度が下がるので、共通の 0.5 より低い）
+  2. 手首と肩の画面上の距離 ≤ `jammerWristRadiusRatio`（0.35）
+  3. 肘と肩の画面上の距離 ≤ `jammerElbowRadiusRatio`（0.3）（手で顔・肩を触ったときは肘が下がっているので区別できる）
+  4. 3Dモードかつ `jammerUseDepth` のときだけ：手首が肩より `jammerDepthRatio`（0.2）以上手前（z。MediaPipe の z は映像の幅の単位なので縦横比を掛けてそろえる）
+  - ポーズが `jammerHoldTime`（0.08秒）続いたら1回だけ true。腕を戻して `jammerReleaseTime`（0.15秒）たつまで次は撃てない（突き出したままでは連射しない）。時間は `unscaledDeltaTime`。
+  - Held は無い。デバッグ用に `JammerPoseActive`、腕ごとの途中経過 `LeftJammerDebug` / `RightJammerDebug`（`JammerArmDebug`）を公開。
 
 ## 見失いの警告（TrackingLossMonitor / TrackingLossWarningView）
 - 目的：検出がしばらくできないとき、画面に警告を出す（今は表示だけ。レースは止めない。入力は見失った時点で0になっている）。
@@ -107,7 +115,7 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 - **注意**：基準は画面上の肩の高さなので、キャリブレーションの後に立つ位置（カメラからの距離）が変わるとずれる。Entry とレースで立つ位置を固定する前提。
 
 ## デバッグ（PoseTest シーン）
-- `TrackingRaceInputDebugViewer`：Source、トラッキング状態、見失いの警告の状態（Monitor がシーンにあれば。検出なしの秒数）（OK/LOST・2D/3D・縦横比）、キャリブレーション状態、Move の数値・スティック・x/y のグラフ、Boost/Shield の HOLDING とトリガー回数を表示する。
+- `TrackingRaceInputDebugViewer`：Jammer の行（ポーズ中は HOLDING、発射回数）と、左右の腕の「手首/しきい値・肘/しきい値・z/しきい値」（成立した腕は緑）。ほかに Source、トラッキング状態、見失いの警告の状態（Monitor がシーンにあれば。検出なしの秒数）（OK/LOST・2D/3D・縦横比）、キャリブレーション状態、Move の数値・スティック・x/y のグラフ、Boost/Shield の HOLDING とトリガー回数を表示する。
 - **C キー**：`_calibrationStartDelay`（1秒）待ってからキャリブレーション開始（テスト用）。待ち時間（「開始まで 0.6秒」）と測定の経過（「測定中 0.8 / 1.5秒」）を表示する。待ち中・測定中に押し直すとやり直し。
   - シーンに `PoseCalibrator` が無ければ、DebugViewer と同じオブジェクトに自動で追加する。
 - **X キー**：キャリブレーションの結果を消す（`PoseCalibration.Clear()`）。開始待ち・測定中なら中止する。未キャリブレーションの動きを確かめる用。
@@ -127,9 +135,16 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 - 2026-11-12：見失いの警告を追加（`TrackingLossMonitor`・`TrackingLossWarningView`、Receiver に `IsConnected`）。表示だけ・レースと Entry の両方に出す・時間は 2秒／0.5秒／1秒、で了承済み。UI は仮。
 
 - 2026-11-12：しゃがみの反応が遅かったため、`verticalSmoothingTime` を 0.1 → **0.01** に変更（PoseTest で確認して OK）。上下共通の値なので、バンザイ（y＋）も同じく速くなる。
+- 2026-11-12：妨害弾（`JammerPressed`）に「片手を前に突き出す」を割り当て。xy の重なり＋3Dモードでは z。成立までの待ち 0.08秒・z を使う・シールドに前腕の長さの条件を足す、で了承済み。しきい値は仮。
 
 ## 現状と残っていること
 - コンパイル確認済み（Unity 外）。**Unity での動作確認と値の調整はまだ**。
 - 縦横比の補正で、傾きの角度や横方向の距離が以前より正しく（大きく）出るようになった。3Dモードの胴の長さも以前（z を含む距離）と少し変わる。**Boost/Shield/傾きのしきい値は実機で調整し直す必要がありそう**。上下のしきい値（`raise*`・`crouch*`）は仮の値。
+- **【次回の課題】妨害弾とシールドが同時に発動する**（2026-11-12、PoseTest で確認）。値か条件の修正が必要。まず DebugViewer の `L:` `R:` の行と Shield の HOLDING を見て、どのケースかを切り分ける：
+  - (a) 突き出しきった状態でもシールドが成立している → 腕が真っすぐカメラを向いておらず、前腕が 0.3 以上に見えている。`shieldMinForearmRatio` を上げる（0.45 前後）。上げすぎると普通のシールドが出にくくなるので、シールドのポーズ時の前腕の長さも見る。
+  - (b) 腕を突き出す途中で一瞬シールドの形を通っている（Shield の Trigger だけ先に増える）→ シールドは待ち時間なしで成立するため。候補：シールドにも短い待ち時間（`shieldHoldTime`）を入れる／妨害弾のポーズに近い腕（肘と肩の距離が `jammerElbowRadiusRatio` × 1.5 以下など）はシールドの判定から外す／妨害弾のポーズ中はシールドを出さない（優先順位）。
+  - (c) 反対の腕がシールドの形になっている → 判定の問題ではなく、ポーズの取り方の問題。
+  - どれにするかは、切り分けの結果を見てユーザーと相談して決める。
+- 妨害弾：コンパイル確認済み（Unity 外）。**Unity での確認と値の調整はまだ**。腕がカメラを向く姿勢は姿勢推定が苦手なので、特に 2Dモード（YOLO）で関節が取れるかを確認する。シールドの前腕の長さの条件で、今までのシールドが出にくくなっていないかも確認する。
 - 見失いの警告：コンパイル確認済み（Unity 外）。**シーンへの配置と Unity での確認はまだ**（レース・Entry・PoseTest）。Entry には Receiver がまだ無い（TrackingInput.prefab は Bootstrapper が RaceInputProvider を必要とするので、Entry には uOscServer＋Receiver だけを置く必要がある）。正式な見た目は別途。
 - Entry シーンへの `PoseCalibrator` の組み込み（いつ `StartCalibration()` を呼ぶか、失敗時の演出）はこれから。

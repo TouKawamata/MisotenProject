@@ -73,6 +73,34 @@ public class TrackingRaceInputSettings
     [Tooltip("手首が肘よりも体の中心側にどれだけ寄っていれば良いかのマージン（胴の長さに対する比率）")]
     public float shieldInwardMarginRatio = 0.1f;
 
+    [Tooltip("前腕（肘〜手首）が画面上でこの長さ以上に見えていること（胴の長さに対する比率）。腕を前に突き出したとき（妨害弾）にシールドが出ないようにする")]
+    public float shieldMinForearmRatio = 0.3f;
+
+    [Header("Jammer（妨害弾：片手を前に突き出す）")]
+    [Tooltip("手首と肩の画面上の距離がこれ以下なら、手首が肩に重なって見えるとみなす（胴の長さに対する比率）")]
+    public float jammerWristRadiusRatio = 0.35f;
+
+    [Tooltip("肘と肩の画面上の距離がこれ以下なら、肘が肩に重なって見えるとみなす（胴の長さに対する比率）")]
+    public float jammerElbowRadiusRatio = 0.3f;
+
+    [Tooltip("3Dモードのとき、手首が肩より手前（カメラ側）に出ていることも条件にする（2Dモードでは見ない）")]
+    public bool jammerUseDepth = true;
+
+    [Tooltip("手首が肩よりこれ以上手前に出ていれば、前に突き出しているとみなす（胴の長さに対する比率。3Dモードのみ）")]
+    public float jammerDepthRatio = 0.2f;
+
+    [Tooltip("肩・肘・手首の信頼度のしきい値。腕がカメラを向くと関節が重なって信頼度が下がるので、共通の値より低めにする")]
+    [Range(0f, 1f)]
+    public float jammerMinVisibility = 0.3f;
+
+    [Tooltip("ポーズがこの秒数続いたら撃つ（腕を振る途中で一瞬重なったときの誤検知対策）")]
+    [Min(0f)]
+    public float jammerHoldTime = 0.08f;
+
+    [Tooltip("撃った後、腕を戻してこの秒数たったら次を撃てる（突き出したままでは連射しない）")]
+    [Min(0f)]
+    public float jammerReleaseTime = 0.15f;
+
     [Header("共通")]
     [Tooltip("この信頼度を下回るランドマークは未検出として扱う")]
     [Range(0f, 1f)]
