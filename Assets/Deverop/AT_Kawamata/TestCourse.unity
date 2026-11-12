@@ -9454,7 +9454,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
   m_PrefabInstance: {fileID: 659967152165127082}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894165661}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 14db904e0aab928438e033e2b94578d2, type: 3}
@@ -19097,11 +19097,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
   m_PrefabInstance: {fileID: 1890089503}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1894165661 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-  m_PrefabInstance: {fileID: 659967152165127082}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1896899495
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21559,10 +21554,6 @@ PrefabInstance:
       propertyPath: _boostHitProfile
       value: 
       objectReference: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
-    - target: {fileID: 4560963151100089494, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-      propertyPath: _currentTypeIndex
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4573234749840560132, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _switchToThirdPerson
       value: 0
@@ -21622,17 +21613,14 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6929844204703215832, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 659967152165127085}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
 --- !u!114 &659967152165127083 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: -7268944218637680035, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
   m_PrefabInstance: {fileID: 659967152165127082}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894165661}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 86c13d90c7c434943a5a2c30b8bb3aab, type: 3}
@@ -21643,29 +21631,12 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6976442047495844702, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
   m_PrefabInstance: {fileID: 659967152165127082}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894165661}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73de88d3061ba8b4284a14bbeb575985, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceInputProvider
---- !u!114 &659967152165127085
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894165661}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edf0cc6daff901b4081f409b4177c1ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JammerHitDebugger
-  _hitKey: 24
-  _racerManager: {fileID: 0}
-  _jammerLauncher: {fileID: 0}
-  _typeOverride: {fileID: 11400000, guid: 4389ad731f870e84c9db182c1a9ed8ea, type: 2}
-  _showStatus: 1
 --- !u!1001 &2667757041561019954
 PrefabInstance:
   m_ObjectHideFlags: 0
