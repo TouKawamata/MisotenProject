@@ -24,4 +24,8 @@ public interface IRaceInput
 
     // 押し続けているか（シールドの継続。離すと終了する）
     bool ShieldHeld { get; }
+
+    // このフレームで押されたか（妨害弾の発射。JammerLauncherを持つレーサーだけが撃つ）。
+    // 撃たない入力（トラッキング入力・CPUの判断など）は実装しなくてよい（常にfalse）。CPUに撃たせるときは、判断の側でtrueを返す。
+    bool JammerPressed => false;
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 // ・Jammer/Profiles：JammerProfileと、弾の種類6つ（減速／リングを減速リングに／視界反転（左右）／視界反転（上下）／左右移動が遅い／ブースト不可）
 // ・Jammer/Material/Jammer.mat、Jammer/Prefab/JammerProjectile.prefab（球。Colliderは無し）
 // ・Player.prefab：JammerLauncher（Profileと種類を登録）とViewFlipPresentationを付け、PlayerManagerのJammer Launcherに入れる
+// ・CPURacer.prefab：JammerLauncherを付け、CPUManagerのJammer Launcherに入れる（撃つかどうかはCPUの判断が決める）
 public static class JammerSetupMenu
 {
     private const string RootFolder = "Assets/Deverop/AT_Kawamata/Jammer";
@@ -13,6 +14,7 @@ public static class JammerSetupMenu
     private const string PrefabFolder = RootFolder + "/Prefab";
     private const string MaterialFolder = RootFolder + "/Material";
     private const string PlayerPrefabPath = "Assets/Deverop/AT_Kawamata/Prefab/Player.prefab";
+    private const string CpuPrefabPath = "Assets/Deverop/AT_Kawamata/Prefab/CPURacer.prefab";
 
     private static readonly Color ProjectileColor = new Color(1f, 0.25f, 0.85f);
 
@@ -36,6 +38,7 @@ public static class JammerSetupMenu
         JammerProjectile projectile = CreateProjectilePrefab(CreateMaterial());
         JammerProfile profile = CreateProfile(projectile);
         SetupPlayerPrefab(profile, types);
+        SetupCpuPrefab(profile, types);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -133,52 +136,71 @@ public static class JammerSetupMenu
         return profile;
     }
 
-    // Player.prefabを開いて、足りない部品を付けて保存する。すでに付いていて設定済みの項目は変えない。
+    // Player.prefab：発射台と、視界反転の画面の演出を付ける。
     private static void SetupPlayerPrefab(JammerProfile profile, JammerTypeProfile[] types)
     {
-        GameObject root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+        EditRacerPrefab(PlayerPrefabPath, (root, racerManager) =>
+        {
+            SetupLauncher(racerManager, profile, types);
+
+            ViewFlipPresentation viewFlip = GetOrAdd<ViewFlipPresentation>(racerManager.gameObject);
+            SerializedObject viewFlipSerialized = new SerializedObject(viewFlip);
+            SetIfEmpty(viewFlipSerialized.FindProperty("_racerManager"), racerManager);
+            SetIfEmpty(viewFlipSerialized.FindProperty("_camera"), root.GetComponentInChildren<Camera>(true));
+            viewFlipSerialized.ApplyModifiedPropertiesWithoutUndo();
+        });
+    }
+
+    // CPURacer.prefab：発射台だけを付ける（いつ撃つかはCPUの判断がIRaceInput.JammerPressedで決める。視界反転は入力の反転で受ける）。
+    private static void SetupCpuPrefab(JammerProfile profile, JammerTypeProfile[] types)
+    {
+        EditRacerPrefab(CpuPrefabPath, (root, racerManager) => SetupLauncher(racerManager, profile, types));
+    }
+
+    // プレハブを開いて、RacerManagerBaseを持つGameObjectに部品を付けて保存する。すでに付いていて設定済みの項目は変えない。
+    private static void EditRacerPrefab(string path, System.Action<GameObject, RacerManagerBase> edit)
+    {
+        GameObject root = PrefabUtility.LoadPrefabContents(path);
         try
         {
-            PlayerManager playerManager = root.GetComponentInChildren<PlayerManager>(true);
-            if (playerManager == null)
+            RacerManagerBase racerManager = root.GetComponentInChildren<RacerManagerBase>(true);
+            if (racerManager == null)
             {
-                Debug.LogError($"JammerSetupMenu: {PlayerPrefabPath} にPlayerManagerが見つかりません", AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath));
+                Debug.LogError($"JammerSetupMenu: {path} にRacerManagerBase（PlayerManager／CPUManager）が見つかりません", AssetDatabase.LoadAssetAtPath<GameObject>(path));
                 return;
             }
 
-            GameObject owner = playerManager.gameObject;
-            JammerLauncher launcher = GetOrAdd<JammerLauncher>(owner);
-            SerializedObject launcherSerialized = new SerializedObject(launcher);
-            SetIfEmpty(launcherSerialized.FindProperty("_profile"), profile);
-            SerializedProperty typeList = launcherSerialized.FindProperty("_types");
-            if (typeList.arraySize == 0)
-            {
-                typeList.arraySize = types.Length;
-                for (int i = 0; i < types.Length; i++)
-                {
-                    typeList.GetArrayElementAtIndex(i).objectReferenceValue = types[i];
-                }
-            }
-
-            launcherSerialized.ApplyModifiedPropertiesWithoutUndo();
-
-            ViewFlipPresentation viewFlip = GetOrAdd<ViewFlipPresentation>(owner);
-            SerializedObject viewFlipSerialized = new SerializedObject(viewFlip);
-            SetIfEmpty(viewFlipSerialized.FindProperty("_racerManager"), playerManager);
-            SetIfEmpty(viewFlipSerialized.FindProperty("_camera"), root.GetComponentInChildren<Camera>(true));
-            viewFlipSerialized.ApplyModifiedPropertiesWithoutUndo();
-
-            SerializedObject managerSerialized = new SerializedObject(playerManager);
-            SetIfEmpty(managerSerialized.FindProperty("_jammerLauncher"), launcher);
-            managerSerialized.ApplyModifiedPropertiesWithoutUndo();
-
-            PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
-            Debug.Log($"JammerSetupMenu: {PlayerPrefabPath} に妨害弾を組み込みました");
+            edit(root, racerManager);
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            Debug.Log($"JammerSetupMenu: {path} に妨害弾を組み込みました");
         }
         finally
         {
             PrefabUtility.UnloadPrefabContents(root);
         }
+    }
+
+    // 発射台を付け、Profileと種類を登録し、RacerManagerBaseのJammer Launcherに入れる。
+    private static void SetupLauncher(RacerManagerBase racerManager, JammerProfile profile, JammerTypeProfile[] types)
+    {
+        JammerLauncher launcher = GetOrAdd<JammerLauncher>(racerManager.gameObject);
+        SerializedObject launcherSerialized = new SerializedObject(launcher);
+        SetIfEmpty(launcherSerialized.FindProperty("_profile"), profile);
+        SerializedProperty typeList = launcherSerialized.FindProperty("_types");
+        if (typeList.arraySize == 0)
+        {
+            typeList.arraySize = types.Length;
+            for (int i = 0; i < types.Length; i++)
+            {
+                typeList.GetArrayElementAtIndex(i).objectReferenceValue = types[i];
+            }
+        }
+
+        launcherSerialized.ApplyModifiedPropertiesWithoutUndo();
+
+        SerializedObject managerSerialized = new SerializedObject(racerManager);
+        SetIfEmpty(managerSerialized.FindProperty("_jammerLauncher"), launcher);
+        managerSerialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static T GetOrAdd<T>(GameObject target) where T : Component

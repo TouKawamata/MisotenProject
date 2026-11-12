@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 // デバッグ用のキーボード入力。新Input System（Keyboard.current）のみを使用する。
 // このプロジェクトはActive Input HandlingがNew Input System専用のため、UnityEngine.Inputは使用不可。
-// 移動：A/D・←/→で左右、W/S・↑/↓で上下。ブースト：Space、シールド：左Shift。
+// 移動：A/D・←/→で左右、W/S・↑/↓で上下。ブースト：Space、シールド：左Shift、妨害弾：Q。
 public class KeyboardRaceInput : IRaceInput
 {
     public Vector2 Move
@@ -49,4 +49,6 @@ public class KeyboardRaceInput : IRaceInput
     public bool ShieldPressed => Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame;
 
     public bool ShieldHeld => Keyboard.current != null && Keyboard.current.leftShiftKey.isPressed;
+
+    public bool JammerPressed => Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
 }

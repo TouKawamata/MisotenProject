@@ -1,14 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-// 妨害弾の発射台。Playerプレハブに付け、PlayerManagerのJammer Launcherに入れる（PlayerManagerがゴール前のTickごとにTickを呼ぶ）。
-// 残弾・発射間隔・再装填を管理し、Qキーで、今の種類（Types のうち選んでいるもの）の弾を標的へ撃つ。
+// 妨害弾の発射台。レーサー（Player／CPU）のプレハブに付け、RacerManagerBaseのJammer Launcherに入れる（ゴール前のTickごとにTickが呼ばれる）。
+// 残弾・発射間隔・再装填を管理し、入力の「撃つ」（IRaceInput.JammerPressed。キーボードはQ）で、今の種類（Typesのうち選んでいるもの）の弾を標的へ撃つ。
 // ・レーサーを狙う種類：自分より順位が高いレーサーのうち、コース上の距離が一番近いレーサー（ゴール済みは除く）
 // ・リングを狙う種類：Ring Targetsのうち、自分より前にある一番近いもの（加速リングができるまでの仮の標的）
 // 標的がいなければ撃たない（弾は減らない）。弾は1発ずつ回復する（最大数より少ない間だけタイマーが進み、撃ってもリセットしない）。
 // 種類の切り替えは、Inspectorのボタン（JammerLauncherEditor）かSelectTypeで行う。
-// Qキーはトラッキング入力に割り当てが無いので、IRaceInputには足さず、KeyboardRaceInputと同じくKeyboard.currentを直接読む。
 public class JammerLauncher : MonoBehaviour
 {
     [SerializeField] private JammerProfile _profile;
@@ -42,6 +40,9 @@ public class JammerLauncher : MonoBehaviour
     // 次の1発が回復するまでの残り秒数。満タンなら0。
     public float ReloadRemainingTime => _profile != null && Ammo < MaxAmmo ? Mathf.Max(0f, _profile.ReloadDuration - _reloadElapsed) : 0f;
 
+    // 今撃てるか（残弾があり、発射間隔が過ぎていて、種類・弾のプレハブが設定されている）。標的がいるかは含めない。CPUの判断が読む。
+    public bool CanFire => _profile != null && _profile.ProjectilePrefab != null && CurrentType != null && Ammo > 0 && _fireIntervalTimer <= 0f;
+
     private void Awake()
     {
         ResetAmmo();
@@ -68,8 +69,9 @@ public class JammerLauncher : MonoBehaviour
         _isInitialized = true;
     }
 
-    // owner：撃つレーサー（自分）、racers：参加者全員、ownerGuide：自分のコースのガイド、canFire：撃てる状態か（スタン中はfalse）。
-    public void Tick(float deltaTime, IReadOnlyRacerData owner, IReadOnlyList<IReadOnlyRacerData> racers, ICourseGuide ownerGuide, bool canFire)
+    // owner：撃つレーサー（自分）、racers：参加者全員、ownerGuide：自分のコースのガイド。
+    // firePressed：このTickで撃つか（入力のJammerPressed。スタン中などはレーサー側がfalseにして渡す）。押していなくても、再装填は進む。
+    public void Tick(float deltaTime, IReadOnlyRacerData owner, IReadOnlyList<IReadOnlyRacerData> racers, ICourseGuide ownerGuide, bool firePressed)
     {
         if (_profile == null)
         {
@@ -83,13 +85,10 @@ public class JammerLauncher : MonoBehaviour
 
         TickReload(deltaTime);
 
-        Keyboard keyboard = Keyboard.current;
-        if (!canFire || keyboard == null || !keyboard.qKey.wasPressedThisFrame)
+        if (firePressed)
         {
-            return;
+            TryFire(owner, racers, ownerGuide);
         }
-
-        TryFire(owner, racers, ownerGuide);
     }
 
     private void TickReload(float deltaTime)

@@ -13,7 +13,7 @@ using UnityEngine;
 // 通常の接触（ブーストなし）の食い込みは、RacerContactResolverからIRacerContactBodyとして押し戻される。
 // コースギミックとの接触は、飛行のTickの直後にRacerGimmickSensorが判定し、ギミック（CourseGimmickBase）へIGimmickRacerとして自分を渡す。
 // ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止・視界反転）はRacerEffectsに集め、最高速度などに掛ける。
-// 妨害弾は当てられる側（IJammerHitReceiver）だけを持つ。撃つ側はPlayerのJammerLauncher。
+// 妨害弾は、当てられる側（IJammerHitReceiver）と、撃つ側（Jammer Launcherが設定されていれば、入力のJammerPressedで撃つ）の両方を持つ。
 public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer, IJammerHitReceiver
 {
     [SerializeField] private PlayerFlightController _flightController;
@@ -40,6 +40,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     [Header("通常の接触")]
     [Tooltip("他のレーサーとの食い込みの計算に使う体のCollider。未設定なら、このGameObjectのColliderを使う")]
     [SerializeField] private Collider _bodyCollider;
+
+    [Header("妨害弾")]
+    [Tooltip("妨害弾の発射台。入力のJammerPressed（キーボードはQ）で撃つ。未設定なら撃たない")]
+    [SerializeField] private JammerLauncher _jammerLauncher;
 
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs = true;
@@ -147,6 +151,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     // 防いだ後、シールドが再び使えるようになるまでの残り秒数。使えない間でなければ0。
     public float ShieldBrokenRemainingTime => _shield.BrokenRemainingTime;
+
+    // 今、妨害弾を撃てるか（発射台があり、残弾があって発射間隔が過ぎている。スタン中は撃てない）。標的がいるかは含めない。
+    public bool CanFireJammer => _jammerLauncher != null && _jammerLauncher.CanFire && !_stun.IsStunned;
+
+    // 妨害弾の残弾。発射台が無ければ0。
+    public int JammerAmmo => _jammerLauncher != null ? _jammerLauncher.Ammo : 0;
 
     // 参加者全員（自分も含む）のRacerData。CPUの入力・妨害弾が周りのレーサーを見るのに使う。RaceManagerがInitializeの前に渡す。
     public IReadOnlyList<IReadOnlyRacerData> Racers { get; private set; } = Array.Empty<IReadOnlyRacerData>();
@@ -343,6 +353,12 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
         _boost.Tick(deltaTime, canControl && input.BoostHeld);
         _shield.Tick(deltaTime, canControl && input.ShieldHeld);
+
+        // 妨害弾。スタン中は撃てない（再装填は進む）。
+        if (_jammerLauncher != null)
+        {
+            _jammerLauncher.Tick(deltaTime, data, Racers, CourseGuide, canControl && input.JammerPressed);
+        }
 
         CurrentProfile = _defaultProfile;
         float maxSpeed = _boost.CurrentMaxSpeed * _shield.MaxSpeedMultiplier * GetStunSpeedMultiplier() * _effects.MaxSpeedMultiplier;
