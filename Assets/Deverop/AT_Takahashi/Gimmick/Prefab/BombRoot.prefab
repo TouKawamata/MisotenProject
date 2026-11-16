@@ -1,0 +1,370 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &28200230958227253
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8991233343665664686}
+  - component: {fileID: 354793051893972281}
+  - component: {fileID: 7265328218469723187}
+  - component: {fileID: 1250338026097111976}
+  - component: {fileID: 2272111581511691591}
+  - component: {fileID: 4299734394799500872}
+  - component: {fileID: 8111221840669550089}
+  m_Layer: 0
+  m_Name: ExplosionEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8991233343665664686
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4453954494089799130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &354793051893972281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb43163518eb16646932a7bca761f7dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenNoiseEffectController
+  _grainNoise: {fileID: 7265328218469723187}
+  _triTone: {fileID: 1250338026097111976}
+  _chromaticAberration: {fileID: 2272111581511691591}
+  _rgbBlockNoise: {fileID: 4299734394799500872}
+  _glitchEffects: {fileID: 8111221840669550089}
+  _presets:
+  - _displayName: Test
+    _useGrainNoise: 1
+    _useTriTone: 0
+    _useChromaticAberration: 1
+    _useRGBBlockNoise: 1
+    _useBaseScanLine: 0
+    _useScanLineUp: 0
+    _useWaveformWarp: 1
+    _useDeformLine: 1
+  _selectedPresetIndex: 0
+  _stopUnusedEffects: 1
+  _stopAllOnDisable: 1
+--- !u!114 &7265328218469723187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d7e641194bf2514480d13e9a317eb1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GrainNoiseEffect
+  _playIntensity: 0.18
+  _grainScale: 1
+  _animateNoise: 1
+  _noiseSpeed: 24
+  _playDuration: 0.2
+  _playEase: 9
+  _stopDuration: 0.35
+  _stopEase: 4
+  _useUnscaledTime: 0
+--- !u!114 &1250338026097111976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33e118d5b6659c447bb756e3ee1a88c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TriToneEffect
+  _playIntensity: 1
+  _shadowColor: {r: 0.02, g: 0.05, b: 0.12, a: 1}
+  _midtoneColor: {r: 0.1, g: 0.55, b: 0.65, a: 1}
+  _highlightColor: {r: 1, g: 0.9, b: 0.55, a: 1}
+  _shadowThreshold: 0.33
+  _highlightThreshold: 0.66
+  _blendSoftness: 0.08
+  _playDuration: 0.25
+  _playEase: 9
+  _stopDuration: 0.4
+  _stopEase: 4
+  _useUnscaledTime: 0
+--- !u!114 &2272111581511691591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb9ad82c4de9bad43bc148da48097b9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChromaticAberrationEffect
+  _playIntensity: 0.015
+  _direction: {x: 1, y: 0}
+  _radial: 1
+  _center: {x: 0.5, y: 0.5}
+  _edgePower: 1.5
+  _preserveCenter: 0.15
+  _playDuration: 0.2
+  _playEase: 9
+  _stopDuration: 0.35
+  _stopEase: 4
+  _useUnscaledTime: 0
+--- !u!114 &4299734394799500872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fcd6ff966fd3a9429b436fda680bfc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RGBBlockNoiseEffect
+  _playIntensity: 1
+  _blockCount: {x: 12, y: 36}
+  _density: 0.25
+  _displacement: 0.04
+  _colorSeparation: 0.012
+  _verticalInfluence: 0.1
+  _animateNoise: 1
+  _noiseFrequency: 18
+  _playDuration: 0.08
+  _playEase: 9
+  _stopDuration: 0.2
+  _stopEase: 4
+  _useUnscaledTime: 0
+--- !u!114 &8111221840669550089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28200230958227253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ddab472ab237f4ab2894bef8af1909, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlitchEffectsController
+  glitchMaterial: {fileID: 2100000, guid: 4a00e5e6d955c3147a8fdb5ef1805b6d, type: 2}
+  effectDuration: 1
+--- !u!1 &1500456801947132595
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4102719973884161062}
+  - component: {fileID: 4691654657617222823}
+  - component: {fileID: 8857769421076234236}
+  - component: {fileID: 357293107179309549}
+  - component: {fileID: 906230349973877442}
+  m_Layer: 8
+  m_Name: Bomb
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4102719973884161062
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500456801947132595}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 42.2, y: 2.3683004, z: 4.17437}
+  m_LocalScale: {x: 13, y: 13, z: 13}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4453954494089799130}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &4691654657617222823
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500456801947132595}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &8857769421076234236
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500456801947132595}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!135 &357293107179309549
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500456801947132595}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.6
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &906230349973877442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1500456801947132595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edcc92b5bb578164b8d0a38e117ebf4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Bomb
+  _blastRadius: 30
+  _pushDistance: 50
+  _pushDuration: 0.6
+  _stunDuration: 0.8
+  _canBeBlockedByShield: 1
+  _onExploded:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 354793051893972281}
+        m_TargetAssemblyTypeName: ScreenNoiseEffectController, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  _effectDuration: 3
+  _onEffectStopped:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 354793051893972281}
+        m_TargetAssemblyTypeName: ScreenNoiseEffectController, Assembly-CSharp
+        m_MethodName: Stop
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+--- !u!1 &3274694118539919348
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4453954494089799130}
+  m_Layer: 0
+  m_Name: BombRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4453954494089799130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3274694118539919348}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -42.5, y: 9.2317, z: 66.57993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4102719973884161062}
+  - {fileID: 8991233343665664686}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
