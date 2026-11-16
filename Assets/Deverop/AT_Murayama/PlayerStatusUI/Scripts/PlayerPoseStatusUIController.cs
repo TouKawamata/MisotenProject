@@ -59,11 +59,20 @@ namespace AT_Murayama.PlayerStatusUI
 
         public enum SteeringPoseMode
         {
-            [InspectorName("しきい値で『左移動ポーズ』『右移動ポーズ』へ状態遷移")]
+            [InspectorName("しきい値で『上下左右移動ポーズ』へ状態遷移")]
             DiscreteStateSwitch = 0,
 
-            [InspectorName("Steering値 (-1〜+1) に応じて通常ポーズと左右ポーズを連続ブレンド")]
+            [InspectorName("入力値 (-1〜+1) に応じて通常ポーズと上下左右ポーズを連続ブレンド")]
             ContinuousBlend = 1
+        }
+
+        public enum DiagonalMoveMode
+        {
+            [InspectorName("合成しない：入力が強い方の軸（横 or 縦）のポーズのみ適用")]
+            SingleDominantAxis = 0,
+
+            [InspectorName("合成する：横移動ポーズと縦移動ポーズを2軸ブレンド合成")]
+            CombineAxes = 1
         }
 
         public enum MaterialDisplayMode
@@ -141,7 +150,7 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("状態を保持する PlayerManager（IsStunned / IsBoosting / IsShielding / 各イベントの取得元）")]
         [SerializeField] private PlayerManager _playerManager;
 
-        [Tooltip("左右移動量（Steering: -1〜+1）を保持する PlayerFlightController")]
+        [Tooltip("左右・上下移動量（MoveInput: X=左右, Y=上下）を保持する PlayerFlightController")]
         [SerializeField] private PlayerFlightController _flightController;
 
         [Header("2. 3Dキャラクターモデル ＆ ポーズプリセットデータ")]
@@ -157,13 +166,37 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("モデルの初期バインドポーズ（Tポーズ）のバックアップ")]
         [SerializeField] private List<BoneTransformSnapshot> _bindPoseSnapshots = new List<BoneTransformSnapshot>();
 
-        [Header("3. 状態判定・左右移動（Steering）遷移設定")]
-        [Tooltip("左右移動（Steering）のポーズ反映方式")]
+        [Header("3. 状態判定・上下左右移動・弾発射 遷移設定")]
+        [Tooltip("上下左右移動（MoveInput）のポーズ反映方式")]
         [SerializeField] private SteeringPoseMode _steeringMode = SteeringPoseMode.DiscreteStateSwitch;
 
-        [Tooltip("Steering（-1〜+1）がこの絶対値を超えたら『左移動』『右移動』ポーズへ切り替えるしきい値")]
+        [Tooltip("横入力（Steering: -1〜+1）がこの絶対値を超えたら『左移動』『右移動』ポーズへ切り替えるしきい値")]
         [Range(0.05f, 0.8f)]
         [SerializeField] private float _steeringThreshold = 0.2f;
+
+        [Tooltip("縦移動（上昇・下降：MoveInput.y）のポーズ反映を有効にするか")]
+        [SerializeField] private bool _enableVerticalPose = true;
+
+        [Tooltip("縦入力（Vertical: -1〜+1）がこの絶対値を超えたら『上昇』『下降』ポーズへ切り替えるしきい値")]
+        [Range(0.05f, 0.8f)]
+        [SerializeField] private float _verticalThreshold = 0.2f;
+
+        [Tooltip("斜め入力時（左右と上下が同時に入力されたとき）にポーズを合成するか、強い方の単一ポーズにするか")]
+        [SerializeField] private DiagonalMoveMode _diagonalMoveMode = DiagonalMoveMode.CombineAxes;
+
+        [Tooltip("【斜め合成ON時】横ポーズと縦ポーズを重ねる際のブレンド係数（1.0で100%加算、0.7〜0.85で自然な斜め姿勢）")]
+        [Range(0.3f, 1.0f)]
+        [SerializeField] private float _diagonalCombineWeight = 0.85f;
+
+        [Tooltip("弾発射（Jammer）時の専用ポーズ再生を有効にするか")]
+        [SerializeField] private bool _enableFirePose = true;
+
+        [Tooltip("弾発射時に発射ポーズを維持する秒数（経過後に元の状態へ滑らかに戻る）")]
+        [Range(0.1f, 1.5f)]
+        [SerializeField] private float _firePoseDuration = 0.45f;
+
+        [Tooltip("ブースト中・シールド展開中に弾を撃った場合も発射ポーズを優先表示するか")]
+        [SerializeField] private bool _allowFirePoseDuringBoostAndShield = true;
 
         [Tooltip("トラッキング入力の境界で状態が1フレームごとにパタパタ切り替わる（チャタリング）のを防ぐ最小維持秒数")]
         [Range(0f, 0.25f)]
@@ -313,6 +346,10 @@ namespace AT_Murayama.PlayerStatusUI
         [Range(-1f, 1f)]
         [SerializeField] private float _manualTestSteering = 0f;
 
+        [Tooltip("手動テストモード時の上下移動量（-1=下降, 0=中央, +1=上昇）")]
+        [Range(-1f, 1f)]
+        [SerializeField] private float _manualTestVertical = 0f;
+
         [Tooltip("現在インスペクター上でポーズ編集・保存対象として選択している状態")]
         [SerializeField] private PlayerUIState _selectedEditState = PlayerUIState.Normal;
 
@@ -366,7 +403,14 @@ namespace AT_Murayama.PlayerStatusUI
         private float _eventScalePunch = 0f;
 
         private bool _wasStunnedLastFrame = false;
+        private int _lastJammerAmmo = -1;
+        private float _firePoseRemainingTimer = 0f;
         private bool _wasHoloColorOverridden = false;
+
+        private const string Label_DiagonalUpLeft    = "MOVE UP-LEFT";
+        private const string Label_DiagonalUpRight   = "MOVE UP-RIGHT";
+        private const string Label_DiagonalDownLeft  = "MOVE DOWN-LEFT";
+        private const string Label_DiagonalDownRight = "MOVE DOWN-RIGHT";
         private Bounds _initialModelLocalBounds;
         private bool _hasValidModelBounds = false;
 
@@ -421,6 +465,76 @@ namespace AT_Murayama.PlayerStatusUI
         {
             get => _manualTestSteering;
             set => _manualTestSteering = value;
+        }
+
+        public float ManualTestVertical
+        {
+            get => _manualTestVertical;
+            set => _manualTestVertical = value;
+        }
+
+        public SteeringPoseMode SteeringMode
+        {
+            get => _steeringMode;
+            set => _steeringMode = value;
+        }
+
+        public bool EnableVerticalPose
+        {
+            get => _enableVerticalPose;
+            set => _enableVerticalPose = value;
+        }
+
+        public float VerticalThreshold
+        {
+            get => _verticalThreshold;
+            set => _verticalThreshold = Mathf.Clamp(value, 0.05f, 0.8f);
+        }
+
+        public DiagonalMoveMode DiagonalMove
+        {
+            get => _diagonalMoveMode;
+            set => _diagonalMoveMode = value;
+        }
+
+        public float DiagonalCombineWeight
+        {
+            get => _diagonalCombineWeight;
+            set => _diagonalCombineWeight = Mathf.Clamp(value, 0.3f, 1.0f);
+        }
+
+        public bool EnableFirePose
+        {
+            get => _enableFirePose;
+            set
+            {
+                _enableFirePose = value;
+                if (!_enableFirePose) _firePoseRemainingTimer = 0f;
+            }
+        }
+
+        public float FirePoseDuration
+        {
+            get => _firePoseDuration;
+            set => _firePoseDuration = Mathf.Clamp(value, 0.1f, 1.5f);
+        }
+
+        public bool AllowFirePoseDuringBoostAndShield
+        {
+            get => _allowFirePoseDuringBoostAndShield;
+            set => _allowFirePoseDuringBoostAndShield = value;
+        }
+
+        /// <summary>
+        /// 弾発射（Firing）専用ポーズを一定時間ワンショット再生します（テストまたは外部通知用）。
+        /// </summary>
+        public void TriggerFirePose(float customDuration = -1f)
+        {
+            if (!_enableFirePose) return;
+            _firePoseRemainingTimer = customDuration > 0f ? customDuration : _firePoseDuration;
+#if UNITY_EDITOR
+            StartEditorTransitionPreview(Mathf.Max(0.6f, _firePoseRemainingTimer + 0.35f));
+#endif
         }
 
         public PlayerUIState SelectedEditState
@@ -1039,22 +1153,35 @@ namespace AT_Murayama.PlayerStatusUI
                 }
             }
 
+            if (_firePoseRemainingTimer > 0f)
+            {
+                _firePoseRemainingTimer = Mathf.Max(0f, _firePoseRemainingTimer - dt);
+            }
+
             PlayerUIState targetState;
-            float steering;
+            Vector2 moveInput;
 
             if (_useManualTestMode)
             {
-                targetState = _manualTestState;
-                steering = _manualTestSteering;
+                moveInput = new Vector2(_manualTestSteering, _enableVerticalPose ? _manualTestVertical : 0f);
+                if (_enableFirePose && _firePoseRemainingTimer > 0f && _manualTestState != PlayerUIState.Stunned &&
+                    (_allowFirePoseDuringBoostAndShield || (_manualTestState != PlayerUIState.Boosting && _manualTestState != PlayerUIState.Shielding)))
+                {
+                    targetState = PlayerUIState.Firing;
+                }
+                else
+                {
+                    targetState = ResolveManualTestState(_manualTestState, moveInput);
+                }
             }
             else
             {
-                steering = EvaluateCurrentPlayerState(out targetState);
+                moveInput = EvaluateCurrentPlayerState(out targetState, dt);
             }
 
             _currentState = targetState;
 
-            UpdatePoseAndColors(targetState, steering, dt);
+            UpdatePoseAndColors(targetState, moveInput, dt);
             UpdateUILayoutAndCamera();
         }
 
@@ -1175,18 +1302,69 @@ namespace AT_Murayama.PlayerStatusUI
 #endif
         }
 
-        private float EvaluateCurrentPlayerState(out PlayerUIState resolvedState)
+        private PlayerUIState ResolveManualTestState(PlayerUIState requestedState, Vector2 moveInput)
         {
-            float steering = 0f;
+            if (requestedState != PlayerUIState.Normal || _steeringMode != SteeringPoseMode.DiscreteStateSwitch)
+            {
+                return requestedState;
+            }
+
+            return ResolveDominantDiscreteMoveState(moveInput);
+        }
+
+        private PlayerUIState ResolveDominantDiscreteMoveState(Vector2 moveInput)
+        {
+            float absX = Mathf.Abs(moveInput.x);
+            float absY = _enableVerticalPose ? Mathf.Abs(moveInput.y) : 0f;
+            bool hasX = absX >= _steeringThreshold;
+            bool hasY = _enableVerticalPose && absY >= _verticalThreshold;
+
+            if (hasX && hasY)
+            {
+                if (absX >= absY)
+                {
+                    return moveInput.x < 0f ? PlayerUIState.MoveLeft : PlayerUIState.MoveRight;
+                }
+                return moveInput.y >= 0f ? PlayerUIState.MoveUp : PlayerUIState.MoveDown;
+            }
+
+            if (hasX)
+            {
+                return moveInput.x < 0f ? PlayerUIState.MoveLeft : PlayerUIState.MoveRight;
+            }
+
+            if (hasY)
+            {
+                return moveInput.y >= 0f ? PlayerUIState.MoveUp : PlayerUIState.MoveDown;
+            }
+
+            return PlayerUIState.Normal;
+        }
+
+        private static bool IsLocomotionState(PlayerUIState state)
+        {
+            return state == PlayerUIState.Normal
+                || state == PlayerUIState.MoveLeft
+                || state == PlayerUIState.MoveRight
+                || state == PlayerUIState.MoveUp
+                || state == PlayerUIState.MoveDown;
+        }
+
+        private Vector2 EvaluateCurrentPlayerState(out PlayerUIState resolvedState, float dt)
+        {
+            Vector2 moveInput = Vector2.zero;
             if (_flightController != null)
             {
-                steering = Mathf.Clamp(_flightController.Steering, -1f, 1f);
+                Vector2 rawMove = _flightController.MoveInput;
+                moveInput.x = Mathf.Clamp(rawMove.x, -1f, 1f);
+                moveInput.y = _enableVerticalPose ? Mathf.Clamp(rawMove.y, -1f, 1f) : 0f;
             }
 
             if (_playerManager == null)
             {
+                _lastJammerAmmo = -1;
                 resolvedState = PlayerUIState.Normal;
-                return steering;
+                return moveInput;
             }
 
             bool isStunned = _playerManager.IsStunned;
@@ -1198,39 +1376,61 @@ namespace AT_Murayama.PlayerStatusUI
             }
             _wasStunnedLastFrame = isStunned;
 
+            // 弾発射（Jammer）のポーリング検知（他メンバースクリプト改変なし・0 GC Alloc）
+            if (Application.isPlaying)
+            {
+                int currentAmmo = _playerManager.JammerAmmo;
+                if (_enableFirePose && _lastJammerAmmo >= 0 && currentAmmo < _lastJammerAmmo && !isStunned)
+                {
+                    _firePoseRemainingTimer = _firePoseDuration;
+                }
+                _lastJammerAmmo = currentAmmo;
+            }
+            else
+            {
+                _lastJammerAmmo = -1;
+            }
+
             // 優先度1（最優先）：スタン
             if (isStunned)
             {
+                _firePoseRemainingTimer = 0f;
                 resolvedState = PlayerUIState.Stunned;
-                return steering;
+                return moveInput;
             }
 
-            // 優先度2：ブースト
+            // 優先度2（ブースト/シールドより優先設定時）：弾発射
+            if (_enableFirePose && _firePoseRemainingTimer > 0f && _allowFirePoseDuringBoostAndShield)
+            {
+                resolvedState = PlayerUIState.Firing;
+                return moveInput;
+            }
+
+            // 優先度3：ブースト
             if (_playerManager.IsBoosting)
             {
                 resolvedState = PlayerUIState.Boosting;
-                return steering;
+                return moveInput;
             }
 
-            // 優先度3：シールド
+            // 優先度4：シールド
             if (_playerManager.IsShielding)
             {
                 resolvedState = PlayerUIState.Shielding;
-                return steering;
+                return moveInput;
             }
 
-            // 優先度4：通常（Steeringに応じて左・右・中央）
+            // 優先度5（通常優先設定時）：弾発射
+            if (_enableFirePose && _firePoseRemainingTimer > 0f)
+            {
+                resolvedState = PlayerUIState.Firing;
+                return moveInput;
+            }
+
+            // 優先度6：通常移動（MoveInputのX/Yに応じて上下・左右・中央）
             if (_steeringMode == SteeringPoseMode.DiscreteStateSwitch)
             {
-                PlayerUIState desiredSubState = PlayerUIState.Normal;
-                if (steering <= -_steeringThreshold)
-                {
-                    desiredSubState = PlayerUIState.MoveLeft;
-                }
-                else if (steering >= _steeringThreshold)
-                {
-                    desiredSubState = PlayerUIState.MoveRight;
-                }
+                PlayerUIState desiredSubState = ResolveDominantDiscreteMoveState(moveInput);
 
                 // トラッキング境界での微細なチャタリング防止デバウンス
                 float now = Application.isPlaying ? Time.unscaledTime : (float)
@@ -1252,24 +1452,62 @@ namespace AT_Murayama.PlayerStatusUI
                 }
                 else
                 {
-                    resolvedState = (_currentState == PlayerUIState.Normal ||
-                                     _currentState == PlayerUIState.MoveLeft ||
-                                     _currentState == PlayerUIState.MoveRight)
+                    resolvedState = IsLocomotionState(_currentState)
                         ? _currentState
                         : desiredSubState;
                 }
-                return steering;
+                return moveInput;
             }
 
             resolvedState = PlayerUIState.Normal;
-            return steering;
+            return moveInput;
         }
 
         // ──────────────────────────────────────────────
         // 2. ポーズ補間（Slerp）＆ 色・マテリアル更新
         // ──────────────────────────────────────────────
 
-        private void UpdatePoseAndColors(PlayerUIState targetState, float steering, float dt)
+        private static bool TryGetSnapshotRotation(StatePoseEntry entry, int hintIndex, string bonePath, string boneName, out Quaternion localRot)
+        {
+            if (entry != null && entry.boneSnapshots != null)
+            {
+                int count = entry.boneSnapshots.Count;
+                if (hintIndex >= 0 && hintIndex < count)
+                {
+                    BoneTransformSnapshot hinted = entry.boneSnapshots[hintIndex];
+                    if (hinted.boneName == boneName)
+                    {
+                        localRot = hinted.localRotation;
+                        return true;
+                    }
+                }
+
+                for (int i = 0; i < count; i++)
+                {
+                    BoneTransformSnapshot s = entry.boneSnapshots[i];
+                    if (s.bonePath == bonePath || s.boneName == boneName)
+                    {
+                        localRot = s.localRotation;
+                        return true;
+                    }
+                }
+            }
+
+            localRot = Quaternion.identity;
+            return false;
+        }
+
+        private static Quaternion ShortestDeltaRotation(Quaternion baseRot, Quaternion axisRot)
+        {
+            Quaternion delta = Quaternion.Inverse(baseRot) * axisRot;
+            if (delta.w < 0f)
+            {
+                delta = new Quaternion(-delta.x, -delta.y, -delta.z, -delta.w);
+            }
+            return delta;
+        }
+
+        private void UpdatePoseAndColors(PlayerUIState targetState, Vector2 moveInput, float dt)
         {
             EnsureDefaultPosesInitialized();
 
@@ -1279,13 +1517,76 @@ namespace AT_Murayama.PlayerStatusUI
             float speed = Mathf.Max(1f, primaryEntry.transitionSpeed * _globalTransitionSpeedMultiplier);
             float tLerp = 1f - Mathf.Exp(-speed * dt);
 
-            // ContinuousBlend モードかつ Normal 状態の場合は、Steering量に応じて MoveLeft / MoveRight と連続ブレンド
-            StatePoseEntry secondaryEntry = null;
-            float secondaryBlend = 0f;
-            if (_steeringMode == SteeringPoseMode.ContinuousBlend && targetState == PlayerUIState.Normal && Mathf.Abs(steering) > 0.01f)
+            float steerX = Mathf.Clamp(moveInput.x, -1f, 1f);
+            float vertY = _enableVerticalPose ? Mathf.Clamp(moveInput.y, -1f, 1f) : 0f;
+
+            // 2軸移動ポーズ（横 MoveLeft/Right + 縦 MoveUp/Down）の合成可否と重みを算出
+            StatePoseEntry normalEntry = null;
+            StatePoseEntry xEntry = null;
+            StatePoseEntry yEntry = null;
+            float wX = 0f;
+            float wY = 0f;
+            bool useTwoAxisDeltaBlend = false;
+
+            if (IsLocomotionState(targetState))
             {
-                secondaryEntry = GetPoseEntry(steering < 0f ? PlayerUIState.MoveLeft : PlayerUIState.MoveRight);
-                secondaryBlend = Mathf.Clamp01(Mathf.Abs(steering));
+                bool hasInput = Mathf.Abs(steerX) > 0.01f || Mathf.Abs(vertY) > 0.01f;
+                bool isManualPresetOnly = _useManualTestMode && targetState != PlayerUIState.Normal && !hasInput;
+
+                if (!isManualPresetOnly)
+                {
+                    if (_steeringMode == SteeringPoseMode.ContinuousBlend)
+                    {
+                        float absX = Mathf.Abs(steerX);
+                        float absY = Mathf.Abs(vertY);
+
+                        if (_diagonalMoveMode == DiagonalMoveMode.SingleDominantAxis)
+                        {
+                            if (absX >= absY && absX > 0.01f)
+                            {
+                                wX = Mathf.Clamp01(absX);
+                            }
+                            else if (absY > 0.01f)
+                            {
+                                wY = Mathf.Clamp01(absY);
+                            }
+                        }
+                        else
+                        {
+                            wX = absX > 0.01f ? Mathf.Clamp01(absX) : 0f;
+                            wY = absY > 0.01f ? Mathf.Clamp01(absY) : 0f;
+                            if (wX > 0.01f && wY > 0.01f)
+                            {
+                                wX *= _diagonalCombineWeight;
+                                wY *= _diagonalCombineWeight;
+                            }
+                        }
+
+                        useTwoAxisDeltaBlend = (wX > 0.01f || wY > 0.01f);
+                    }
+                    else if (_diagonalMoveMode == DiagonalMoveMode.CombineAxes)
+                    {
+                        bool hasX = Mathf.Abs(steerX) >= _steeringThreshold;
+                        bool hasY = _enableVerticalPose && Mathf.Abs(vertY) >= _verticalThreshold;
+                        if (hasX && hasY)
+                        {
+                            wX = _diagonalCombineWeight;
+                            wY = _diagonalCombineWeight;
+                            useTwoAxisDeltaBlend = true;
+                        }
+                    }
+
+                    if (useTwoAxisDeltaBlend)
+                    {
+                        normalEntry = GetPoseEntry(PlayerUIState.Normal);
+                        xEntry = wX > 0.01f ? GetPoseEntry(steerX < 0f ? PlayerUIState.MoveLeft : PlayerUIState.MoveRight) : null;
+                        yEntry = wY > 0.01f ? GetPoseEntry(vertY >= 0f ? PlayerUIState.MoveUp : PlayerUIState.MoveDown) : null;
+                        if (normalEntry == null || (xEntry == null && yEntry == null))
+                        {
+                            useTwoAxisDeltaBlend = false;
+                        }
+                    }
+                }
             }
 
             float time = Application.isPlaying ? Time.time : (float)
@@ -1297,19 +1598,31 @@ namespace AT_Murayama.PlayerStatusUI
                 ;
 
             // 各ボーンの回転を Slerp で滑らかに更新
-            int count = primaryEntry.boneSnapshots.Count;
+            StatePoseEntry baseBoneEntry = useTwoAxisDeltaBlend ? normalEntry : primaryEntry;
+            int count = baseBoneEntry.boneSnapshots.Count;
             for (int i = 0; i < count; i++)
             {
-                BoneTransformSnapshot snap = primaryEntry.boneSnapshots[i];
+                BoneTransformSnapshot snap = baseBoneEntry.boneSnapshots[i];
                 Transform bone = FindBoneTransform(snap.bonePath, snap.boneName);
                 if (bone == null) continue;
 
                 Quaternion targetRot = snap.localRotation;
 
-                // ContinuousBlend 時の左右ブレンド
-                if (secondaryEntry != null && i < secondaryEntry.boneSnapshots.Count)
+                // Normal 基準の差分クォータニオン合成（横・縦の単一連続ブレンド ＆ 斜め2軸合成に対応）
+                if (useTwoAxisDeltaBlend)
                 {
-                    targetRot = Quaternion.Slerp(targetRot, secondaryEntry.boneSnapshots[i].localRotation, secondaryBlend);
+                    Quaternion combinedRot = targetRot;
+                    if (xEntry != null && TryGetSnapshotRotation(xEntry, i, snap.bonePath, snap.boneName, out Quaternion xRot))
+                    {
+                        Quaternion deltaX = ShortestDeltaRotation(targetRot, xRot);
+                        combinedRot = combinedRot * Quaternion.Slerp(Quaternion.identity, deltaX, wX);
+                    }
+                    if (yEntry != null && TryGetSnapshotRotation(yEntry, i, snap.bonePath, snap.boneName, out Quaternion yRot))
+                    {
+                        Quaternion deltaY = ShortestDeltaRotation(targetRot, yRot);
+                        combinedRot = combinedRot * Quaternion.Slerp(Quaternion.identity, deltaY, wY);
+                    }
+                    targetRot = combinedRot;
                 }
 
                 // アイドル呼吸揺れ・スタン時の揺れ加算
@@ -1345,10 +1658,23 @@ namespace AT_Murayama.PlayerStatusUI
             // モデルルートの回転・位置オフセット補間
             Vector3 targetRootRotOffset = primaryEntry.modelRootRotationOffset;
             Vector3 targetRootPosOffset = primaryEntry.modelRootPositionOffset;
-            if (secondaryEntry != null)
+            if (useTwoAxisDeltaBlend)
             {
-                targetRootRotOffset = Vector3.Lerp(targetRootRotOffset, secondaryEntry.modelRootRotationOffset, secondaryBlend);
-                targetRootPosOffset = Vector3.Lerp(targetRootPosOffset, secondaryEntry.modelRootPositionOffset, secondaryBlend);
+                Vector3 baseRot = normalEntry.modelRootRotationOffset;
+                Vector3 basePos = normalEntry.modelRootPositionOffset;
+                targetRootRotOffset = baseRot;
+                targetRootPosOffset = basePos;
+
+                if (xEntry != null)
+                {
+                    targetRootRotOffset += (xEntry.modelRootRotationOffset - baseRot) * wX;
+                    targetRootPosOffset += (xEntry.modelRootPositionOffset - basePos) * wX;
+                }
+                if (yEntry != null)
+                {
+                    targetRootRotOffset += (yEntry.modelRootRotationOffset - baseRot) * wY;
+                    targetRootPosOffset += (yEntry.modelRootPositionOffset - basePos) * wY;
+                }
             }
 
             _currentModelRootRotOffset = Vector3.Lerp(_currentModelRootRotOffset, targetRootRotOffset, tLerp);
@@ -1359,11 +1685,16 @@ namespace AT_Murayama.PlayerStatusUI
             Color targetRim = primaryEntry.rimGlowColor;
             Color targetAccent = primaryEntry.accentColor;
 
-            if (secondaryEntry != null)
+            if (useTwoAxisDeltaBlend)
             {
-                targetMain = Color.Lerp(targetMain, secondaryEntry.mainHoloColor, secondaryBlend);
-                targetRim = Color.Lerp(targetRim, secondaryEntry.rimGlowColor, secondaryBlend);
-                targetAccent = Color.Lerp(targetAccent, secondaryEntry.accentColor, secondaryBlend);
+                float maxAxisWeight = Mathf.Clamp01(Mathf.Max(wX, wY));
+                StatePoseEntry dominantAxisEntry = (xEntry != null && (yEntry == null || wX >= wY)) ? xEntry : yEntry;
+                if (dominantAxisEntry != null)
+                {
+                    targetMain = Color.Lerp(normalEntry.mainHoloColor, dominantAxisEntry.mainHoloColor, maxAxisWeight);
+                    targetRim = Color.Lerp(normalEntry.rimGlowColor, dominantAxisEntry.rimGlowColor, maxAxisWeight);
+                    targetAccent = Color.Lerp(normalEntry.accentColor, dominantAxisEntry.accentColor, maxAxisWeight);
+                }
             }
 
             // スタン中の警告点滅（状態カラー変更が有効な場合のみ）
@@ -1395,7 +1726,32 @@ namespace AT_Murayama.PlayerStatusUI
             // UIラベル更新
             if (_uiStateLabelText != null)
             {
-                _uiStateLabelText.text = primaryEntry.displayLabel;
+                string resolvedLabel = primaryEntry.displayLabel;
+                if (useTwoAxisDeltaBlend && xEntry != null && yEntry != null)
+                {
+                    bool isUp = vertY >= 0f;
+                    bool isLeft = steerX < 0f;
+                    resolvedLabel = isUp
+                        ? (isLeft ? Label_DiagonalUpLeft : Label_DiagonalUpRight)
+                        : (isLeft ? Label_DiagonalDownLeft : Label_DiagonalDownRight);
+                }
+                else if (useTwoAxisDeltaBlend && _steeringMode == SteeringPoseMode.ContinuousBlend)
+                {
+                    if (xEntry != null && wX >= wY && wX >= _steeringThreshold)
+                    {
+                        resolvedLabel = xEntry.displayLabel;
+                    }
+                    else if (yEntry != null && wY > wX && wY >= _verticalThreshold)
+                    {
+                        resolvedLabel = yEntry.displayLabel;
+                    }
+                    else
+                    {
+                        resolvedLabel = normalEntry.displayLabel;
+                    }
+                }
+
+                _uiStateLabelText.text = resolvedLabel;
                 Color labelCol = finalRim;
                 float maxComp = Mathf.Max(1f, Mathf.Max(labelCol.r, Mathf.Max(labelCol.g, labelCol.b)));
                 labelCol.r /= maxComp;
@@ -2871,20 +3227,199 @@ namespace AT_Murayama.PlayerStatusUI
 
         private void EnsureDefaultPosesInitialized()
         {
-            bool needsInit = (_inlineStatePoses == null || _inlineStatePoses.Count < 6);
-            if (!needsInit && _inlineStatePoses.Count > 0 && _inlineStatePoses[0].boneSnapshots.Count == 0)
+            if (_modelInstance == null || _allRigBones.Count == 0)
             {
-                needsInit = true;
+                return;
             }
 
-            if (needsInit && _modelInstance != null && _allRigBones.Count > 0)
+            bool isCompletelyEmpty = (_inlineStatePoses == null || _inlineStatePoses.Count == 0 || _inlineStatePoses[0].boneSnapshots.Count == 0);
+            if (isCompletelyEmpty && (_posePresetAsset == null || _posePresetAsset.statePoses.Count == 0))
             {
                 GenerateDefaultSixStatePoses();
+                return;
             }
+
+            EnsureMissingStatePosesGenerated();
         }
 
         /// <summary>
-        /// アニメーション知識がなくてもワンクリックで6状態（通常・左・右・ブースト・シールド・スタン）の
+        /// 既存シーンやアセットに保存済みのポーズ（従来の6状態など）を一切消さず、
+        /// 未登録の新規状態（MoveUp / MoveDown / Firing 等）だけを安全に追加生成します。
+        /// </summary>
+        public int EnsureMissingStatePosesGenerated()
+        {
+            if (_modelInstance == null || _allRigBones.Count == 0)
+            {
+                CacheBoneHierarchy();
+                if (_allRigBones.Count == 0) return 0;
+            }
+
+            List<StatePoseEntry> targetList = (_posePresetAsset != null && _posePresetAsset.statePoses.Count > 0)
+                ? _posePresetAsset.statePoses
+                : _inlineStatePoses;
+
+            if (targetList == null) return 0;
+
+            bool hasMissing = false;
+            foreach (PlayerUIState state in Enum.GetValues(typeof(PlayerUIState)))
+            {
+                StatePoseEntry existing = null;
+                for (int i = 0; i < targetList.Count; i++)
+                {
+                    if (targetList[i] != null && targetList[i].state == state)
+                    {
+                        existing = targetList[i];
+                        break;
+                    }
+                }
+
+                if (existing == null || existing.boneSnapshots == null || existing.boneSnapshots.Count == 0)
+                {
+                    hasMissing = true;
+                    break;
+                }
+            }
+
+            if (!hasMissing) return 0;
+
+            List<BoneTransformSnapshot> bindList = (_posePresetAsset != null && _posePresetAsset.bindPoseSnapshots.Count > 0)
+                ? _posePresetAsset.bindPoseSnapshots
+                : _bindPoseSnapshots;
+            if (bindList == null || bindList.Count == 0)
+            {
+                // バインドポーズ未記録時は既存データの破壊を防ぐため生成を行わない
+                return 0;
+            }
+
+            // 現在のボーン姿勢を一時退避（Play中や編集中に見た目がチラつかないように復元する）
+            int boneCount = _allRigBones.Count;
+            Quaternion[] savedLocalRotations = new Quaternion[boneCount];
+            Vector3[] savedLocalPositions = new Vector3[boneCount];
+            for (int i = 0; i < boneCount; i++)
+            {
+                Transform b = _allRigBones[i];
+                if (b != null)
+                {
+                    savedLocalRotations[i] = b.localRotation;
+                    savedLocalPositions[i] = b.localPosition;
+                }
+            }
+
+            Quaternion savedModelRot = _modelInstance.transform.rotation;
+            Vector3 savedRootRotOffset = _currentModelRootRotOffset;
+            Vector3 savedRootPosOffset = _currentModelRootPosOffset;
+
+            _modelInstance.transform.rotation = Quaternion.identity;
+            ResetModelToBindPose();
+            ComputeCharacterAxesInModelSpace(out Vector3 charUp, out Vector3 charForward, out Vector3 charLeft, out Vector3 charRight);
+
+            int addedCount = 0;
+            foreach (PlayerUIState state in Enum.GetValues(typeof(PlayerUIState)))
+            {
+                StatePoseEntry existing = null;
+                for (int i = 0; i < targetList.Count; i++)
+                {
+                    if (targetList[i] != null && targetList[i].state == state)
+                    {
+                        existing = targetList[i];
+                        break;
+                    }
+                }
+
+                if (existing != null && existing.boneSnapshots != null && existing.boneSnapshots.Count > 0)
+                {
+                    continue;
+                }
+
+                ResetModelToBindPose();
+                StatePoseEntry entry = existing ?? PlayerPosePresetData.CreateDefaultMetadataEntry(state);
+                ApplyProceduralPoseInBindSpace(state, entry, charUp, charForward, charLeft, charRight);
+                CaptureCurrentPoseToList(entry.boneSnapshots);
+                if (existing == null)
+                {
+                    targetList.Add(entry);
+                }
+                addedCount++;
+            }
+
+            if (addedCount > 0)
+            {
+                if (_posePresetAsset != null && ReferenceEquals(targetList, _posePresetAsset.statePoses))
+                {
+                    // アセット側へ追加した場合は内蔵リストも同期
+                    _inlineStatePoses.Clear();
+                    for (int i = 0; i < _posePresetAsset.statePoses.Count; i++)
+                    {
+                        StatePoseEntry src = _posePresetAsset.statePoses[i];
+                        _inlineStatePoses.Add(new StatePoseEntry
+                        {
+                            state = src.state,
+                            displayLabel = src.displayLabel,
+                            transitionSpeed = src.transitionSpeed,
+                            mainHoloColor = src.mainHoloColor,
+                            rimGlowColor = src.rimGlowColor,
+                            accentColor = src.accentColor,
+                            modelRootRotationOffset = src.modelRootRotationOffset,
+                            modelRootPositionOffset = src.modelRootPositionOffset,
+                            boneSnapshots = new List<BoneTransformSnapshot>(src.boneSnapshots)
+                        });
+                    }
+#if UNITY_EDITOR
+                    UnityEditor.EditorUtility.SetDirty(_posePresetAsset);
+#endif
+                }
+                else
+                {
+                    SyncInlineAndAssetPoses();
+                }
+            }
+
+            // 一時変更をすべて元に戻す
+            _modelInstance.transform.rotation = savedModelRot;
+            for (int i = 0; i < boneCount; i++)
+            {
+                Transform b = _allRigBones[i];
+                if (b != null)
+                {
+                    b.localRotation = savedLocalRotations[i];
+                    b.localPosition = savedLocalPositions[i];
+                    _currentSmoothedRotations[b] = savedLocalRotations[i];
+                }
+            }
+            _currentModelRootRotOffset = savedRootRotOffset;
+            _currentModelRootPosOffset = savedRootPosOffset;
+
+            return addedCount;
+        }
+
+        private void ComputeCharacterAxesInModelSpace(out Vector3 charUp, out Vector3 charForward, out Vector3 charLeft, out Vector3 charRight)
+        {
+            Transform spine0 = FindBoneTransform(null, "spine_C0_0_jnt");
+            Transform head   = FindBoneTransform(null, "neck_C0_head_jnt");
+            Transform armL0  = FindBoneTransform(null, "arm_L0_0_jnt");
+            Transform armR0  = FindBoneTransform(null, "arm_R0_0_jnt");
+            Transform footL0 = FindBoneTransform(null, "foot_L0_0_jnt");
+            Transform footL1 = FindBoneTransform(null, "foot_L0_1_jnt");
+
+            charUp = (head != null && spine0 != null)
+                ? (head.position - spine0.position).normalized
+                : Vector3.up;
+            if (charUp.sqrMagnitude < 0.01f) charUp = Vector3.up;
+
+            charLeft = (armL0 != null && armR0 != null)
+                ? Vector3.ProjectOnPlane(armL0.position - armR0.position, charUp).normalized
+                : Vector3.right;
+            if (charLeft.sqrMagnitude < 0.01f) charLeft = Vector3.right;
+            charRight = -charLeft;
+
+            charForward = (footL1 != null && footL0 != null)
+                ? Vector3.ProjectOnPlane(footL1.position - footL0.position, charUp).normalized
+                : Vector3.forward;
+            if (charForward.sqrMagnitude < 0.01f) charForward = Vector3.forward;
+        }
+
+        /// <summary>
+        /// アニメーション知識がなくてもワンクリックで全9状態（通常・上下左右・ブースト・シールド・スタン・発射）の
         /// カッコいいポーズを Bind Pose（Tポーズ）から幾何学的に自動計算して構築します。
         /// </summary>
         public void GenerateDefaultSixStatePoses()
@@ -2904,28 +3439,7 @@ namespace AT_Murayama.PlayerStatusUI
             _modelInstance.transform.rotation = Quaternion.identity;
             ResetModelToBindPose();
 
-            Transform spine0 = FindBoneTransform(null, "spine_C0_0_jnt");
-            Transform head   = FindBoneTransform(null, "neck_C0_head_jnt");
-            Transform armL0  = FindBoneTransform(null, "arm_L0_0_jnt");
-            Transform armR0  = FindBoneTransform(null, "arm_R0_0_jnt");
-            Transform footL0 = FindBoneTransform(null, "foot_L0_0_jnt");
-            Transform footL1 = FindBoneTransform(null, "foot_L0_1_jnt");
-
-            Vector3 charUp = (head != null && spine0 != null)
-                ? (head.position - spine0.position).normalized
-                : Vector3.up;
-            if (charUp.sqrMagnitude < 0.01f) charUp = Vector3.up;
-
-            Vector3 charLeft = (armL0 != null && armR0 != null)
-                ? Vector3.ProjectOnPlane(armL0.position - armR0.position, charUp).normalized
-                : Vector3.right;
-            if (charLeft.sqrMagnitude < 0.01f) charLeft = Vector3.right;
-            Vector3 charRight = -charLeft;
-
-            Vector3 charForward = (footL1 != null && footL0 != null)
-                ? Vector3.ProjectOnPlane(footL1.position - footL0.position, charUp).normalized
-                : Vector3.forward;
-            if (charForward.sqrMagnitude < 0.01f) charForward = Vector3.forward;
+            ComputeCharacterAxesInModelSpace(out Vector3 charUp, out Vector3 charForward, out Vector3 charLeft, out Vector3 charRight);
 
             _inlineStatePoses.Clear();
             foreach (PlayerUIState state in Enum.GetValues(typeof(PlayerUIState)))
@@ -3093,6 +3607,74 @@ namespace AT_Murayama.PlayerStatusUI
 
                     RotateBoneWorld("leg_R0_0_jnt", -up, fwd, 12f);
                     RotateBoneWorld("leg_R0_4_jnt", -up, -fwd, 28f);
+                    break;
+
+                case PlayerUIState.MoveUp:
+                    entry.modelRootRotationOffset = new Vector3(-12f, 0f, 0f);
+                    RotateBoneWorld("spine_C0_1_jnt", up, -fwd, 10f);
+                    RotateBoneWorld("spine_C0_2_jnt", up, -fwd, 8f);
+                    RotateBoneWorld("spine_C0_3_jnt", up, -fwd, 8f);
+                    RotateBoneWorld("neck_C0_0_jnt", up, -fwd, 14f);
+
+                    RotateBoneWorld("arm_L0_0_jnt", left, -up, 42f);
+                    RotateBoneWorld("arm_L0_0_jnt", left, -fwd, 16f);
+                    RotateBoneWorld("arm_L0_4_jnt", -up, fwd, 24f);
+
+                    RotateBoneWorld("arm_R0_0_jnt", right, -up, 42f);
+                    RotateBoneWorld("arm_R0_0_jnt", right, -fwd, 16f);
+                    RotateBoneWorld("arm_R0_4_jnt", -up, fwd, 24f);
+
+                    RotateBoneWorld("leg_L0_0_jnt", -up, -fwd, 10f);
+                    RotateBoneWorld("leg_L0_4_jnt", -up, -fwd, 18f);
+
+                    RotateBoneWorld("leg_R0_0_jnt", -up, -fwd, 10f);
+                    RotateBoneWorld("leg_R0_4_jnt", -up, -fwd, 18f);
+                    break;
+
+                case PlayerUIState.MoveDown:
+                    entry.modelRootRotationOffset = new Vector3(12f, 0f, 0f);
+                    RotateBoneWorld("spine_C0_1_jnt", up, fwd, 14f);
+                    RotateBoneWorld("spine_C0_2_jnt", up, fwd, 10f);
+                    RotateBoneWorld("spine_C0_3_jnt", up, fwd, 10f);
+                    RotateBoneWorld("neck_C0_0_jnt", up, fwd, 10f);
+
+                    RotateBoneWorld("arm_L0_0_jnt", left, -up, 62f);
+                    RotateBoneWorld("arm_L0_0_jnt", left, fwd, 20f);
+                    RotateBoneWorld("arm_L0_4_jnt", -up, fwd, 52f);
+
+                    RotateBoneWorld("arm_R0_0_jnt", right, -up, 62f);
+                    RotateBoneWorld("arm_R0_0_jnt", right, fwd, 20f);
+                    RotateBoneWorld("arm_R0_4_jnt", -up, fwd, 52f);
+
+                    RotateBoneWorld("leg_L0_0_jnt", -up, fwd, 28f);
+                    RotateBoneWorld("leg_L0_4_jnt", -up, -fwd, 50f);
+
+                    RotateBoneWorld("leg_R0_0_jnt", -up, fwd, 28f);
+                    RotateBoneWorld("leg_R0_4_jnt", -up, -fwd, 50f);
+                    break;
+
+                case PlayerUIState.Firing:
+                    entry.modelRootRotationOffset = new Vector3(4f, -10f, 0f);
+                    RotateBoneWorld("spine_C0_1_jnt", fwd, left, 14f);
+                    RotateBoneWorld("spine_C0_2_jnt", fwd, left, 12f);
+                    RotateBoneWorld("spine_C0_3_jnt", up, fwd, 8f);
+                    RotateBoneWorld("neck_C0_0_jnt", left, fwd, 12f);
+
+                    // 右腕を前方へ突き出して発射する構え
+                    RotateBoneWorld("arm_R0_0_jnt", right, fwd, 86f);
+                    RotateBoneWorld("arm_R0_0_jnt", up, fwd, 6f);
+                    RotateBoneWorld("arm_R0_4_jnt", -up, fwd, 12f);
+
+                    // 左腕はバランスを取って後方・下へ引く
+                    RotateBoneWorld("arm_L0_0_jnt", left, -up, 52f);
+                    RotateBoneWorld("arm_L0_0_jnt", left, -fwd, 28f);
+                    RotateBoneWorld("arm_L0_4_jnt", -up, fwd, 48f);
+
+                    RotateBoneWorld("leg_L0_0_jnt", -up, fwd, 20f);
+                    RotateBoneWorld("leg_L0_4_jnt", -up, -fwd, 30f);
+
+                    RotateBoneWorld("leg_R0_0_jnt", -up, -fwd, 12f);
+                    RotateBoneWorld("leg_R0_4_jnt", -up, -fwd, 22f);
                     break;
             }
         }

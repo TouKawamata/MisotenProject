@@ -54,7 +54,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
 
             Color prevBg = GUI.backgroundColor;
             GUI.backgroundColor = new Color(0.45f, 0.85f, 1.0f);
-            if (GUILayout.Button("🔄 ステージ・UIを再構築 ＆ 6状態の初期サンプルポーズを自動セットアップ", GUILayout.Height(30)))
+            if (GUILayout.Button("🔄 ステージ・UIを再構築 ＆ 全9状態（上下左右・発射対応）の初期サンプルポーズを再生成", GUILayout.Height(30)))
             {
                 Undo.RecordObject(controller, "Rebuild Player Pose UI Stage");
                 controller.RebuildStageAndUI();
@@ -1317,39 +1317,85 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             GUI.backgroundColor = new Color(0.35f, 0.85f, 1.0f);
             if (GUILayout.Button("🟢 通常\n(Normal)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.Normal, 0f);
+                SetTestState(controller, PlayerUIState.Normal, 0f, 0f);
             }
             if (GUILayout.Button("⬅️ 左移動\n(MoveLeft)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.MoveLeft, -1f);
+                SetTestState(controller, PlayerUIState.MoveLeft, -1f, 0f);
             }
             if (GUILayout.Button("➡️ 右移動\n(MoveRight)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.MoveRight, 1f);
+                SetTestState(controller, PlayerUIState.MoveRight, 1f, 0f);
             }
             EditorGUILayout.EndHorizontal();
 
-            // 2段目：ブースト・シールド・スタン（最優先）
+            // 2段目：上昇・下降・弾発射（新状態）
+            EditorGUILayout.BeginHorizontal();
+            GUI.backgroundColor = new Color(0.45f, 0.90f, 1.0f);
+            if (GUILayout.Button("⬆️ 上昇\n(MoveUp)", GUILayout.Height(36)))
+            {
+                SetTestState(controller, PlayerUIState.MoveUp, 0f, 1f);
+            }
+            if (GUILayout.Button("⬇️ 下降\n(MoveDown)", GUILayout.Height(36)))
+            {
+                SetTestState(controller, PlayerUIState.MoveDown, 0f, -1f);
+            }
+            GUI.backgroundColor = new Color(1.0f, 0.85f, 0.40f);
+            if (GUILayout.Button("🎯 弾発射\n(Firing)", GUILayout.Height(36)))
+            {
+                SetTestState(controller, PlayerUIState.Firing, 0f, 0f);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            // 3段目：ブースト・シールド・スタン（最優先）
             EditorGUILayout.BeginHorizontal();
             GUI.backgroundColor = new Color(1.0f, 0.65f, 0.3f);
             if (GUILayout.Button("🔥 ブースト\n(Boosting)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.Boosting, 0f);
+                SetTestState(controller, PlayerUIState.Boosting, 0f, 0f);
                 controller.TriggerEventFlash(new Color(4.5f, 2.2f, 0.5f, 1.0f), 1.0f, 0.12f);
             }
 
             GUI.backgroundColor = new Color(0.35f, 0.95f, 0.65f);
             if (GUILayout.Button("🛡️ シールド\n(Shielding)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.Shielding, 0f);
+                SetTestState(controller, PlayerUIState.Shielding, 0f, 0f);
                 controller.TriggerEventFlash(new Color(0.5f, 4.8f, 2.5f, 1.0f), 0.9f, 0.10f);
             }
 
             GUI.backgroundColor = new Color(1.0f, 0.45f, 0.45f);
             if (GUILayout.Button("💫 スタン [最優先]\n(Stunned)", GUILayout.Height(36)))
             {
-                SetTestState(controller, PlayerUIState.Stunned, 0f);
+                SetTestState(controller, PlayerUIState.Stunned, 0f, 0f);
                 controller.TriggerEventFlash(new Color(5.0f, 0.6f, 0.6f, 1.0f), 1.35f, 0.16f);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            // 斜め移動テスト＆発射ワンショットテスト
+            EditorGUILayout.BeginHorizontal();
+            GUI.backgroundColor = new Color(0.55f, 0.88f, 1.0f);
+            if (GUILayout.Button("↗️ 斜め右上テスト\n(Steer:+1, Vert:+1)", GUILayout.Height(32)))
+            {
+                SetTestState(controller, PlayerUIState.Normal, 1f, 1f);
+            }
+            if (GUILayout.Button("↙️ 斜め左下テスト\n(Steer:-1, Vert:-1)", GUILayout.Height(32)))
+            {
+                SetTestState(controller, PlayerUIState.Normal, -1f, -1f);
+            }
+            GUI.backgroundColor = new Color(1.0f, 0.82f, 0.45f);
+            if (GUILayout.Button("🔫 発射ワンショット\n(TriggerFirePose)", GUILayout.Height(32)))
+            {
+                if (Application.isPlaying)
+                {
+                    Undo.RecordObject(controller, "Trigger Fire Pose");
+                    controller.UseManualTestMode = false;
+                    controller.TriggerFirePose();
+                    EditorUtility.SetDirty(controller);
+                }
+                else
+                {
+                    SetTestState(controller, PlayerUIState.Firing, 0f, 0f);
+                }
             }
             EditorGUILayout.EndHorizontal();
 
@@ -1357,8 +1403,45 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             GUI.backgroundColor = new Color(0.55f, 1.0f, 0.85f);
             if (GUILayout.Button("⚡ シールド防御成功瞬間（ShieldBlocked フラッシュ演出）をテスト発火", GUILayout.Height(24)))
             {
-                SetTestState(controller, PlayerUIState.Shielding, 0f);
+                SetTestState(controller, PlayerUIState.Shielding, 0f, 0f);
                 controller.TriggerEventFlash(new Color(3.5f, 6.0f, 4.5f, 1.0f), 1.5f, 0.22f);
+            }
+
+            // 斜め合成モード / 連続ブレンドモード比較ワンクリック切替
+            EditorGUILayout.Space(2);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                bool isCombine = controller.DiagonalMove == PlayerPoseStatusUIController.DiagonalMoveMode.CombineAxes;
+                GUI.backgroundColor = isCombine ? new Color(0.45f, 0.90f, 1.0f) : new Color(0.95f, 0.82f, 0.55f);
+                string diagLabel = isCombine
+                    ? "↗️ 斜め入力: [ 合成する (CombineAxes) ]"
+                    : "↗️ 斜め入力: [ 合成しない・強い軸優先 ]";
+                if (GUILayout.Button(diagLabel, GUILayout.Height(24)))
+                {
+                    Undo.RecordObject(controller, "Toggle Diagonal Move Mode");
+                    controller.DiagonalMove = isCombine
+                        ? PlayerPoseStatusUIController.DiagonalMoveMode.SingleDominantAxis
+                        : PlayerPoseStatusUIController.DiagonalMoveMode.CombineAxes;
+                    controller.StartEditorTransitionPreview(0.5f);
+                    EditorUtility.SetDirty(controller);
+                    SceneView.RepaintAll();
+                }
+
+                bool isContinuous = controller.SteeringMode == PlayerPoseStatusUIController.SteeringPoseMode.ContinuousBlend;
+                GUI.backgroundColor = isContinuous ? new Color(0.45f, 0.95f, 0.75f) : new Color(0.85f, 0.85f, 0.95f);
+                string steerModeLabel = isContinuous
+                    ? "🔄 補間: [ 連続ブレンド ]"
+                    : "🔄 補間: [ 離散切替 ]";
+                if (GUILayout.Button(steerModeLabel, GUILayout.Height(24), GUILayout.Width(160)))
+                {
+                    Undo.RecordObject(controller, "Toggle Steering Pose Mode");
+                    controller.SteeringMode = isContinuous
+                        ? PlayerPoseStatusUIController.SteeringPoseMode.DiscreteStateSwitch
+                        : PlayerPoseStatusUIController.SteeringPoseMode.ContinuousBlend;
+                    controller.StartEditorTransitionPreview(0.5f);
+                    EditorUtility.SetDirty(controller);
+                    SceneView.RepaintAll();
+                }
             }
 
             // 状態カラー変更のクイック切替（テスト用）
@@ -1380,7 +1463,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
 
             GUI.backgroundColor = prevBg;
 
-            // Steering スライダー
+            // Steering スライダー（左右）
             EditorGUI.BeginChangeCheck();
             float newSteer = EditorGUILayout.Slider("手動 Steering (-1:左 〜 +1:右)", controller.ManualTestSteering, -1f, 1f);
             if (EditorGUI.EndChangeCheck())
@@ -1388,8 +1471,30 @@ namespace AT_Murayama.PlayerStatusUI.Editor
                 Undo.RecordObject(controller, "Change Manual Steering");
                 controller.UseManualTestMode = true;
                 controller.ManualTestSteering = newSteer;
-                if (Mathf.Abs(newSteer) < 0.05f &&
-                    (controller.ManualTestState == PlayerUIState.MoveLeft || controller.ManualTestState == PlayerUIState.MoveRight))
+                if (controller.ManualTestState == PlayerUIState.MoveLeft ||
+                    controller.ManualTestState == PlayerUIState.MoveRight ||
+                    controller.ManualTestState == PlayerUIState.MoveUp ||
+                    controller.ManualTestState == PlayerUIState.MoveDown)
+                {
+                    controller.ManualTestState = PlayerUIState.Normal;
+                }
+                controller.StartEditorTransitionPreview(0.5f);
+                EditorUtility.SetDirty(controller);
+                SceneView.RepaintAll();
+            }
+
+            // Vertical スライダー（上下）
+            EditorGUI.BeginChangeCheck();
+            float newVert = EditorGUILayout.Slider("手動 Vertical (-1:下 〜 +1:上)", controller.ManualTestVertical, -1f, 1f);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(controller, "Change Manual Vertical");
+                controller.UseManualTestMode = true;
+                controller.ManualTestVertical = newVert;
+                if (controller.ManualTestState == PlayerUIState.MoveLeft ||
+                    controller.ManualTestState == PlayerUIState.MoveRight ||
+                    controller.ManualTestState == PlayerUIState.MoveUp ||
+                    controller.ManualTestState == PlayerUIState.MoveDown)
                 {
                     controller.ManualTestState = PlayerUIState.Normal;
                 }
@@ -1399,7 +1504,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             }
 
             EditorGUILayout.Space(6);
-            if (GUILayout.Button("🧪 全UIシステム・状態カラー・GhostRimパルス無効化 自動テストを実行 (全12項目)", GUILayout.Height(24)))
+            if (GUILayout.Button("🧪 全UIシステム・上下移動＆発射ポーズ 自動テストを実行 (全13項目)", GUILayout.Height(24)))
             {
                 UILayoutSystemTest.RunAllTestsAndSaveLog();
             }
@@ -1490,6 +1595,17 @@ namespace AT_Murayama.PlayerStatusUI.Editor
 
             EditorGUILayout.Space(3);
 
+            // 不足している新状態の初期ポーズのみ安全に自動追加（既存ポーズは一切上書きしない）
+            GUI.backgroundColor = new Color(0.55f, 0.90f, 1.0f);
+            if (GUILayout.Button("🆕 不足状態（上昇・下降・発射）の初期ポーズのみ自動追加（既存維持）", GUILayout.Height(26)))
+            {
+                Undo.RecordObject(controller, "Append Missing State Poses");
+                int addedCount = controller.EnsureMissingStatePosesGenerated();
+                EditorUtility.SetDirty(controller);
+                SceneView.RepaintAll();
+                Debug.Log($"[PlayerPoseStatusUIControllerEditor] 不足ポーズの追加処理が完了しました（追加数: {addedCount}件 / 既存ポーズは保持）");
+            }
+
             // ScriptableObject アセットとして書き出し保存
             GUI.backgroundColor = new Color(0.95f, 0.82f, 0.4f);
             if (GUILayout.Button("📁 全状態のポーズデータを ScriptableObject アセット (.asset) に書き出し保存", GUILayout.Height(26)))
@@ -1501,12 +1617,13 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             EditorGUILayout.EndVertical();
         }
 
-        private void SetTestState(PlayerPoseStatusUIController controller, PlayerUIState state, float steering)
+        private void SetTestState(PlayerPoseStatusUIController controller, PlayerUIState state, float steering, float vertical = 0f)
         {
             Undo.RecordObject(controller, "Set Player Pose UI Test State");
             controller.UseManualTestMode = true;
             controller.ManualTestState = state;
             controller.ManualTestSteering = steering;
+            controller.ManualTestVertical = vertical;
             controller.SelectedEditState = state;
             controller.StartEditorTransitionPreview(0.75f);
             EditorUtility.SetDirty(controller);

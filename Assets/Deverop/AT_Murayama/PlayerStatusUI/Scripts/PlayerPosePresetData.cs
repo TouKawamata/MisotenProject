@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AT_Murayama.PlayerStatusUI
 {
     /// <summary>
-    /// プレイヤーのUI表示状態（優先度：Stunned > Boosting > Shielding > Normal/MoveLeft/MoveRight）
+    /// プレイヤーのUI表示状態（優先度：Stunned > Firing(任意設定) > Boosting > Shielding > Normal/MoveLeft/MoveRight/MoveUp/MoveDown）
     /// </summary>
     public enum PlayerUIState
     {
@@ -25,7 +25,16 @@ namespace AT_Murayama.PlayerStatusUI
         Shielding = 4,
 
         [InspectorName("スタン中（IsStunned ※最優先）")]
-        Stunned = 5
+        Stunned = 5,
+
+        [InspectorName("上昇移動（Vertical > 0）")]
+        MoveUp = 6,
+
+        [InspectorName("下降移動（Vertical < 0）")]
+        MoveDown = 7,
+
+        [InspectorName("弾発射（Jammer Fired）")]
+        Firing = 8
     }
 
     /// <summary>
@@ -101,7 +110,7 @@ namespace AT_Murayama.PlayerStatusUI
         menuName = "AT_Murayama/PlayerStatusUI/Player Pose Preset Asset")]
     public class PlayerPosePresetData : ScriptableObject
     {
-        [Tooltip("各状態（Normal / MoveLeft / MoveRight / Boosting / Shielding / Stunned）のポーズ定義リスト")]
+        [Tooltip("各状態（Normal / MoveLeft / MoveRight / MoveUp / MoveDown / Boosting / Shielding / Stunned / Firing）のポーズ定義リスト")]
         public List<StatePoseEntry> statePoses = new List<StatePoseEntry>();
 
         [Tooltip("モデルの初期バインドポーズ（Tポーズ）の記録（リセット・自動計算の基準用）")]
@@ -176,6 +185,30 @@ namespace AT_Murayama.PlayerStatusUI
                     entry.mainHoloColor = new Color(3.8f, 0.35f, 0.45f, 0.90f);
                     entry.rimGlowColor = new Color(4.8f, 2.0f, 0.3f, 1.0f);
                     entry.accentColor = new Color(4.5f, 0.6f, 0.6f, 1.0f);
+                    break;
+
+                case PlayerUIState.MoveUp:
+                    entry.displayLabel = "MOVE UP";
+                    entry.transitionSpeed = 11f;
+                    entry.mainHoloColor = new Color(0.0f, 2.6f, 3.6f, 0.85f);
+                    entry.rimGlowColor = new Color(0.5f, 4.2f, 4.6f, 0.95f);
+                    entry.accentColor = new Color(0.3f, 4.2f, 3.8f, 1.0f);
+                    break;
+
+                case PlayerUIState.MoveDown:
+                    entry.displayLabel = "MOVE DOWN";
+                    entry.transitionSpeed = 11f;
+                    entry.mainHoloColor = new Color(0.0f, 2.6f, 3.6f, 0.85f);
+                    entry.rimGlowColor = new Color(0.5f, 4.2f, 4.6f, 0.95f);
+                    entry.accentColor = new Color(0.3f, 4.2f, 3.8f, 1.0f);
+                    break;
+
+                case PlayerUIState.Firing:
+                    entry.displayLabel = "FIRE";
+                    entry.transitionSpeed = 18f;
+                    entry.mainHoloColor = new Color(0.0f, 2.2f, 3.2f, 0.80f);
+                    entry.rimGlowColor = new Color(0.4f, 3.8f, 4.5f, 0.95f);
+                    entry.accentColor = new Color(0.2f, 4.0f, 3.5f, 1.0f);
                     break;
             }
             return entry;
