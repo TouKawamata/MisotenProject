@@ -294,6 +294,28 @@ namespace AT_Murayama.StadiumCrowd
         [Range(0.05f, 1.0f)]
         [SerializeField] private float _waveSpeed = 0.22f;
 
+        [Header("4B. 遠景負荷最適化・本採用設定")]
+        [Tooltip("この距離(m)以遠の観客はGPU頂点アニメーション計算(三角関数・視線追従等)を完全スキップし静止ポーズにします（0で無制限）")]
+        [Min(0f)]
+        [SerializeField] private float _animCullDistance = 250f;
+
+        [Tooltip("この距離(m)以遠の観客は縮退させて完全非表示(ピクセル描画0)にします（0で無制限）")]
+        [Min(0f)]
+        [SerializeField] private float _maxRenderDistance = 600f;
+
+        [Tooltip("観客の影キャスト（遠景用・軽量化したい場合はOFFでShadowCasterパスを削減）")]
+        [SerializeField] private bool _castShadows = true;
+
+        [Tooltip("再生中にメインカメラが最大表示距離より離れている間はCPU側の視線追従・MPB更新を自動停止します（0 GC Alloc）")]
+        [SerializeField] private bool _pauseTrackingWhenFar = true;
+
+        [Tooltip("ONにすると再生中にこのオブジェクトのレイヤーへCamera.layerCullDistancesを設定し、描画前段階で完全カリングします（安全ガードによりDefault・共有レイヤー・予約Layer29/30では動作しません）")]
+        [SerializeField] private bool _applyLayerCullDistance = false;
+
+        [Tooltip("Camera.layerCullDistances適用時のカリング距離(m)")]
+        [Min(10f)]
+        [SerializeField] private float _layerCullDistance = 500f;
+
         [Header("5. 内部参照 & 統計情報")]
         [SerializeField] private Shader _crowdShader;
         [SerializeField] private Material _sharedCrowdMaterial;
@@ -301,11 +323,15 @@ namespace AT_Murayama.StadiumCrowd
         [SerializeField] private int _generatedSpectatorCount;
         [SerializeField] private int _generatedChunkCount;
         [SerializeField] private int _generatedTriangleCount;
+        [SerializeField] private bool _isBakedAssets;
+        [SerializeField] private Vector3 _crowdBoundsCenterLocal;
+        [SerializeField] private float _crowdBoundingRadius = 150f;
 
         // Cached runtime state (0 GC Alloc)
         private const string CrowdRootName = "Generated_StadiumCrowd_Root";
         private const string MarkerObjectName = "Preview_SkyDiveTargetMarker";
         private const int MaxSpectatorsPerChunk = 1500;
+        private const float SpatialChunkCellSize = 24f;
 
         private readonly List<MeshRenderer> _chunkRenderers = new List<MeshRenderer>();
         private readonly List<SpectatorPlacementPoint> _lastPlacementPoints = new List<SpectatorPlacementPoint>();
@@ -317,6 +343,15 @@ namespace AT_Murayama.StadiumCrowd
         private bool _delayedPosInitialized;
         private Transform _markerTransform;
         private double _lastEditorTime;
+
+        private Camera _cachedMainCamera;
+        private float _nextCameraLookupTime;
+        private Camera _appliedCullCamera;
+        private int _appliedCullLayer = -1;
+        private float _appliedCullDistanceValue = -1f;
+        private float _savedPrevLayerCullDistance;
+        private bool _hasSavedLayerCullState;
+        private bool _trackingPausedByDistance;
 
         // Shader Property IDs
         private static readonly int TargetPosOSId = Shader.PropertyToID("_TargetPosOS");
@@ -332,6 +367,8 @@ namespace AT_Murayama.StadiumCrowd
         private static readonly int HeightVariationId = Shader.PropertyToID("_HeightVariation");
         private static readonly int WaveIntensityId = Shader.PropertyToID("_WaveIntensity");
         private static readonly int WaveSpeedId = Shader.PropertyToID("_WaveSpeed");
+        private static readonly int AnimCullDistanceId = Shader.PropertyToID("_AnimCullDistance");
+        private static readonly int MaxRenderDistanceId = Shader.PropertyToID("_MaxRenderDistance");
 
         private static readonly int OutfitColorAId = Shader.PropertyToID("_OutfitColorA");
         private static readonly int OutfitColorBId = Shader.PropertyToID("_OutfitColorB");
@@ -346,6 +383,9 @@ namespace AT_Murayama.StadiumCrowd
         public int GeneratedSpectatorCount => _generatedSpectatorCount;
         public int GeneratedChunkCount => _generatedChunkCount;
         public int GeneratedTriangleCount => _generatedTriangleCount;
+        public bool IsBakedAssets => _isBakedAssets;
+        public bool IsLayerSafeForCullDistance => IsSafeLayerForCull(gameObject.layer);
+        public bool IsTrackingPausedByDistance => _trackingPausedByDistance;
         public int SectorCount => _sectorCount;
         public int SectorActiveMask
         {
@@ -364,12 +404,23 @@ namespace AT_Murayama.StadiumCrowd
             {
                 GenerateCrowd();
             }
+            else if (!_isBakedAssets && HasMissingChunkMeshes())
+            {
+                // Non-baked procedural meshes are not stored inside Prefabs; regenerate automatically if missing.
+                GenerateCrowd();
+            }
             else
             {
+                if (_isBakedAssets && HasMissingChunkMeshes())
+                {
+                    Debug.LogWarning("[StadiumCrowd] ベイク済みメッシュ参照の一部が欠損しています。インスペクターから再生成または再ベイクしてください。", this);
+                }
                 ApplyMaterialSettingsToAllChunks();
             }
 
 #if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.update += OnEditorUpdate;
             _lastEditorTime = EditorApplication.timeSinceStartup;
@@ -378,10 +429,27 @@ namespace AT_Murayama.StadiumCrowd
 
         private void OnDisable()
         {
+            RestoreLayerCullDistance();
 #if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             EditorApplication.update -= OnEditorUpdate;
 #endif
         }
+
+        private void OnDestroy()
+        {
+            RestoreLayerCullDistance();
+#if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+#endif
+        }
+
+#if UNITY_EDITOR
+        private void OnBeforeAssemblyReload()
+        {
+            RestoreLayerCullDistance();
+        }
+#endif
 
         private void Start()
         {
@@ -421,13 +489,43 @@ namespace AT_Murayama.StadiumCrowd
         /// <summary>
         /// 毎フレームの視線追従座標の更新とMaterialPropertyBlockの転送（0 GC Alloc）
         /// </summary>
-        private void TickTrackingAndShader(float deltaTime, float currentTime)
+        private void TickTrackingAndShader(float deltaTime, float currentTime, bool forceUpdate = false)
         {
             if (_chunkRenderers.Count == 0)
             {
                 RefreshChunkRenderersList();
                 if (_chunkRenderers.Count == 0) return;
             }
+
+            if (Application.isPlaying && _applyLayerCullDistance)
+            {
+                UpdateLayerCullDistance();
+            }
+
+            if (_pauseTrackingWhenFar && !forceUpdate && Application.isPlaying)
+            {
+                float effectiveCullDist = _maxRenderDistance > 0f
+                    ? _maxRenderDistance
+                    : (_applyLayerCullDistance && IsSafeLayerForCull(gameObject.layer) ? _layerCullDistance : 0f);
+
+                if (effectiveCullDist > 0f)
+                {
+                    Camera cam = GetMainCameraCached();
+                    if (cam != null)
+                    {
+                        Vector3 lossy = transform.lossyScale;
+                        float maxScale = Mathf.Max(Mathf.Abs(lossy.x), Mathf.Max(Mathf.Abs(lossy.y), Mathf.Abs(lossy.z)));
+                        float pauseThreshold = _crowdBoundingRadius * Mathf.Max(maxScale, 0.01f) + effectiveCullDist + 25f;
+                        Vector3 worldCenter = transform.TransformPoint(_crowdBoundsCenterLocal);
+                        if ((cam.transform.position - worldCenter).sqrMagnitude > pauseThreshold * pauseThreshold)
+                        {
+                            _trackingPausedByDistance = true;
+                            return;
+                        }
+                    }
+                }
+            }
+            _trackingPausedByDistance = false;
 
             float landingExcitementBoost = 0f;
 
@@ -645,9 +743,46 @@ namespace AT_Murayama.StadiumCrowd
                 _sharedCrowdMaterial.SetFloat(HeightVariationId, _heightVariation);
                 _sharedCrowdMaterial.SetFloat(WaveIntensityId, _waveIntensity);
                 _sharedCrowdMaterial.SetFloat(WaveSpeedId, _waveSpeed);
+                _sharedCrowdMaterial.SetFloat(AnimCullDistanceId, Mathf.Max(0f, _animCullDistance));
+                _sharedCrowdMaterial.SetFloat(MaxRenderDistanceId, Mathf.Max(0f, _maxRenderDistance));
             }
 
-            TickTrackingAndShader(0.016f, Application.isPlaying ? Time.time : 0f);
+            if (_chunkRenderers.Count == 0)
+            {
+                RefreshChunkRenderersList();
+            }
+
+            ShadowCastingMode castMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            for (int i = 0; i < _chunkRenderers.Count; i++)
+            {
+                MeshRenderer mr = _chunkRenderers[i];
+                if (mr == null) continue;
+                if (mr.gameObject.layer != gameObject.layer)
+                {
+                    mr.gameObject.layer = gameObject.layer;
+                }
+                if (mr.shadowCastingMode != castMode)
+                {
+                    mr.shadowCastingMode = castMode;
+                }
+                if (_sharedCrowdMaterial != null && mr.sharedMaterial != _sharedCrowdMaterial)
+                {
+                    mr.sharedMaterial = _sharedCrowdMaterial;
+                }
+            }
+
+            Transform root = transform.Find(CrowdRootName);
+            if (root != null)
+            {
+                Transform stand = root.Find("StadiumBleachers_TierMesh");
+                if (stand != null && stand.gameObject.layer != gameObject.layer)
+                {
+                    stand.gameObject.layer = gameObject.layer;
+                }
+            }
+
+            UpdateLayerCullDistance();
+            TickTrackingAndShader(0.016f, Application.isPlaying ? Time.time : 0f, true);
         }
 
         // =====================================================================
@@ -709,7 +844,8 @@ namespace AT_Murayama.StadiumCrowd
 
             // 5. Update marker & tracking immediately
             UpdateTargetMarkerVisual();
-            TickTrackingAndShader(0.016f, 0f);
+            TickTrackingAndShader(0.016f, 0f, true);
+            UpdateLayerCullDistance();
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)
@@ -736,6 +872,10 @@ namespace AT_Murayama.StadiumCrowd
             _generatedSpectatorCount = 0;
             _generatedChunkCount = 0;
             _generatedTriangleCount = 0;
+            _isBakedAssets = false;
+            _crowdBoundsCenterLocal = Vector3.zero;
+            _crowdBoundingRadius = 150f;
+            _trackingPausedByDistance = false;
         }
 
         /// <summary>
@@ -1166,8 +1306,26 @@ namespace AT_Murayama.StadiumCrowd
 
             if (points.Count == 0 || template.vertices == null || template.vertices.Length == 0)
             {
+                _crowdBoundsCenterLocal = Vector3.zero;
+                _crowdBoundingRadius = 50f;
                 return;
             }
+
+            // 空間グリッド順にソートすることで、各チャンクのMesh.boundsを局所化しFrustum Cullingを効かせる
+            points.Sort(SpatialSortComparison);
+
+            Vector3 minPt = points[0].localPosition;
+            Vector3 maxPt = points[0].localPosition;
+            for (int i = 1; i < points.Count; i++)
+            {
+                Vector3 p = points[i].localPosition;
+                minPt = Vector3.Min(minPt, p);
+                maxPt = Vector3.Max(maxPt, p);
+            }
+            _crowdBoundsCenterLocal = (minPt + maxPt) * 0.5f;
+            _crowdBoundingRadius = Mathf.Max(10f, Vector3.Distance(minPt, maxPt) * 0.5f);
+
+            ShadowCastingMode shadowMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             int tplVertCount = template.vertices.Length;
             int tplTriCount = template.triangles.Length;
@@ -1257,7 +1415,7 @@ namespace AT_Murayama.StadiumCrowd
 
                 MeshRenderer mr = chunkObj.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = _sharedCrowdMaterial;
-                mr.shadowCastingMode = ShadowCastingMode.On;
+                mr.shadowCastingMode = shadowMode;
                 mr.receiveShadows = true;
 
                 _chunkRenderers.Add(mr);
@@ -1567,6 +1725,341 @@ namespace AT_Murayama.StadiumCrowd
                 }
             }
         }
+
+        private static int SpatialSortComparison(SpectatorPlacementPoint a, SpectatorPlacementPoint b)
+        {
+            int ax = Mathf.FloorToInt(a.localPosition.x / SpatialChunkCellSize);
+            int bx = Mathf.FloorToInt(b.localPosition.x / SpatialChunkCellSize);
+            int cmpX = ax.CompareTo(bx);
+            if (cmpX != 0) return cmpX;
+
+            int az = Mathf.FloorToInt(a.localPosition.z / SpatialChunkCellSize);
+            int bz = Mathf.FloorToInt(b.localPosition.z / SpatialChunkCellSize);
+            // Serpentine Z keeps consecutive grid columns contiguous in chunk bounds
+            int cmpZ = ((ax & 1) == 0) ? az.CompareTo(bz) : bz.CompareTo(az);
+            if (cmpZ != 0) return cmpZ;
+
+            int ay = Mathf.FloorToInt(a.localPosition.y / 8f);
+            int by = Mathf.FloorToInt(b.localPosition.y / 8f);
+            int cmpY = ay.CompareTo(by);
+            if (cmpY != 0) return cmpY;
+
+            return a.stadiumAngle01.CompareTo(b.stadiumAngle01);
+        }
+
+        private bool HasMissingChunkMeshes()
+        {
+            for (int i = 0; i < _chunkRenderers.Count; i++)
+            {
+                MeshRenderer mr = _chunkRenderers[i];
+                if (mr == null) return true;
+                MeshFilter mf = mr.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null) return true;
+            }
+            return false;
+        }
+
+        private Camera GetMainCameraCached()
+        {
+            if (_cachedMainCamera != null && _cachedMainCamera.isActiveAndEnabled && _cachedMainCamera.CompareTag("MainCamera"))
+            {
+                return _cachedMainCamera;
+            }
+
+            if (Application.isPlaying)
+            {
+                if (Time.unscaledTime < _nextCameraLookupTime && _cachedMainCamera == null)
+                {
+                    return null;
+                }
+                _nextCameraLookupTime = Time.unscaledTime + 1.0f;
+            }
+
+            _cachedMainCamera = Camera.main;
+            return _cachedMainCamera;
+        }
+
+        public static bool IsSafeLayerForCull(int layer)
+        {
+            // Layers 0..10 contain Default, TransparentFX, Water, UI, Player, Stage, Ground, Obstacle, Wall.
+            // Layers 29 and 30 are reserved for PlayerPoseUI and Minimap. Only dedicated user layers (11..28, 31) are permitted.
+            return layer >= 11 && layer <= 31 && layer != 29 && layer != 30;
+        }
+
+        public void UpdateLayerCullDistance()
+        {
+            if (!Application.isPlaying || !_applyLayerCullDistance || !IsSafeLayerForCull(gameObject.layer))
+            {
+                RestoreLayerCullDistance();
+                return;
+            }
+
+            Camera cam = GetMainCameraCached();
+            if (cam == null) return;
+
+            int layer = gameObject.layer;
+            float targetDist = Mathf.Max(10f, _layerCullDistance);
+
+            if (_appliedCullCamera == cam && _appliedCullLayer == layer && Mathf.Approximately(_appliedCullDistanceValue, targetDist))
+            {
+                return;
+            }
+
+            RestoreLayerCullDistance();
+
+            float[] dists = cam.layerCullDistances;
+            if (dists != null && layer >= 0 && layer < dists.Length)
+            {
+                _savedPrevLayerCullDistance = dists[layer];
+                _hasSavedLayerCullState = true;
+                dists[layer] = targetDist;
+                cam.layerCullDistances = dists;
+                _appliedCullCamera = cam;
+                _appliedCullLayer = layer;
+                _appliedCullDistanceValue = targetDist;
+            }
+        }
+
+        public void RestoreLayerCullDistance()
+        {
+            if (!_hasSavedLayerCullState) return;
+
+            if (_appliedCullCamera != null && _appliedCullLayer >= 0 && _appliedCullLayer < 32)
+            {
+                float[] dists = _appliedCullCamera.layerCullDistances;
+                if (dists != null && _appliedCullLayer < dists.Length)
+                {
+                    dists[_appliedCullLayer] = _savedPrevLayerCullDistance;
+                    _appliedCullCamera.layerCullDistances = dists;
+                }
+            }
+
+            _hasSavedLayerCullState = false;
+            _appliedCullCamera = null;
+            _appliedCullLayer = -1;
+            _appliedCullDistanceValue = -1f;
+            _savedPrevLayerCullDistance = 0f;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 生成済みチャンクメッシュ＆マテリアルを Project フォルダに .asset / .mat として永続保存し、プレハブ化に対応させます。
+        /// </summary>
+        public bool BakeCrowdAssetsToProject(out string savedFolderPath)
+        {
+            savedFolderPath = string.Empty;
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("[StadiumCrowd] Play Mode 中のベイクは未対応です。編集モードで実行してください。", this);
+                return false;
+            }
+
+            RefreshChunkRenderersList();
+            if (_chunkRenderers.Count == 0 || HasMissingChunkMeshes())
+            {
+                GenerateCrowd();
+                RefreshChunkRenderersList();
+            }
+
+            Transform root = transform.Find(CrowdRootName);
+            if (root == null || _chunkRenderers.Count == 0)
+            {
+                Debug.LogWarning("[StadiumCrowd] ベイク対象の生成済みチャンクが存在しません。", this);
+                return false;
+            }
+
+            ApplyMaterialSettingsToAllChunks();
+
+            string safeName = MakeSafeFileName(gameObject.name);
+            int idToken = Mathf.Abs(GetInstanceID());
+            savedFolderPath = $"Assets/Deverop/AT_Murayama/StadiumCrowd/Baked/{safeName}_{idToken}";
+            EnsureAssetFolder(savedFolderPath);
+
+            // Bake Crowd Material copy so prefab keeps independent theme & culling values
+            if (_sharedCrowdMaterial != null)
+            {
+                string crowdMatPath = $"{savedFolderPath}/M_{safeName}_CrowdBaked.mat";
+                string currentMatPath = AssetDatabase.GetAssetPath(_sharedCrowdMaterial);
+                if (currentMatPath == crowdMatPath)
+                {
+                    EditorUtility.SetDirty(_sharedCrowdMaterial);
+                }
+                else
+                {
+                    Material existingMat = AssetDatabase.LoadAssetAtPath<Material>(crowdMatPath);
+                    if (existingMat != null)
+                    {
+                        EditorUtility.CopySerialized(_sharedCrowdMaterial, existingMat);
+                        _sharedCrowdMaterial = existingMat;
+                        EditorUtility.SetDirty(existingMat);
+                    }
+                    else
+                    {
+                        Material bakedMat = new Material(_sharedCrowdMaterial)
+                        {
+                            name = $"M_{safeName}_CrowdBaked"
+                        };
+                        AssetDatabase.CreateAsset(bakedMat, crowdMatPath);
+                        _sharedCrowdMaterial = bakedMat;
+                    }
+                }
+            }
+
+            // Bake Stand Material if stand exists
+            Transform standTransform = root.Find("StadiumBleachers_TierMesh");
+            if (standTransform != null && _sharedStandMaterial != null)
+            {
+                string standMatPath = $"{savedFolderPath}/M_{safeName}_StandBaked.mat";
+                string currentStandMatPath = AssetDatabase.GetAssetPath(_sharedStandMaterial);
+                if (currentStandMatPath == standMatPath)
+                {
+                    EditorUtility.SetDirty(_sharedStandMaterial);
+                }
+                else
+                {
+                    Material existingStandMat = AssetDatabase.LoadAssetAtPath<Material>(standMatPath);
+                    if (existingStandMat != null)
+                    {
+                        EditorUtility.CopySerialized(_sharedStandMaterial, existingStandMat);
+                        _sharedStandMaterial = existingStandMat;
+                        EditorUtility.SetDirty(existingStandMat);
+                    }
+                    else
+                    {
+                        Material bakedStandMat = new Material(_sharedStandMaterial)
+                        {
+                            name = $"M_{safeName}_StandBaked"
+                        };
+                        AssetDatabase.CreateAsset(bakedStandMat, standMatPath);
+                        _sharedStandMaterial = bakedStandMat;
+                    }
+                }
+            }
+
+            int savedMeshCount = 0;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child == null) continue;
+
+                MeshFilter mf = child.GetComponent<MeshFilter>();
+                MeshRenderer mr = child.GetComponent<MeshRenderer>();
+                if (mf == null || mf.sharedMesh == null) continue;
+
+                string meshPath = $"{savedFolderPath}/{child.name}.asset";
+                string currentMeshPath = AssetDatabase.GetAssetPath(mf.sharedMesh);
+                if (currentMeshPath == meshPath)
+                {
+                    EditorUtility.SetDirty(mf.sharedMesh);
+                }
+                else
+                {
+                    if (AssetDatabase.LoadAssetAtPath<Mesh>(meshPath) != null)
+                    {
+                        AssetDatabase.DeleteAsset(meshPath);
+                    }
+                    Mesh meshCopy = Instantiate(mf.sharedMesh);
+                    meshCopy.name = mf.sharedMesh.name;
+                    AssetDatabase.CreateAsset(meshCopy, meshPath);
+                    mf.sharedMesh = meshCopy;
+                }
+
+                if (mr != null)
+                {
+                    mr.sharedMaterial = (child.name == "StadiumBleachers_TierMesh") ? _sharedStandMaterial : _sharedCrowdMaterial;
+                    if (child.name != "StadiumBleachers_TierMesh")
+                    {
+                        mr.shadowCastingMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    }
+                    EditorUtility.SetDirty(mr);
+                }
+                child.gameObject.layer = gameObject.layer;
+                EditorUtility.SetDirty(mf);
+                savedMeshCount++;
+            }
+
+            _isBakedAssets = savedMeshCount > 0;
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+            return _isBakedAssets;
+        }
+
+        /// <summary>
+        /// 本番ステージ向け設定（プレビューマーカー削除・Player自動追従・EditModeプレビューOFF）へ一括切替します。
+        /// </summary>
+        public void ApplyProductionPreset()
+        {
+            Undo.RecordObject(this, "Apply Production Crowd Settings");
+
+            _showTargetMarkerMesh = false;
+            _previewInEditMode = false;
+            _trackingMode = TargetTrackingMode.FollowTransform;
+            _autoFindPlayerAtRuntime = true;
+
+            if (_lookAtTarget == null)
+            {
+                TryAutoFindPlayerTarget();
+            }
+
+            DestroyPreviewMarkerImmediate();
+            ApplyMaterialSettingsToAllChunks();
+            EditorUtility.SetDirty(this);
+        }
+
+        public void DestroyPreviewMarkerImmediate()
+        {
+            if (_markerTransform != null)
+            {
+                Undo.DestroyObjectImmediate(_markerTransform.gameObject);
+                _markerTransform = null;
+            }
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != null && child.name == MarkerObjectName)
+                {
+                    Undo.DestroyObjectImmediate(child.gameObject);
+                }
+            }
+        }
+
+        private static void EnsureAssetFolder(string targetFolder)
+        {
+            string normalized = targetFolder.Replace('\\', '/').TrimEnd('/');
+            if (AssetDatabase.IsValidFolder(normalized)) return;
+
+            string[] parts = normalized.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+                current = next;
+            }
+        }
+
+        private static string MakeSafeFileName(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return "Crowd";
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(raw.Length);
+            for (int i = 0; i < raw.Length; i++)
+            {
+                char ch = raw[i];
+                if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '-')
+                {
+                    sb.Append(ch);
+                }
+                else
+                {
+                    sb.Append('_');
+                }
+            }
+            return sb.Length > 0 ? sb.ToString() : "Crowd";
+        }
+#endif
 
         private static float NextFloat(System.Random rng)
         {

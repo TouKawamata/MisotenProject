@@ -423,6 +423,68 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             }
         }
 
+        [Test]
+        public void Test_VerticalAndFirePoseSystem()
+        {
+            Assert.AreEqual(6, (int)PlayerUIState.MoveUp);
+            Assert.AreEqual(7, (int)PlayerUIState.MoveDown);
+            Assert.AreEqual(8, (int)PlayerUIState.Firing);
+
+            GameObject go = new GameObject("Test_PlayerPoseStatusUI_VerticalAndFire") { hideFlags = HideFlags.DontSave };
+            try
+            {
+                PlayerPoseStatusUIController controller = go.AddComponent<PlayerPoseStatusUIController>();
+
+                controller.EnableVerticalPose = true;
+                Assert.IsTrue(controller.EnableVerticalPose);
+
+                controller.VerticalThreshold = 0.25f;
+                Assert.AreEqual(0.25f, controller.VerticalThreshold, 0.001f);
+
+                controller.DiagonalMove = PlayerPoseStatusUIController.DiagonalMoveMode.CombineAxes;
+                Assert.AreEqual(PlayerPoseStatusUIController.DiagonalMoveMode.CombineAxes, controller.DiagonalMove);
+                controller.DiagonalMove = PlayerPoseStatusUIController.DiagonalMoveMode.SingleDominantAxis;
+                Assert.AreEqual(PlayerPoseStatusUIController.DiagonalMoveMode.SingleDominantAxis, controller.DiagonalMove);
+
+                controller.DiagonalCombineWeight = 0.75f;
+                Assert.AreEqual(0.75f, controller.DiagonalCombineWeight, 0.001f);
+
+                controller.SteeringMode = PlayerPoseStatusUIController.SteeringPoseMode.ContinuousBlend;
+                Assert.AreEqual(PlayerPoseStatusUIController.SteeringPoseMode.ContinuousBlend, controller.SteeringMode);
+
+                controller.EnableFirePose = true;
+                controller.FirePoseDuration = 0.45f;
+                controller.AllowFirePoseDuringBoostAndShield = true;
+                Assert.IsTrue(controller.EnableFirePose);
+                Assert.AreEqual(0.45f, controller.FirePoseDuration, 0.001f);
+                Assert.IsTrue(controller.AllowFirePoseDuringBoostAndShield);
+
+                controller.UseManualTestMode = true;
+                controller.ManualTestSteering = 0.8f;
+                controller.ManualTestVertical = -0.6f;
+                Assert.AreEqual(0.8f, controller.ManualTestSteering, 0.001f);
+                Assert.AreEqual(-0.6f, controller.ManualTestVertical, 0.001f);
+
+                controller.ManualTestState = PlayerUIState.MoveUp;
+                Assert.AreEqual(PlayerUIState.MoveUp, controller.ManualTestState);
+                controller.ManualTestState = PlayerUIState.MoveDown;
+                Assert.AreEqual(PlayerUIState.MoveDown, controller.ManualTestState);
+                controller.ManualTestState = PlayerUIState.Firing;
+                Assert.AreEqual(PlayerUIState.Firing, controller.ManualTestState);
+
+                controller.TriggerFirePose(0.5f);
+
+                int addedFirst = controller.EnsureMissingStatePosesGenerated();
+                int addedSecond = controller.EnsureMissingStatePosesGenerated();
+                Assert.IsTrue(addedFirst >= 0);
+                Assert.AreEqual(0, addedSecond);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
         /// <summary>
         /// バッチ実行および結果ログ出力用ランナー
         /// </summary>
@@ -464,6 +526,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             RunTest("Test_SmartSignage_SweepPhaseOffsetAndStaggering", tester.Test_SmartSignage_SweepPhaseOffsetAndStaggering);
             RunTest("Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering", tester.Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering);
             RunTest("Test_GhostRim_StaticNoPulseMaterial", tester.Test_GhostRim_StaticNoPulseMaterial);
+            RunTest("Test_VerticalAndFirePoseSystem", tester.Test_VerticalAndFirePoseSystem);
 
             sb.AppendLine("==================================================");
             sb.AppendLine($"合計: {pass + fail} 件 ｜ 成功: {pass} 件 ｜ 失敗: {fail} 件");
