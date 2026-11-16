@@ -48,6 +48,9 @@ public class PlayerFlightController : MonoBehaviour
     // 機首の向きへの押し出し（シールドで防いだときの加速など）。横ずれと同じく「何mを何秒で」位置へ足すため、LateralPushを使い回す。
     private readonly LateralPush _forwardPush = new LateralPush();
 
+    // コースの上下方向への押し出し（爆風など、ApplyPushで上下の成分があるとき）。横ずれと同じくLateralPushを使い回す。
+    private readonly LateralPush _verticalPush = new LateralPush();
+
     // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。CPUの入力（判断）などが読む。
     public ICourseGuide Guide => _guide;
 
@@ -57,8 +60,8 @@ public class PlayerFlightController : MonoBehaviour
     // 機首の向きの速さ（最高速度で制限している成分）。押し出し（ApplyForwardPush）の分は含まない。
     public float ForwardSpeed => Vector3.Dot(Velocity, _playerForward);
 
-    // ブースト接触などで横・前後へ押し出している途中か。
-    public bool IsBeingPushed => _lateralPush.IsActive || _forwardPush.IsActive;
+    // ブースト接触などで上下左右・前後へ押し出している途中か。
+    public bool IsBeingPushed => _lateralPush.IsActive || _forwardPush.IsActive || _verticalPush.IsActive;
 
     // 機体の位置でのコースの上方向（バンク込み）。機体の回転の上方向に使う。カメラの向きの基準にもする。
     public Vector3 ReferenceUp { get; private set; } = Vector3.up;
@@ -118,6 +121,7 @@ public class PlayerFlightController : MonoBehaviour
         Steering = 0f;
         _lateralPush.Stop();
         _forwardPush.Stop();
+        _verticalPush.Stop();
         IsClampedToTunnel = false;
         if (_guide is ICourseRoute route)
         {
@@ -198,9 +202,10 @@ public class PlayerFlightController : MonoBehaviour
         _velocity = ClampForwardSpeed(_velocity, splineRight, splineUp, maxSpeed, profile);
 
         // 7. 位置積分（円筒境界＝壁の外には出られず、当たった角度に応じて減速する）。
-        //    横ずれ・前への押し出し（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
+        //    上下左右・前への押し出し（LateralPush）は速度とは別に位置へ足し、慣性や最高速度の制限で打ち消されないようにする。
         Vector3 desiredPosition = position + Velocity * deltaTime
             + splineRight * _lateralPush.Advance(deltaTime)
+            + splineUp * _verticalPush.Advance(deltaTime)
             + _playerForward * _forwardPush.Advance(deltaTime);
         transform.position = ClampVelocityAndPositionToTunnelRadius(desiredPosition, centerPosition, splineRight, splineUp, tunnelRadius, profile);
 
@@ -219,6 +224,7 @@ public class PlayerFlightController : MonoBehaviour
         _planarSpeed = Vector2.zero;
         _lateralPush.Stop();
         _forwardPush.Stop();
+        _verticalPush.Stop();
         MoveInput = Vector2.zero;
         Steering = 0f;
     }
@@ -411,6 +417,34 @@ public class PlayerFlightController : MonoBehaviour
         }
 
         _forwardPush.Start(distance, duration);
+    }
+
+    // directionの向き（ワールド座標）へdistance（m）をduration秒かけて押し出す（爆風など、ある点から離れる向きへ飛ばすとき）。
+    // 機首の向きの成分は前後へ、コースの左右・上下の成分は、その割合のまま上下左右へ分けて押し出す
+    // （真後ろから押されたら後ろへ下がるだけで、横へはほとんど動かない）。トンネルの壁の外へは出ない。
+    // 成分が小さい向きは押し出し直さない（その向きで押し出している途中なら、そのまま続ける）。
+    public void ApplyPush(Vector3 direction, float distance, float duration)
+    {
+        if (_guide == null || distance <= 0f || direction.sqrMagnitude < 0.0001f)
+        {
+            return;
+        }
+
+        Vector3 position = transform.position;
+        Vector3 unit = direction.normalized;
+        StartPushIfNeeded(_forwardPush, Vector3.Dot(unit, _playerForward) * distance, duration);
+        StartPushIfNeeded(_lateralPush, Vector3.Dot(unit, _guide.GetRight(position)) * distance, duration);
+        StartPushIfNeeded(_verticalPush, Vector3.Dot(unit, _guide.GetUp(position)) * distance, duration);
+    }
+
+    private static void StartPushIfNeeded(LateralPush push, float signedDistance, float duration)
+    {
+        if (Mathf.Abs(signedDistance) < 0.001f)
+        {
+            return;
+        }
+
+        push.Start(signedDistance, duration);
     }
 
     // 他のレーサーとの通常の接触で、食い込みを押し戻す（RacerContactResolverから、PlayerManager経由で呼ばれる）。
