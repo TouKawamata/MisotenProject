@@ -489,6 +489,11 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         _flightController.ApplyLateralPush(direction, distance, duration);
     }
 
+    void IGimmickRacer.ApplyPush(Vector3 direction, float distance, float duration)
+    {
+        _flightController.ApplyPush(direction, distance, duration);
+    }
+
     void IGimmickRacer.Stun(float duration)
     {
         _boost.ForceStop();
