@@ -12,6 +12,8 @@ public class DebugHud : MonoBehaviour
     [SerializeField] private PlayerManager playerManager;
     [SerializeField] private CourseSpline courseSpline;
     [SerializeField] private Transform player;
+    [Tooltip("妨害弾の弾数を表示する。未設定ならPlayerManagerの子から探す（2026-11-13 川又）")]
+    [SerializeField] private JammerLauncher jammerLauncher;
 
     [Header("HUD")]
     [SerializeField] private bool visible = true;
@@ -55,6 +57,7 @@ public class DebugHud : MonoBehaviour
     private bool inputExpanded = true;
     private bool flightExpanded = true;
     private bool boostExpanded = true;
+    private bool jammerExpanded = true;
     private bool courseExpanded = true;
     private bool performanceExpanded = true;
 
@@ -72,8 +75,10 @@ public class DebugHud : MonoBehaviour
             position.x,
             position.y,
             Mathf.Max(420f, graphSize.x + 40f),
-            700f);
+            820f); // JAMMER欄を足した分、700から高くした（2026-11-13 川又）
 
+        if (jammerLauncher == null && playerManager != null)
+            jammerLauncher = playerManager.GetComponentInChildren<JammerLauncher>();
     }
 
     private void OnDestroy()
@@ -209,6 +214,7 @@ public class DebugHud : MonoBehaviour
         DrawInputSection();
         DrawFlightSection();
         DrawBoostSection();
+        DrawJammerSection();
         DrawCourseSection();
         DrawPerformanceSection();
 
@@ -438,6 +444,43 @@ public class DebugHud : MonoBehaviour
             //         ? Color.green
             //         : Color.white);
         }
+    }
+
+    // ----------------------------------------------------------------
+    // Jammer（妨害弾の弾数。2026-11-13 川又）
+    // ----------------------------------------------------------------
+
+    private void DrawJammerSection()
+    {
+        if (!DrawFoldout("JAMMER", ref jammerExpanded))
+            return;
+
+        if (jammerLauncher == null)
+        {
+            DrawValue("JammerLauncher", "NULL", Color.red);
+            return;
+        }
+
+        int ammo = jammerLauncher.Ammo;
+        int maxAmmo = jammerLauncher.MaxAmmo;
+
+        DrawValue(
+            "Ammo",
+            $"{ammo} / {maxAmmo}",
+            ammo > 0 ? Color.white : Color.red);
+
+        DrawBar(
+            maxAmmo > 0 ? (float)ammo / maxAmmo : 0f,
+            new Color(1f, 0.5f, 0.2f));
+
+        DrawValue(
+            "Reload",
+            $"{jammerLauncher.ReloadRemainingTime:F2} sec");
+
+        DrawValue(
+            "CanFire",
+            jammerLauncher.CanFire ? "YES" : "NO",
+            jammerLauncher.CanFire ? Color.green : Color.gray);
     }
 
     // ----------------------------------------------------------------
