@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  m_Fog: 1
+  m_FogColor: {r: 0.7283019, g: 0.7283019, b: 0.7283019, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogDensity: 0.001
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -6105,7 +6105,7 @@ Transform:
   m_GameObject: {fileID: 208637961}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 548.6363, y: 34.50002, z: 287.71045}
+  m_LocalPosition: {x: 526.8, y: 34.50002, z: 307.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -14156,7 +14156,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  sharedProfile: {fileID: 11400000, guid: 33967aa0423348445aa045983e64d8ac, type: 2}
 --- !u!4 &832575519
 Transform:
   m_ObjectHideFlags: 0
@@ -16722,40 +16722,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 1033501856}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1038878430 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-  m_PrefabInstance: {fileID: 2090501241}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1038878432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1038878430}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
 --- !u!4 &1045740798 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -19725,6 +19691,10 @@ PrefabInstance:
       propertyPath: playerModelAnimator
       value: 
       objectReference: {fileID: 1470364644}
+    - target: {fileID: 4827631539258932926, guid: 12f1233bac18c5846a811c5ade8103b4, type: 3}
+      propertyPath: m_RenderPostProcessing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8725138767783372615, guid: 12f1233bac18c5846a811c5ade8103b4, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -21280,40 +21250,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6091024882800365695, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
   m_PrefabInstance: {fileID: 1487349658}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1489499138 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9839215780587951, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-  m_PrefabInstance: {fileID: 2090501241}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1489499140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1489499138}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
 --- !u!1001 &1490465149
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29722,6 +29658,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3851208975920090820, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
+      propertyPath: m_Shadows.m_Type
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: timeOfDay
       value: 8
@@ -29751,10 +29691,6 @@ PrefabInstance:
       value: 0.6666667
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-      propertyPath: enableCloudHaze
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetIntensity
       value: 1
       objectReference: {fileID: 0}
@@ -29766,10 +29702,6 @@ PrefabInstance:
       propertyPath: cloudShadowStrength
       value: 3
       objectReference: {fileID: 0}
-    - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-      propertyPath: enableDemoCameraControl
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 6454354765493393146, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: m_Shadows.m_Type
       value: 2
@@ -29777,13 +29709,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 9839215780587951, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1489499140}
-    - targetCorrespondingSourceObject: {fileID: 2471544683475451861, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1038878432}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
 --- !u!1 &2090529453
 GameObject:
@@ -30231,7 +30157,7 @@ Transform:
   m_GameObject: {fileID: 2112164470}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 548.6363, y: 34.50002, z: 269.40045}
+  m_LocalPosition: {x: 594.3, y: 34.50002, z: 292.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
