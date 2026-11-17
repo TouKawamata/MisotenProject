@@ -153,6 +153,12 @@ namespace AT_Murayama.PlayerStatusUI
         [Tooltip("左右・上下移動量（MoveInput: X=左右, Y=上下）を保持する PlayerFlightController")]
         [SerializeField] private PlayerFlightController _flightController;
 
+        [Tooltip("レース進行管理（未指定時はシーン内から自動検索。存在する場合は走行中のみ状態UIを表示）")]
+        [SerializeField] private RaceManager _raceManager;
+
+        [Tooltip("ONのとき、カウントダウン終了（GO）までとプレイヤーのゴール後は状態UIを非表示にします（RaceManagerが存在するシーンのみ有効）")]
+        [SerializeField] private bool _hideOutsideRacing = true;
+
         [Header("2. 3Dキャラクターモデル ＆ ポーズプリセットデータ")]
         [Tooltip("UIに表示するボーン入りキャラクターモデルプレハブ（未指定時は Assets/TeamResources/Art/Models/born model.fbx を自動ロード）")]
         [SerializeField] private GameObject _characterModelPrefab;
@@ -372,6 +378,7 @@ namespace AT_Murayama.PlayerStatusUI
         private Camera _modifiedMainCamera;
         private int _lastExcludedLayer = -1;
         private bool _hasExcludedLayer;
+        private bool _hasSearchedRaceManager;
 
         private readonly List<Renderer> _cachedRenderers = new List<Renderer>();
         private readonly Dictionary<Renderer, Material[]> _originalMaterialsMap = new Dictionary<Renderer, Material[]>();
@@ -1050,6 +1057,82 @@ namespace AT_Murayama.PlayerStatusUI
             set => _customSaveName = value;
         }
 
+        public RaceManager RaceManager
+        {
+            get => _raceManager;
+            set
+            {
+                _raceManager = value;
+                _hasSearchedRaceManager = true;
+            }
+        }
+
+        public bool HideOutsideRacing
+        {
+            get => _hideOutsideRacing;
+            set
+            {
+                _hideOutsideRacing = value;
+                if (_stageRoot != null && _modelInstance != null)
+                {
+                    if (!ShouldShowInCurrentRaceState())
+                    {
+                        SetStatusUIVisualsActive(false);
+                    }
+                    else
+                    {
+                        SetStatusUIVisualsActive(true);
+                        UpdateUILayoutAndCamera();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 現在のレース状態でプレイヤー状態UIを表示すべきかを判定する（EditMode・手動テストモード・RaceManager不在シーンでは常にtrue）
+        /// </summary>
+        public bool ShouldShowInCurrentRaceState()
+        {
+            if (!Application.isPlaying || !_hideOutsideRacing || _useManualTestMode)
+            {
+                return true;
+            }
+
+            if (_raceManager == null)
+            {
+                return true;
+            }
+
+            IReadOnlyRacerData playerData = _raceManager.PlayerData;
+            return _raceManager.State == ERaceState.Racing && playerData != null && !playerData.IsFinished;
+        }
+
+        private void SetStatusUIVisualsActive(bool active)
+        {
+            if (!active)
+            {
+                if (_subCamera != null && _subCamera.enabled)
+                {
+                    _subCamera.enabled = false;
+                }
+                if (_uiCanvas != null && _uiCanvas.gameObject.activeSelf)
+                {
+                    _uiCanvas.gameObject.SetActive(false);
+                }
+                if (_modelInstance != null && _modelInstance.activeSelf)
+                {
+                    _modelInstance.SetActive(false);
+                }
+            }
+            else
+            {
+                if (_modelInstance != null && !_modelInstance.activeSelf)
+                {
+                    _modelInstance.SetActive(true);
+                }
+            }
+        }
+
         // ──────────────────────────────────────────────
         // ライフサイクル
         // ──────────────────────────────────────────────
@@ -1061,9 +1144,14 @@ namespace AT_Murayama.PlayerStatusUI
             UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += RestoreMainCameraCullingMask;
 #endif
             _nextAutoFindTime = 0f;
+            _hasSearchedRaceManager = false;
             AutoFindReferencesIfNeeded();
             SubscribePlayerEvents();
             EnsureStageAndUIReady();
+            if (!ShouldShowInCurrentRaceState())
+            {
+                SetStatusUIVisualsActive(false);
+            }
         }
 
         private void OnDisable()
@@ -1143,7 +1231,7 @@ namespace AT_Murayama.PlayerStatusUI
             }
 
             // レース開始時にプレイヤー機が後から動的生成（Instantiate）された場合でも自動的に検知・接続する
-            if (Application.isPlaying && !_useManualTestMode && (_playerManager == null || _flightController == null))
+            if (Application.isPlaying && !_useManualTestMode && (_playerManager == null || _flightController == null || (!_hasSearchedRaceManager && _raceManager == null)))
             {
                 float now = Time.unscaledTime;
                 if (now >= _nextAutoFindTime)
@@ -1152,6 +1240,14 @@ namespace AT_Murayama.PlayerStatusUI
                     AutoFindReferencesIfNeeded();
                 }
             }
+
+            if (!ShouldShowInCurrentRaceState())
+            {
+                SetStatusUIVisualsActive(false);
+                return;
+            }
+
+            SetStatusUIVisualsActive(true);
 
             if (_firePoseRemainingTimer > 0f)
             {
@@ -1189,7 +1285,9 @@ namespace AT_Murayama.PlayerStatusUI
         {
             // 方式B（メインカメラ前3Dミニチュア）のとき、CameraController（LateUpdate）の移動が完了した後に
             // ステージ位置を再同期することで、カメラ移動に対する1フレーム遅延のガタつき（ジッター）を完全に防止する
-            if (_displayMode == UIDisplayMode.ModeB_CameraForeground3D && _stageRoot != null && _modelInstance != null)
+            if (_displayMode == UIDisplayMode.ModeB_CameraForeground3D &&
+                _stageRoot != null && _modelInstance != null &&
+                ShouldShowInCurrentRaceState())
             {
                 UpdateUILayoutAndCamera();
             }
@@ -1215,6 +1313,15 @@ namespace AT_Murayama.PlayerStatusUI
 
         private void AutoFindReferencesIfNeeded()
         {
+            if (!_hasSearchedRaceManager)
+            {
+                _hasSearchedRaceManager = true;
+                if (_raceManager == null)
+                {
+                    _raceManager = FindAnyObjectByType<RaceManager>();
+                }
+            }
+
             if (_playerManager == null)
             {
                 _playerManager = FindAnyObjectByType<PlayerManager>();

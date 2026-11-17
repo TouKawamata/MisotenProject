@@ -110,6 +110,12 @@ public class CourseMinimapController : MonoBehaviour
     [Tooltip("他機（ライバル機）の Transform リスト（任意・最大8機など）")]
     [SerializeField] private List<Transform> _racerTargets = new List<Transform>();
 
+    [Tooltip("レース進行管理（未設定時はシーン内から自動検索。存在する場合は走行中のみミニマップを表示）")]
+    [SerializeField] private RaceManager _raceManager;
+
+    [Tooltip("ONのとき、カウントダウン終了（GO）までとプレイヤーのゴール後はミニマップを非表示にします（RaceManagerが存在するシーンのみ有効）")]
+    [SerializeField] private bool _hideOutsideRacing = true;
+
     [Header("コースメッシュ生成設定")]
     [Tooltip("サンプリング間隔（m）。ミニマップなので 3〜5m でも十分滑らかで軽量です")]
     [SerializeField] private float _sampleInterval = 4f;
@@ -239,6 +245,7 @@ public class CourseMinimapController : MonoBehaviour
     private int _lastBuiltSegments = -1;
     private int _lastBuiltBranchCount = 0;
     private float _nextAutoFindTime = 0f;
+    private bool _hasSearchedRaceManager;
 
     private static readonly int PlayerLocalPosId    = Shader.PropertyToID("_PlayerLocalPos");
     private static readonly int VisibleRadiusId     = Shader.PropertyToID("_VisibleRadius");
@@ -264,10 +271,15 @@ public class CourseMinimapController : MonoBehaviour
         UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += RestoreMainCameraCullingMask;
 #endif
         _nextAutoFindTime = 0f;
+        _hasSearchedRaceManager = false;
         AutoFindReferences(forceImmediate: true);
         EnsureHierarchyAndRebuild();
         UpdateModeStateAndTransforms();
         UpdateIconsAndShaderProperties();
+        if (!ShouldShowInCurrentRaceState())
+        {
+            SetMinimapVisualsActive(false);
+        }
     }
 
     private void OnDisable()
@@ -447,6 +459,17 @@ public class CourseMinimapController : MonoBehaviour
             if (_meshRoot == null) return;
         }
 
+        if (!ShouldShowInCurrentRaceState())
+        {
+            SetMinimapVisualsActive(false);
+            return;
+        }
+
+        if (_hologramPivot != null && !_hologramPivot.gameObject.activeSelf)
+        {
+            _hologramPivot.gameObject.SetActive(true);
+        }
+
         UpdateModeStateAndTransforms();
         UpdateIconsAndShaderProperties();
     }
@@ -458,6 +481,79 @@ public class CourseMinimapController : MonoBehaviour
     public CourseSpline CourseSpline => _courseSpline;
     public CourseNetwork CourseNetwork => _courseNetwork;
     public int ActiveBranchCount => _lastBuiltBranchCount;
+
+    public RaceManager RaceManager
+    {
+        get => _raceManager;
+        set
+        {
+            _raceManager = value;
+            _hasSearchedRaceManager = true;
+        }
+    }
+
+    public bool HideOutsideRacing
+    {
+        get => _hideOutsideRacing;
+        set
+        {
+            _hideOutsideRacing = value;
+            if (_hologramPivot != null && _meshRoot != null)
+            {
+                if (!ShouldShowInCurrentRaceState())
+                {
+                    SetMinimapVisualsActive(false);
+                }
+                else
+                {
+                    if (!_hologramPivot.gameObject.activeSelf)
+                    {
+                        _hologramPivot.gameObject.SetActive(true);
+                    }
+                    UpdateModeStateAndTransforms();
+                    UpdateIconsAndShaderProperties();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 現在のレース状態でミニマップを表示すべきかを判定する（EditModeやRaceManager不在シーンでは常にtrue）
+    /// </summary>
+    public bool ShouldShowInCurrentRaceState()
+    {
+        if (!Application.isPlaying || !_hideOutsideRacing)
+        {
+            return true;
+        }
+
+        if (_raceManager == null)
+        {
+            return true;
+        }
+
+        IReadOnlyRacerData playerData = _raceManager.PlayerData;
+        return _raceManager.State == ERaceState.Racing && playerData != null && !playerData.IsFinished;
+    }
+
+    private void SetMinimapVisualsActive(bool active)
+    {
+        if (!active)
+        {
+            if (_subCamera != null && _subCamera.enabled)
+            {
+                _subCamera.enabled = false;
+            }
+            if (_uiCanvas != null && _uiCanvas.gameObject.activeSelf)
+            {
+                _uiCanvas.gameObject.SetActive(false);
+            }
+            if (_hologramPivot != null && _hologramPivot.gameObject.activeSelf)
+            {
+                _hologramPivot.gameObject.SetActive(false);
+            }
+        }
+    }
 
     public void SetDisplayMode(MinimapDisplayMode mode)
     {
@@ -772,6 +868,16 @@ public class CourseMinimapController : MonoBehaviour
 
     private void AutoFindReferences(bool forceImmediate)
     {
+        if ((!_hasSearchedRaceManager || forceImmediate) && _raceManager == null)
+        {
+            _hasSearchedRaceManager = true;
+            _raceManager = FindFirstObjectByType<RaceManager>();
+        }
+        else if (forceImmediate && _raceManager != null)
+        {
+            _hasSearchedRaceManager = true;
+        }
+
         if (!forceImmediate && _courseSpline != null && _playerTarget != null)
         {
             return;

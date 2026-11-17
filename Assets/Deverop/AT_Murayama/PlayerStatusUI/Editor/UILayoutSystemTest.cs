@@ -485,6 +485,43 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             }
         }
 
+        [Test]
+        public void Test_HideOutsideRacing_DefaultAndToggle()
+        {
+            GameObject go = new GameObject("Test_HideOutsideRacing") { hideFlags = HideFlags.DontSave };
+            try
+            {
+                CourseMinimapController minimap = go.AddComponent<CourseMinimapController>();
+                PlayerPoseStatusUIController statusUi = go.AddComponent<PlayerPoseStatusUIController>();
+
+                // 本番シーン配置だけで有効になるよう初期値は true
+                Assert.IsTrue(minimap.HideOutsideRacing);
+                Assert.IsTrue(statusUi.HideOutsideRacing);
+
+                // RaceManager不在・EditModeでは03.unity等の作業を妨げないよう表示維持(true)
+                Assert.IsTrue(minimap.ShouldShowInCurrentRaceState());
+                Assert.IsTrue(statusUi.ShouldShowInCurrentRaceState());
+
+                minimap.HideOutsideRacing = false;
+                statusUi.HideOutsideRacing = false;
+                Assert.IsFalse(minimap.HideOutsideRacing);
+                Assert.IsFalse(statusUi.HideOutsideRacing);
+
+                minimap.HideOutsideRacing = true;
+                statusUi.HideOutsideRacing = true;
+                Assert.IsTrue(minimap.HideOutsideRacing);
+                Assert.IsTrue(statusUi.HideOutsideRacing);
+
+                // 手動テストモード中は常に表示維持
+                statusUi.UseManualTestMode = true;
+                Assert.IsTrue(statusUi.ShouldShowInCurrentRaceState());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
         /// <summary>
         /// バッチ実行および結果ログ出力用ランナー
         /// </summary>
@@ -527,6 +564,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             RunTest("Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering", tester.Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering);
             RunTest("Test_GhostRim_StaticNoPulseMaterial", tester.Test_GhostRim_StaticNoPulseMaterial);
             RunTest("Test_VerticalAndFirePoseSystem", tester.Test_VerticalAndFirePoseSystem);
+            RunTest("Test_HideOutsideRacing_DefaultAndToggle", tester.Test_HideOutsideRacing_DefaultAndToggle);
 
             sb.AppendLine("==================================================");
             sb.AppendLine($"合計: {pass + fail} 件 ｜ 成功: {pass} 件 ｜ 失敗: {fail} 件");
