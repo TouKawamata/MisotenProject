@@ -48,8 +48,10 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     private RacerEntry _playerEntry;
     private IRaceIntro _raceIntro;
     private CancellationTokenSource _cancellationTokenSource;
+
+    // 再開のカウントダウンだけを止めるためのもの（_cancellationTokenSourceとつないであり、シーンを捨てたときも止まる）。動いていないときはnull。
+    private CancellationTokenSource _resumeCountdownCancellationTokenSource;
     private bool _isInitialized;
-    private bool _isResumeCountdownRunning;
     private int _lastPlayerRank;
 
     // カウントが変わったとき（3, 2, 1, …）。0はGO。レースの途中から再開するときのカウントダウンでも出る。
@@ -69,7 +71,10 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     // GOからの経過時間（秒）。Time.timeではなく自前で積み上げる（将来ポーズを入れてもズレないように）。
     public float ElapsedTime { get; private set; }
 
-    public float GoalDistance => _progressTracker != null ? _progressTracker.GoalDistance : 0f;
+    // レースの途中から再開するカウントダウンの最中か。ポーズメニューは、この間にEscで開かないようにする。
+    public bool IsResumeCountdownRunning => _resumeCountdownCancellationTokenSource != null;
+
+    public float GoalDistance =>_progressTracker != null ? _progressTracker.GoalDistance : 0f;
 
     public IReadOnlyList<IReadOnlyRacerData> Racers => _racerDataList;
 
@@ -298,37 +303,53 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     }
 
     // ポーズから、その場でカウントダウンしてからレースに戻す（カメラ接続が切れてキャリブレーションした後など）。
-    // 走行中に呼ばれたときだけ、カウントダウンの間はStateをCountdownにする（RacerのTickを呼ばないので、止めた位置・速度のまま動かない）。
+    // カウントダウンの間はゲームの時間を止める（Time.timeScale = 0）。Racerだけでなく、妨害弾・ギミックなども止まったまま待つ。
+    // カウントは実時間で数え、GOでTime.timeScaleを1に戻して走行に戻す。ポーズメニューはtimeScaleを0のままにして呼べばよい。
+    // 走行中に呼ばれたときだけ動く。カウントダウンの間はStateをCountdownにする（RacerのTickも呼ばない）。
     // ElapsedTimeは止めている間は進まない。RaceStartedは出さない（レースの最初ではないため）。
-    // スタートの演出・最初のカウントダウンの途中なら、何もしない（元の流れがそのまま続く）。
-    // Time.timeScaleは触らないので、ポーズで0にしていたら呼び出し側（ポーズメニュー）が1に戻す。0のままだとカウントダウンも止まったまま。
+    // スタートの演出・最初のカウントダウンの途中・ゴール後・カウントダウン中に呼ばれたときは、何もしない。
     public async UniTask ResumeWithCountdownAsync()
     {
         // Dispose後（シーンを捨てている途中）は_cancellationTokenSourceがnullなので、何もしない。
-        if (!_isInitialized || _cancellationTokenSource == null || _isResumeCountdownRunning || State != ERaceState.Racing)
+        if (!_isInitialized || _cancellationTokenSource == null || IsResumeCountdownRunning || State != ERaceState.Racing)
         {
             return;
         }
 
-        _isResumeCountdownRunning = true;
+        var resumeCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_cancellationTokenSource.Token);
+        _resumeCountdownCancellationTokenSource = resumeCancellationTokenSource;
+        Time.timeScale = 0f;
         State = ERaceState.Countdown;
         Log("レースの途中から再開するカウントダウン");
 
         try
         {
-            bool isCanceled = await CountdownAsync(_cancellationTokenSource.Token);
+            bool isCanceled = await CountdownAsync(resumeCancellationTokenSource.Token, true);
             if (isCanceled)
             {
+                // CancelResumeCountdownで止めたとき：走行中に戻すが、timeScaleは0のまま（ポーズしたまま）にする。
+                // シーンを捨てたときもここに来るが、そのときはStateを戻しても害はない。
+                State = ERaceState.Racing;
+                Log("再開のカウントダウンを中止");
                 return;
             }
 
+            Time.timeScale = 1f;
             State = ERaceState.Racing;
             Log("再開");
         }
         finally
         {
-            _isResumeCountdownRunning = false;
+            _resumeCountdownCancellationTokenSource = null;
+            resumeCancellationTokenSource.Dispose();
         }
+    }
+
+    // 再開のカウントダウンの途中で止める（カウントダウン中にまたカメラ接続が切れて、ポーズメニューを開き直すときなど）。
+    // ゲームの時間は止めたまま（timeScale = 0）で走行中の状態に戻すので、もう一度ResumeWithCountdownAsyncを呼べる。
+    public void CancelResumeCountdown()
+    {
+        _resumeCountdownCancellationTokenSource?.Cancel();
     }
 
     // ポーズメニューができるまでの動作確認用。再生中にInspectorの右クリックメニューから呼ぶ。
@@ -338,16 +359,23 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         ResumeWithCountdownAsync().Forget();
     }
 
+    // 動作確認用。中止するとtimeScaleが0のまま止まるので、もう一度Resume With Countdownを選ぶと再開する。
+    [ContextMenu("Cancel Resume Countdown (Play Mode)")]
+    private void CancelResumeCountdownFromContextMenu()
+    {
+        CancelResumeCountdown();
+    }
+
     // CountdownSecondsから1まで1秒ごとに数え、最後に0（GO）を出す。キャンセルされたらtrueを返す。
-    // UniTask.Delayは通常の時間で数えるので、Time.timeScaleが0の間は止まる。
-    private async UniTask<bool> CountdownAsync(CancellationToken token)
+    // isRealtimeがfalseなら通常の時間で数える（Time.timeScaleが0の間は止まる）。trueなら実時間で数える（timeScaleが0でも進む）。
+    private async UniTask<bool> CountdownAsync(CancellationToken token, bool isRealtime = false)
     {
         for (int count = _settings.CountdownSeconds; count > 0; count--)
         {
             CountdownChanged?.Invoke(count);
             Log($"カウントダウン {count}");
 
-            bool isCanceled = await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: token).SuppressCancellationThrow();
+            bool isCanceled = await UniTask.Delay(TimeSpan.FromSeconds(1), ignoreTimeScale: isRealtime, cancellationToken: token).SuppressCancellationThrow();
             if (isCanceled)
             {
                 return true;
