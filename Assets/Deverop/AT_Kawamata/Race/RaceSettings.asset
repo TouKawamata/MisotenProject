@@ -15,7 +15,9 @@ MonoBehaviour:
   _startDistance: 30
   _rowSpacing: 8
   _columnSpacing: 4
-  _columns: 4
+  _columns: 8
+  _columnStagger: 3.5
+  _placePlayerLast: 1
   _playerGridIndex: 2
   _countdownSeconds: 3
   _goalDistanceFromEnd: 100
