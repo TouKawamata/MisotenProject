@@ -16,6 +16,8 @@ public sealed class SpeedRing : CourseGimmickBase
     private float _ellipseScale = 1f;
 
 
+    public bool IsSlowing => _isSlowing;
+
     private bool _isSlowing;
     private readonly HashSet<IGimmickRacer> _activatedRacers = new HashSet<IGimmickRacer>();
 

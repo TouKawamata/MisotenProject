@@ -87,3 +87,5 @@ MonoBehaviour:
   _randomSeed: 0
   _showDebugLogs: 1
   _drawGizmos: 1
+  _showLabel: 1
+  _labelHeight: 2.5
