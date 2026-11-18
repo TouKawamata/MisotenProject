@@ -21420,7 +21420,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _innerStunDuration
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _canBeBlockedByShield
