@@ -25,6 +25,10 @@ public class StunPresentation : MonoBehaviour
     [Tooltip("ON：スタンの残り時間に合わせて、電流をだんだん弱める。OFF：スタン中はずっと最大で、解けたらフェードして消える")]
     [SerializeField] private bool _fadeElectricityWithRemainingTime = true;
 
+    [Header("ブーストの炎")]
+    [Tooltip("スタン中に足裏の炎を短くし、ブースト中の追加炎を隠すBoostFlameView")]
+    [SerializeField] private BoostFlameView _flameView;
+
     private bool _isStunned;
     private float _stunTotalTime;
 
@@ -46,6 +50,11 @@ public class StunPresentation : MonoBehaviour
         if (_electricity != null)
         {
             _electricity.SetStun(false, immediate: true);
+        }
+
+        if (_flameView != null)
+        {
+            _flameView.SetStunned(false);
         }
     }
 
@@ -92,6 +101,11 @@ public class StunPresentation : MonoBehaviour
         {
             _electricity.SetStun(true);
         }
+
+        if (_flameView != null)
+        {
+            _flameView.SetStunned(true);
+        }
     }
 
     private void StopStunEffect()
@@ -106,6 +120,11 @@ public class StunPresentation : MonoBehaviour
         if (_electricity != null)
         {
             _electricity.SetStun(false);
+        }
+
+        if (_flameView != null)
+        {
+            _flameView.SetStunned(false);
         }
     }
 }
