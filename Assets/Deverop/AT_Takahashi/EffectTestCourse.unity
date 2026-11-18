@@ -10224,6 +10224,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4103706162558229266, guid: d583b756cea3f6d469fa72a5cf3760a9, type: 3}
   m_PrefabInstance: {fileID: 1032935517}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &950215142 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 354793051893972281, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+  m_PrefabInstance: {fileID: 120439820496350163}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb43163518eb16646932a7bca761f7dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenNoiseEffectController
 --- !u!1001 &957959020
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21385,7 +21396,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 28200230958227253, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _blastRadius
@@ -21393,11 +21404,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _innerRadius
-      value: 25
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _pushDuration
-      value: 100
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _effectDuration
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerPushDistance
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerStunDuration
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _canBeBlockedByShield
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.size
@@ -21406,6 +21433,54 @@ PrefabInstance:
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.size
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 950215142}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Play
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 950215142}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Stop
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ScreenNoiseEffectController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: ScreenNoiseEffectController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 3274694118539919348, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: m_Name

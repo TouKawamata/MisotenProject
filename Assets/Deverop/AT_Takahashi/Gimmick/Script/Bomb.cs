@@ -128,13 +128,6 @@ public sealed class Bomb : CourseGimmickBase
 
         _triggerCollider = GetComponent<Collider>();
 
-        if (_triggerCollider == null)
-        {
-            Debug.LogError(
-                $"{nameof(Bomb)}: Colliderがありません。",
-                this);
-        }
-
         _racerLayerMask = LayerMask.GetMask(RacerLayerName);
 
         if (_racerLayerMask == 0)
@@ -155,6 +148,7 @@ public sealed class Bomb : CourseGimmickBase
         }
     }
 
+
     public override void OnRacerEnter(in GimmickContact contact)
     {
         Debug.Log($"{nameof(Bomb)}: OnRacerEnter", this);
@@ -172,14 +166,14 @@ public sealed class Bomb : CourseGimmickBase
             return;
         }
 
-        // 先に爆発済みにする
         _hasExploded = true;
 
-        // 接触判定はこの時点で不要なので停止する
         if (_triggerCollider != null)
         {
             _triggerCollider.enabled = false;
         }
+
+        Debug.Log("Bomb: EXPLODE", this);
 
         Vector3 center = transform.position;
 
@@ -190,91 +184,9 @@ public sealed class Bomb : CourseGimmickBase
             _racerLayerMask,
             QueryTriggerInteraction.Collide);
 
-        Debug.Log($"Bomb: hitCount={hitCount}, mask={_racerLayerMask}",this);
+        // 以下、爆風処理
+        // ...
 
-        _hitRacers.Clear();
-
-        for (int i = 0; i < hitCount; i++)
-        {
-            Collider hitCollider = _overlaps[i];
-
-            Debug.Log(
-                $"[Bomb] #{i} Collider = " +
-                $"{(hitCollider != null ? hitCollider.name : "NULL")}",
-                this);
-
-            if (hitCollider == null)
-            {
-                Debug.Log("[Bomb] → Collider null でSKIP", this);
-                continue;
-            }
-
-            Debug.Log(
-                $"[Bomb] #{i} Layer = " +
-                $"{LayerMask.LayerToName(hitCollider.gameObject.layer)}",
-                this);
-
-            IGimmickRacer racer =
-                hitCollider.GetComponentInParent<IGimmickRacer>();
-
-            if (racer == null)
-            {
-                Debug.LogWarning(
-                    $"[Bomb] → {hitCollider.name} から " +
-                    $"IGimmickRacer を取得できないのでSKIP",
-                    hitCollider);
-
-                continue;
-            }
-
-            Debug.Log(
-                $"[Bomb] → Racer FOUND: {racer.Transform.name}",
-                this);
-
-            if (!_hitRacers.Add(racer))
-            {
-                Debug.Log(
-                    "[Bomb] → 同じRacerなのでSKIP",
-                    this);
-
-                continue;
-            }
-
-            Debug.Log(
-                $"[Bomb] IsInvincible = {racer.IsInvincible}",
-                this);
-
-            if (racer.IsInvincible)
-            {
-                Debug.Log(
-                    "[Bomb] → 無敵なのでSKIP",
-                    this);
-
-                continue;
-            }
-
-            Debug.Log(
-                $"[Bomb] ShieldCheck = {_canBeBlockedByShield}",
-                this);
-
-            if (_canBeBlockedByShield &&
-                racer.TryBlockWithShield())
-            {
-                Debug.Log(
-                    "[Bomb] → Shieldで防御されたのでSKIP",
-                    this);
-
-                continue;
-            }
-
-            Debug.Log(
-                "[Bomb] ★ ApplyExplosionToRacerを呼びます",
-                this);
-
-            ApplyExplosionToRacer(racer, center);
-        }
-
-        // 爆弾位置のエフェクト・SEのみ。
         _onExploded?.Invoke();
 
         StartCoroutine(StopEffectAfterDelay());
@@ -402,8 +314,8 @@ public sealed class Bomb : CourseGimmickBase
         // コース断面成分の大きさを距離側へ掛ける。
         racer.ApplyPush(
             planar,
-            _innerPushDistance * planar.magnitude,
-            _pushDuration);
+            30f,
+            1f);
 
         // 「後ろなら後退」モードの場合のみ、
         // 爆弾より後方にいるレーサーをさらに後退させる。
@@ -459,7 +371,15 @@ public sealed class Bomb : CourseGimmickBase
 
     private IEnumerator StopEffectAfterDelay()
     {
+        Debug.Log(
+            $"Bomb: waiting {_effectDuration} sec",
+            this);
+
         yield return new WaitForSeconds(_effectDuration);
+
+        Debug.Log(
+            "Bomb: disabling GameObject",
+            this);
 
         _onEffectStopped?.Invoke();
 
