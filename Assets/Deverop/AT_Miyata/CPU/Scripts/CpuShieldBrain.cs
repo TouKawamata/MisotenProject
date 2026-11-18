@@ -239,6 +239,12 @@ public class CpuShieldBrain
                 continue;
             }
 
+            // リングを狙う弾はレーサーに当たらない。シールドで防げない種類は、張っても意味がない。
+            if (projectile.TargetRacer == null || projectile.Type == null || !projectile.Type.CanBeBlockedByShield)
+            {
+                continue;
+            }
+
             Vector3 toSelf = position - projectile.transform.position;
             float distance = toSelf.magnitude;
             if (distance > range || distance < 0.001f || distance >= bestDistance)

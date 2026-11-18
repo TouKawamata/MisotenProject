@@ -19,6 +19,12 @@ public class JammerProjectile : MonoBehaviour
     private Vector3 _direction;
     private float _age;
 
+    // 弾の種類（CPUが読む）。
+    public JammerTypeProfile Type => _type;
+
+    // 狙っているレーサー。リングなどを狙う弾ではnull（CPUが読む）。
+    public IReadOnlyRacerData TargetRacer => _targetRacer;
+
     // レーサーを狙う弾を撃つ。ownerGuide：標的がガイドを持っていないときに使う（撃ったレーサーのガイド）。
     public void LaunchAtRacer(JammerProfile profile, JammerTypeProfile type, IReadOnlyRacerData owner, IReadOnlyRacerData target,
         IReadOnlyList<IReadOnlyRacerData> racers, ICourseGuide ownerGuide, Vector3 direction)

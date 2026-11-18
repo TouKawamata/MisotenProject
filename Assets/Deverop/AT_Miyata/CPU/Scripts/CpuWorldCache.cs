@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
 
 // CPUから見たコースギミックの種類。
@@ -28,7 +27,6 @@ public enum ECpuGimmickKind
 // ・ギミック：一定間隔で探し直す（爆発した爆弾は非アクティブになるので、使うときにactiveInHierarchyを見る）
 // ・妨害弾の弾：1フレームに1回だけ探す（すぐ消えるため）
 // ギミックとの当たり（避ける・リングをくぐる）の計算もここにまとめる。
-// 加速リング（SpeedRing）が減速リングに切り替わったかは公開されていないため、リフレクションで読む（読めなければ加速リング扱い）。
 public static class CpuWorldCache
 {
     private const float GimmickRescanInterval = 1f;
@@ -38,8 +36,6 @@ public static class CpuWorldCache
     private static readonly Dictionary<CourseGimmickBase, Collider[]> _colliders = new Dictionary<CourseGimmickBase, Collider[]>();
     private static float _lastGimmickScanTime = float.NegativeInfinity;
     private static int _projectileScanFrame = -1;
-    private static FieldInfo _ringSlowingField;
-    private static bool _hasLookedUpRingField;
 
     // Enter Play Modeでドメインを読み直さない設定でも、前回の再生の結果が残らないようにする。
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -89,7 +85,7 @@ public static class CpuWorldCache
         switch (gimmick)
         {
             case SpeedRing ring:
-                return IsRingSlowing(ring) ? ECpuGimmickKind.SlowRing : ECpuGimmickKind.SpeedRing;
+                return ring.IsSlowing ? ECpuGimmickKind.SlowRing : ECpuGimmickKind.SpeedRing;
             case Bomb _:
                 return ECpuGimmickKind.Bomb;
             case SlowZone _:
@@ -149,22 +145,6 @@ public static class CpuWorldCache
         float x = local.x / radiusX;
         float y = local.y / radiusY;
         return x * x + y * y <= 1f;
-    }
-
-    private static bool IsRingSlowing(SpeedRing ring)
-    {
-        if (!_hasLookedUpRingField)
-        {
-            _hasLookedUpRingField = true;
-            _ringSlowingField = typeof(SpeedRing).GetField("_isSlowing", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (_ringSlowingField == null || _ringSlowingField.FieldType != typeof(bool))
-            {
-                _ringSlowingField = null;
-                Debug.LogWarning("CpuWorldCache: SpeedRingの減速リングかどうか（_isSlowing）が読めないため、CPUはすべて加速リングとして扱います");
-            }
-        }
-
-        return _ringSlowingField != null && (bool)_ringSlowingField.GetValue(ring);
     }
 
     private static Collider[] GetColliders(CourseGimmickBase gimmick)

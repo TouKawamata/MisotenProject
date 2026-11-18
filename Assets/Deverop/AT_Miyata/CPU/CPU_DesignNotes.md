@@ -17,9 +17,9 @@ CPUレーサーの「判断」（入力）を作る機能の仕様・構成・�
 - ボタンの決まり（仕様書「CPU入力 データ早見表.md」より）：Pressed は1Tickだけ true、**Pressed の Tick も Held を true にする**、ブーストとシールドは同時に使えない、スタン中は入力が無視される、値は `UpdateInput` の中でだけ変える。
 - RacerId は Player が 0、CPU は 1 から。距離・順位は1フレーム前の値。他のレーサーの速度・ゲージは読めない（速度は `DistanceOnCourse` の差から自分で出す）。
 - `ICourseGuide`（`owner.CourseGuide`）でコースの中心・左右・上下・半径・先読みの位置が取れる。`GetRight` が Move.x の＋側、`GetUp` が Move.y の＋側。
-- 妨害弾：`JammerLauncher`（CPURacer.prefab にも付いている）。標的は発射台が決める（自分より順位が高い中で一番近い相手）。種類は `SelectType` で切り替える。`owner.CanFireJammer` で撃てるか分かる。弾（`JammerProjectile`）の種類・標的は外から読めない。
+- 妨害弾：`JammerLauncher`（CPURacer.prefab にも付いている）。標的は発射台が決める（自分より順位が高い中で一番近い相手）。種類は `SelectType` で切り替える。`owner.CanFireJammer` で撃てるか分かる。弾（`JammerProjectile`）の種類は `Type`、狙っているレーサーは `TargetRacer`（リングを狙う弾では null）で読める（2026-11-18 に CPU 用に追加）。
 - 効果（`owner.Effects`）：減速・上下左右が遅い・ブースト禁止・視界反転。**視界反転は、CPUでは移動の入力が反転される**（`RacerManagerBase`）。
-- ギミック（`CourseGimmickBase` の派生）：加速リング `SpeedRing`（AT_Minakuchi。妨害弾で減速リングに変わる）、爆弾 `Bomb`、減速エリア `SlowZone`（AT_Takahashi）。
+- ギミック（`CourseGimmickBase` の派生）：加速リング `SpeedRing`（AT_Minakuchi。妨害弾で減速リングに変わる。今減速リングかは `IsSlowing`）、爆弾 `Bomb`、減速エリア `SlowZone`（AT_Takahashi）。
 
 ## 構成（`AT_Miyata/CPU/`）
 ```
@@ -40,10 +40,16 @@ Scripts/
   CpuLabelDrawer.cs          頭上の表示（Game：OnGUI、Scene：Handles）
 Editor/
   CpuProfilePresetCreator.cs メニュー Tools > CPU > Create Default Profiles
+  CpuGimmickTestSceneCreator.cs メニュー Tools > CPU > Create Gimmick Test Scene（CPUTest_2 から背景・UIを省いたシーンを作る）
 Profiles/                    難易度3つ・個性5つのアセット
 Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユーザーが作成）
 ```
-テストシーン：`AT_Miyata/Scenes/CPUTestCourse.unity`（TestCourse を Save As したもの）。
+テストシーン：`AT_Miyata/Scenes/CPUTest_2.unity`（2026-11-18 に `CPUTestCourse.unity` から切り替えた。旧シーンは削除）。
+ギミック確認用：`AT_Miyata/Scenes/CPUGimmickTest.unity`（Tools > CPU > Create Gimmick Test Scene で CPUTest_2 から作る）。
+- CPUTest_2 をコピーし、背景（ocean・Plane・stadium・tower・building・signboards・Decal_Stadium・Mid_Ring）、UI（Minimap・PauseMenu・PlayerPoseStatusUIController・DebugHud）、AudioManager、スタート・ゴールの演出を消す。コース・Player・エフェクト・CPU・空（ライトがここにある）・Canvas（カウントダウン）は残す。
+- 残すオブジェクトから参照されているものは消さない（Console に「〇〇から参照されているため残しました」と出る）。RaceIntroDirection だけは例外（RaceManager の Intro は未設定でよい）。
+- コースに沿って 150m から 100m おきに、加速リング → 爆弾 → 加速リング → 減速エリア → 減速リングの順に置く（`------- Gimmicks（自動配置） -------` の下。断面の中のずらす方向は固定の乱数）。
+- 既にシーンがあれば何もしない（作り直すときは消してから実行）。
 
 ## 1Tickの流れ（CpuRaceInput.UpdateInput）
 1. 難易度・個性がなければ入力なし（警告は1回だけ）。`DistanceOnCourse` が20m以上戻ったら置き直しとみなして `ResetState`。
@@ -60,7 +66,7 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 - **執念**：`BoostHitInfo` に当てた相手が含まれないため、「自分がスタンした瞬間に、前後15m以内でブーストしていた一番近い相手」を当てた相手とみなす（既存ファイルを変えないための代わりの方法）。
 - **シールド**：脅威は3種類（一番早く届きそうなもの1つ。爆弾は最優先）。
   - 後ろのブースト：一定距離以内（慎重さで 8～25m）、断面での距離3m以内、ブースト中で近づいてくる相手。自分がブースト中なら張らない（ブースト同士ははじくだけのため）。
-  - 妨害弾：自分の方を向いて飛んでくる弾（慎重さで 25～60m 以内、弾の通り道から5m以内）。標的でなくても通り道にいれば当たるため。
+  - 妨害弾：自分の方を向いて飛んでくる弾（慎重さで 25～60m 以内、弾の通り道から5m以内）。標的でなくても通り道にいれば当たるため。リングを狙う弾（`TargetRacer` が null）と、シールドで防げない種類（`CanBeBlockedByShield` が false）は無視する。
   - 爆弾：爆風の範囲（BlastRadius の90%）にいて、自分か誰かが爆弾に触れそう（5m以内）なとき。
   - 妨害弾・爆弾は、慎重さ0.5以上なら、ブーストをやめてでも張る。
 - **ブースト**：攻撃＝相手が25m以内で断面での位置（上下左右）がそろっている（そろいの許容は難易度の AttackAlignTolerance）。加速＝先のカーブの角度が BoostCurveLimit 以下で、ゲージが閾値以上。閾値は「ブーストの使い方」、追い上げ補正（Playerとの差）、RankRatio（最下位で -0.15）で変わる。相手がシールドを張ったら攻撃をやめる。
@@ -86,7 +92,7 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 
 ## セットアップ（案B：既存ファイルは変えない）
 1. CPURacer.prefab の Prefab Variant を `AT_Miyata/CPU/Prefabs/` に作り、ルートに CpuRaceInput を付けて Difficulty・Personality を設定し、`CPUManager.Input Source` に入れる。
-2. 自分用のシーン（CPUTestCourse）に Variant を置き、RaceManager の CPU の欄に入れる。
+2. 自分用のシーン（CPUTest_2）に Variant を置き、RaceManager の CPU の欄に入れる。
 3. **シーンに置いた各 CPU の `PlayerFlightController.Course Spline` に、シーンの CourseSpline を設定する。** シーンのオブジェクトなので Prefab には保存できない。未設定だと CPU は全く動かない（実際に起きた。今は CpuRaceInput が警告を出す）。
 
 ## デバッグ
@@ -95,7 +101,7 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 - 頭上の表示（Show Label / Label Height）：「個性 / 難易度」と今していること（シールド：脅威の種類、リングへ、ギミック回避、反転で混乱 など）。
 - **パスについて**：作業するPCがよく変わるため、このメモにはユーザー名入りのパス（`C:/Users/<名前>/...`）を書かない。プロジェクトの場所は `git rev-parse --show-toplevel`、Unity のバージョンは `ProjectSettings/ProjectVersion.txt`、ユーザーのフォルダは環境変数（`$LOCALAPPDATA` など）から、その場で求める。
 - Unity を使わないコンパイル確認（プロジェクトの Unity バージョンの Roslyn を使う。Git Bash で、リポジトリ内のどこからでも実行できる）。
-  **注意**：`Library/ScriptAssemblies/Assembly-CSharp.dll` は最後に Unity を開いた時点のもの。他のメンバーの変更を pull した後で Unity を開いていないと古く、下のコマンドでは型が見つからないエラーになる。そのときは Assets の全スクリプト（Editor・Plugins以外）をまとめてコンパイルする（2026-11-18 はこの方法で確認。参照に `NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll` と、Assets 内の DLL（DOTween など）を足す）：
+  **注意**：`Library/ScriptAssemblies/Assembly-CSharp.dll` は最後に Unity を開いた時点のもの。他のメンバーの変更を pull した後や、他のメンバーのファイルを変えたときは古いので、Assets の全スクリプト（Editor・Plugins以外）をまとめてコンパイルする。参照に `NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll`、Assets 内の DLL（DOTween など）、`Library/ScriptAssemblies` の Assembly-CSharp 以外の DLL を足し、ソースに `DOTween/Modules/*.cs` も足す（無いと PauseMenu の DOFade がエラーになる）。ファイルが多くてコマンドが長すぎる（exit 126）ので、引数は応答ファイル（`@csc.rsp`、パスは `cygpath -w` で Windows 形式）に書いて渡す。CPU だけを変えたときは下のコマンドでよい：
   ```bash
   P=$(git rev-parse --show-toplevel)
   V=$(sed -n 's/^m_EditorVersion: //p' "$P/ProjectSettings/ProjectVersion.txt" | tr -d '\r')
@@ -110,22 +116,24 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 
 ### 引き継ぎ（2026-11-18 時点）
 - **新しいゲーム性への対応（2026-11-18）**：上下左右の移動、ショートカット廃止、妨害弾、加速リング・爆弾・減速エリア、視界反転に対応した。
-  - 状態：**未コミット**（作業ブランチ `Miyata_NewCPU`）。コンパイルは確認済み（Assets 全体をまとめてコンパイルしてエラー・警告なし）。**Unity での動作確認はまだ**。
+  - 状態：作業ブランチ `Miyata_NewCPU` にコミット済み（`いったん`）。コンパイルは確認済み。**Unity での動作確認はまだ**。
   - 変更したファイル：`CpuRaceInput` `CpuSituation` `CpuPerception` `CpuSteeringBrain`（候補点のコスト方式に作り直し）`CpuShieldBrain`（脅威3種類）`CpuBoostBrain` `CpuTargetSelector`（2次元のそろい）`CpuDifficultyProfile` `CpuPersonalityProfile` `CpuProfilePresetCreator`、Profiles の8アセット（新しい項目の値を直接書き込んだ）。
-  - 新しく作ったファイル：`CpuJammerBrain.cs` `CpuWorldCache.cs`（`.meta` は Unity を開くと作られる）。
-  - 削除したファイル：`CpuShortcutBrain.cs`（と `.meta`）。git の削除はステージしていない（作業ツリーで消しただけ）。
+  - 新しく作ったファイル：`CpuJammerBrain.cs` `CpuWorldCache.cs`。
+  - 削除したファイル：`CpuShortcutBrain.cs`（と `.meta`）。
   - 項目の名前を変えたもの：難易度 `_shortcutSuccessRate` → `_gimmickAwareness`、個性 `_shortcutPreference` → `_ringPreference`（どちらも `FormerlySerializedAs` 付き。アセットの YAML も新しい名前に書き換えた）。
   - CPU の Prefab Variant（`Prefabs/`）とシーンは変えていない。`CpuRaceInput` のシリアライズされる項目は変わっていないので、そのまま使えるはず。
 
 ### 次にやること（この順で）
-1. Unity を開いてコンパイルされることを確かめる（`Library` の Assembly-CSharp.dll は 10/27 のままで古かった）。Console に `CpuWorldCache` のリフレクションの警告が出ないかも見る。
-2. CPUTestCourse に加速リング（`SpeedRing`）・爆弾（`Bomb`）・減速エリア（`SlowZone`）を置いて動きを確認する。テストシーンの CPU は Course Spline の設定を忘れずに。
+1. Unity を開いてコンパイルされることを確かめる。
+2. CPUTest_2 に加速リング（`SpeedRing`）・爆弾（`Bomb`）・減速エリア（`SlowZone`）を置いて動きを確認する。テストシーンの CPU は Course Spline の設定を忘れずに。
    - 確かめる点：上下にも散らばって走るか／リングをくぐるか／爆弾を避けるか、近くで爆発しそうならシールドを張るか／妨害弾を撃つか（Show Debug Logs を ON）、飛んでくる弾にシールドを張るか／視界反転の弾を受けると一時的に逆に動き、慣れて戻るか。
    - 頭上の表示と Gizmos（黄＝目標の位置、緑＝リング、橙＝避けるギミック、水色＝脅威）で判断の様子が見える。
 3. ユーザーの確認で直すところが出たら、各 Brain 先頭の `const` と、難易度・個性のアセットで調整する。OK が出たら下の「調整した内容」に日付つきで書く。
-4. 以下は他のメンバーのファイルの変更なので、ユーザーの承認を得てから提案する：
-   - `SpeedRing`（水口さん）に `public bool IsSlowing => _isSlowing;` を足してもらい、`CpuWorldCache.IsRingSlowing` のリフレクションを置き換える。
-   - 妨害弾の種類・標的は外から読めないので、今は自分の方へ飛んでくる弾にすべてシールドを張る（防げない種類でも張る）。正確にするには `JammerProjectile` に種類・標的を読む口が要る（川又さん）。
+
+- **他のメンバーのファイルに読み取り用の口を追加（2026-11-18、承認済み・最小限）**：
+  - `AT_Minakuchi/SpeedRing/SpeedRing.cs`：`public bool IsSlowing => _isSlowing;`（`CpuWorldCache` のリフレクションをやめてこれを使う）。
+  - `AT_Kawamata/Jammer/Scripts/JammerProjectile.cs`：`public JammerTypeProfile Type => _type;` と `public IReadOnlyRacerData TargetRacer => _targetRacer;`（`CpuShieldBrain` が使う）。
+  - 状態：未コミット。全スクリプトをまとめてコンパイルしてエラーなし。
 
 ### 気をつけること・分かっていること
 - 視界反転・減速リングへの切り替え・妨害弾の種類の選択は `JammerLauncher.SelectType` を CPU から呼んでいる（公開されている口なので既存ファイルは変えていない）。
