@@ -83,6 +83,9 @@ public class TrackingRaceInputSettings
     [Tooltip("肘と肩の画面上の距離がこれ以下なら、肘が肩に重なって見えるとみなす（胴の長さに対する比率）")]
     public float jammerElbowRadiusRatio = 0.3f;
 
+    [Tooltip("前腕（肘〜手首）の画面上の長さがこれ以下なら、腕がカメラを向いているとみなす（胴の長さに対する比率）。シールドのポーズ（前腕が横を向いて長く見える）で妨害弾が出ないようにする。shieldMinForearmRatioより小さくすると、同じ腕で両方が同時に成立しない")]
+    public float jammerMaxForearmRatio = 0.25f;
+
     [Tooltip("3Dモードのとき、手首が肩より手前（カメラ側）に出ていることも条件にする（2Dモードでは見ない）")]
     public bool jammerUseDepth = true;
 

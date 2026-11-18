@@ -22,6 +22,7 @@ using UnityEngine;
 // 2026-11-07 川又：IRaceInputのHorizontal→Move（Vector2）変更と、ショートカット廃止への暫定対応。
 // 2026-11-11：上下の入力（バンザイ／しゃがみ）、2Dモード・縦横比・トラッキング途切れへの対応。ショートカットの処理は削除。
 // 2026-11-12：妨害弾（JammerPressed）を追加。シールドに「前腕が画面上である程度の長さに見える」条件を追加（突き出した腕でシールドが出ないように）。
+// 2026-11-18：妨害弾に「前腕が画面上で短く見える」条件を追加（シールドのポーズで妨害弾が出ないように）。
 public class TrackingRaceInput : IRaceInput {
 	private const int Nose = PoseLandmarkIndex.Nose;
 	private const int LeftShoulder = PoseLandmarkIndex.LeftShoulder;
@@ -260,11 +261,14 @@ public class TrackingRaceInput : IRaceInput {
 		// 画面上（x, y）の距離。胴の長さに対する比率
 		result.WristRatio = Vector2.Distance(wrist, shoulder) / torsoLength;
 		result.ElbowRatio = Vector2.Distance(elbow, shoulder) / torsoLength;
+		result.ForearmRatio = Vector2.Distance(wrist, elbow) / torsoLength;
 
 		// 条件2：手首が肩の近くに重なって見えるか
 		bool wristNear = result.WristRatio <= _settings.jammerWristRadiusRatio;
 		// 条件3：肘も肩の近くに重なって見えるか（手で顔や肩を触ったときは肘が下がっているので、ここで区別する）
 		bool elbowNear = result.ElbowRatio <= _settings.jammerElbowRadiusRatio;
+		// 条件5：前腕が短く見えるか（腕がカメラを向いているか）。シールドのポーズは肘・手首が肩の近くに見えても前腕が横を向いて長く見えるので、ここで区別する
+		bool forearmShort = result.ForearmRatio <= _settings.jammerMaxForearmRatio;
 
 		// 条件4（3Dモードのみ）：手首が肩より手前（カメラ側）に出ているか。2Dモードにはzが無いので見ない
 		bool forward = true;
@@ -276,7 +280,7 @@ public class TrackingRaceInput : IRaceInput {
 			forward = result.DepthRatio >= _settings.jammerDepthRatio;
 		}
 
-		result.Active = wristNear && elbowNear && forward;
+		result.Active = wristNear && elbowNear && forearmShort && forward;
 		return result;
 	}
 
@@ -535,6 +539,7 @@ public struct JammerArmDebug {
 	public bool Valid;       // 肩・肘・手首が見えていて、距離を測れたか
 	public float WristRatio; // 手首と肩の画面上の距離（胴の長さに対する比率）
 	public float ElbowRatio; // 肘と肩の画面上の距離（胴の長さに対する比率）
+	public float ForearmRatio; // 肘と手首の画面上の距離（前腕の見かけの長さ。胴の長さに対する比率）
 	public bool HasDepth;    // 奥行き（z）を見たか（3Dモードで、jammerUseDepthがONのとき）
 	public float DepthRatio; // 手首が肩よりどれだけ手前か（胴の長さに対する比率）
 	public bool Active;      // この腕でポーズが成立しているか

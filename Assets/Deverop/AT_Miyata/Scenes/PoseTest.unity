@@ -686,9 +686,18 @@ MonoBehaviour:
     shieldHeightToleranceRatio: 0.3
     shieldForearmLevelToleranceRatio: 0.3
     shieldInwardMarginRatio: 0.1
+    shieldMinForearmRatio: 0.3
+    jammerWristRadiusRatio: 0.35
+    jammerElbowRadiusRatio: 0.3
+    jammerMaxForearmRatio: 0.25
+    jammerUseDepth: 1
+    jammerDepthRatio: 0.2
+    jammerMinVisibility: 0.3
+    jammerHoldTime: 0.08
+    jammerReleaseTime: 0.15
     minVisibility: 0.5
   _calibrator: {fileID: 0}
-  _calibrationStartDelay: 1
+  _calibrationStartDelay: 2
   _lossMonitor: {fileID: 0}
   _useKeyboardForDebug: 0
   _flashDuration: 0.5

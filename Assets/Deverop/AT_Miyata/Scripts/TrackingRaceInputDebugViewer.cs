@@ -48,7 +48,7 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
     // 表示欄の位置と大きさ
     private const float PanelX = 10f;
     private const float PanelY = 190f;
-    private const float PanelWidth = 360f;
+    private const float PanelWidth = 440f;
     private const float PanelHeight = 510f;
 
     // 現在使用している入力元（キーボード or トラッキング）。
@@ -274,7 +274,7 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         string depth = arm.HasDepth ? $"  z {arm.DepthRatio:+0.00;-0.00;0.00}/{_trackingSettings.jammerDepthRatio:F2}" : "  z -";
         GUI.color = arm.Active ? Color.green : Color.white;
         GUI.Label(new Rect(x, y, width, 20),
-            $"  {label}: 手首 {arm.WristRatio:F2}/{_trackingSettings.jammerWristRadiusRatio:F2}  肘 {arm.ElbowRatio:F2}/{_trackingSettings.jammerElbowRadiusRatio:F2}{depth}");
+            $"  {label}: 手首 {arm.WristRatio:F2}/{_trackingSettings.jammerWristRadiusRatio:F2}  肘 {arm.ElbowRatio:F2}/{_trackingSettings.jammerElbowRadiusRatio:F2}  前腕 {arm.ForearmRatio:F2}/{_trackingSettings.jammerMaxForearmRatio:F2}{depth}");
         GUI.color = originalColor;
     }
 
