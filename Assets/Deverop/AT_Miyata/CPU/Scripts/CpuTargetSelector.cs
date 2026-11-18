@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // ブーストで狙う相手を選ぶ。PlayerもCPUも同じ扱いで、自分以外の全員に点数を付けて一番高い相手を狙う。
-//   点数 ＝ 近さ ＋ 横位置のそろい具合 ＋ 順位ボーナス（自分より上） ＋ 執念ボーナス（直近に自分へ当てた相手）
+//   点数 ＝ 近さ ＋ 断面での位置のそろい具合 ＋ 順位ボーナス（自分より上） ＋ 執念ボーナス（直近に自分へ当てた相手）
 // シールド中（当てると防がれて相手が前へ押し出される）・スタン中（無敵）の相手は狙わない。
 // 狙う相手が頻繁に変わらないよう、今の相手が有効なうちは、点数が一番の相手の一定割合以上なら変えない。
 // 誰に当てられたかはBoostHitInfoに含まれないため、スタンした瞬間に近くでブーストしていた相手を、当てた相手とみなす。
@@ -89,7 +89,7 @@ public class CpuTargetSelector
                 continue;
             }
 
-            float distance = Mathf.Abs(other.ForwardGap) + Mathf.Abs(other.LateralGap);
+            float distance = Mathf.Abs(other.ForwardGap) + other.OffsetGap.magnitude;
             if (Mathf.Abs(other.ForwardGap) <= AttackerSearchRange && distance < bestDistance)
             {
                 bestDistance = distance;
@@ -167,7 +167,7 @@ public class CpuTargetSelector
         }
 
         float closeness = 1f - other.ForwardGap / range;
-        float alignment = 1f - Mathf.Clamp01(Mathf.Abs(other.LateralGap) / Mathf.Max(0.1f, situation.TunnelRadius));
+        float alignment = 1f - Mathf.Clamp01(other.OffsetGap.magnitude / Mathf.Max(0.1f, situation.TunnelRadius));
         float rank = other.Data.CurrentRank < situation.Self.CurrentRank ? RankBonus : 0f;
         float grudge = isGrudge ? MaxGrudgeBonus * personality.Vengefulness : 0f;
         return closeness + alignment + rank + grudge;

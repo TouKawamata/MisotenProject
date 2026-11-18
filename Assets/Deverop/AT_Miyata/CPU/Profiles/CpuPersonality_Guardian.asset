@@ -20,4 +20,6 @@ MonoBehaviour:
   _preferredLine: 0.5
   _lineChangeFrequency: 0.3
   _vengefulness: 0.3
-  _shortcutPreference: 0.5
+  _ringPreference: 0.5
+  _jammerEagerness: 0.3
+  _trickiness: 0.1

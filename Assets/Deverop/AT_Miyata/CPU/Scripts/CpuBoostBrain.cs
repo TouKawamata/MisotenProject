@@ -1,7 +1,7 @@
 using UnityEngine;
 
 // ブーストを押し続けたいかを決める。考え直すTickだけ判断し、それ以外のTickは前の判断を続ける。
-//   攻撃：狙う相手が近く、横位置がそろっていて、ゲージが攻撃の閾値以上なら始める。相手がシールドを張ったら、やめる（防がれると損なため）。
+//   攻撃：狙う相手が近く、断面での位置（上下左右）がそろっていて、ゲージが攻撃の閾値以上なら始める。相手がシールドを張ったら、やめる（防がれると損なため）。
 //   加速：先のコースが曲がっておらず、ゲージが加速の閾値以上なら始める。ゲージが下限まで減るか、先が曲がっていたらやめる。
 // 追い上げ補正（catchUp。＋＝Playerより後ろ）で、加速の閾値を上げ下げする（速度は変えない）。
 // 順位が下ほど（RankRatioが大きいほど）ゲージの減りが遅い（始めた瞬間の順位で決まる）ので、加速の閾値を下げて早めに使う。
@@ -90,7 +90,7 @@ public class CpuBoostBrain
     {
         float attackGauge = Mathf.Lerp(AttackGaugeAtLowAggression, AttackGaugeAtHighAggression, personality.Aggression);
         return target.ForwardGap <= AttackBoostRange
-            && Mathf.Abs(target.LateralGap) <= difficulty.AttackAlignTolerance
+            && target.OffsetGap.magnitude <= difficulty.AttackAlignTolerance
             && gauge >= attackGauge;
     }
 

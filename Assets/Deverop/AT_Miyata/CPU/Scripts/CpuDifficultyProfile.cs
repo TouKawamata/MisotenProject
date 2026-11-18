@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // CPUの難易度＝「うまさ」。反応の速さ・操作の正確さ・成功率など、同じことをしようとしたときにどれだけ正確にできるかを決める。
 // 何をしたがるか（攻撃・守備など）はCpuPersonalityProfile（個性）が決めるので、ここには入れない。
@@ -11,20 +12,20 @@ public class CpuDifficultyProfile : ScriptableObject
     private const string AssetNamePrefix = "CpuDifficulty_";
 
     [Header("判断")]
-    [Tooltip("狙う相手・走行ライン・ブーストを考え直す間隔（秒）。短いほど状況の変化にすぐ対応する")]
+    [Tooltip("狙う相手・目標の位置・ブースト・妨害弾を考え直す間隔（秒）。短いほど状況の変化にすぐ対応する")]
     [SerializeField] private float _thinkInterval = 0.15f;
 
-    [Tooltip("脅威（後ろからのブースト）やショートカットのエリアに気づいてから動くまでの秒数")]
+    [Tooltip("脅威（後ろからのブースト・飛んでくる妨害弾・爆発しそうな爆弾）に気づいてから、シールドを張るまでの秒数")]
     [SerializeField] private float _reactionTime = 0.35f;
 
     [Header("操作")]
-    [Tooltip("目標の横位置とのずれ（m）1つあたりのHorizontal。大きいほど素早く目標へ寄せる")]
+    [Tooltip("目標の位置とのずれ（m）1つあたりのMoveの大きさ。大きいほど素早く目標へ寄せる")]
     [SerializeField] private float _steeringGain = 0.5f;
 
-    [Tooltip("横の速さ（m/s）1つあたり、Horizontalを打ち消す量。大きいほど目標の横位置で行き過ぎにくい")]
+    [Tooltip("上下左右の速さ（m/s）1つあたり、Moveを打ち消す量。大きいほど目標の位置で行き過ぎにくい")]
     [SerializeField] private float _steeringDamping = 0.12f;
 
-    [Tooltip("Horizontalに足すぶれの大きさ（0～1）。大きいほどふらつく")]
+    [Tooltip("Moveに足すぶれの大きさ（0～1）。大きいほどふらつく")]
     [Range(0f, 1f)]
     [SerializeField] private float _steeringNoise = 0.12f;
 
@@ -32,7 +33,7 @@ public class CpuDifficultyProfile : ScriptableObject
     [SerializeField] private float _steeringNoiseFrequency = 0.7f;
 
     [Header("攻撃")]
-    [Tooltip("狙う相手と横位置がこの距離（m）以内にそろったら、攻撃のブーストを始める。大きいほど、そろっていないうちに始めて外しやすい")]
+    [Tooltip("狙う相手と断面での位置（上下左右）がこの距離（m）以内にそろったら、攻撃のブーストを始める。大きいほど、そろっていないうちに始めて外しやすい")]
     [SerializeField] private float _attackAlignTolerance = 1.5f;
 
     [Header("ブースト")]
@@ -47,13 +48,26 @@ public class CpuDifficultyProfile : ScriptableObject
     [SerializeField] private float _boostReserve = 0.05f;
 
     [Header("成功率")]
-    [Tooltip("後ろからのブーストに気づいたとき、シールドを張れる確率（0～1）")]
+    [Tooltip("脅威（後ろからのブースト・妨害弾・爆弾）に気づいたとき、シールドを張れる確率（0～1）")]
     [Range(0f, 1f)]
     [SerializeField] private float _shieldSuccessRate = 0.6f;
 
-    [Tooltip("ショートカットのエリアに入ったとき、発動できる確率（0～1）。個性のショートカット志向も掛かる")]
+    [Header("コースのギミック")]
+    [Tooltip("前方のギミック（加速リング・減速リング・爆弾・減速エリア）に気づく確率（0～1）。ギミックごとに1回だけ決め、見落としたものは避けない・くぐらない")]
     [Range(0f, 1f)]
-    [SerializeField] private float _shortcutSuccessRate = 0.7f;
+    [FormerlySerializedAs("_shortcutSuccessRate")]
+    [SerializeField] private float _gimmickAwareness = 0.7f;
+
+    [Tooltip("前方のギミックを見る距離（m）。長いほど早くから避ける・くぐる位置へ寄せる")]
+    [SerializeField] private float _gimmickLookAhead = 55f;
+
+    [Header("妨害弾")]
+    [Tooltip("状況に合う妨害弾の種類を選ぶ確率（0～1）。それ以外のときは、でたらめに選ぶ")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _jammerSmartness = 0.6f;
+
+    [Tooltip("視界反転の妨害弾を受けてから、反転した操作に慣れるまでの秒数（その間は、移動が逆になる）。効果が切れたときも同じ秒数だけ戸惑う")]
+    [SerializeField] private float _viewFlipAdaptTime = 0.8f;
 
     [Header("追い上げ補正（判断だけを変える。速度は変えない）")]
     [Tooltip("追い上げ補正の強さ（0～1）。0で無効。Playerより後ろなら積極的に、前なら控えめにブーストを使う")]
@@ -87,7 +101,13 @@ public class CpuDifficultyProfile : ScriptableObject
 
     public float ShieldSuccessRate => _shieldSuccessRate;
 
-    public float ShortcutSuccessRate => _shortcutSuccessRate;
+    public float GimmickAwareness => _gimmickAwareness;
+
+    public float GimmickLookAhead => Mathf.Max(0f, _gimmickLookAhead);
+
+    public float JammerSmartness => _jammerSmartness;
+
+    public float ViewFlipAdaptTime => Mathf.Max(0f, _viewFlipAdaptTime);
 
     public float CatchUpStrength => _catchUpStrength;
 

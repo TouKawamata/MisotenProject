@@ -2,20 +2,24 @@ using UnityEngine;
 
 // CPUの入力（判断）。CPUManagerの「Input Source」に入れて使う（ICpuRaceInput）。
 // 毎Tick、CPUManagerから呼ばれるUpdateInputで、次の順に判断して、そのTickのIRaceInputの値を決める。
-//   1. CpuPerception：周りの状況をコースの向きを基準にした値にまとめる（CpuSituation）
+//   1. CpuPerception：周りの状況・前方のギミックを、コースの向きを基準にした値にまとめる（CpuSituation）
 //   2. CpuTargetSelector：狙う相手（PlayerもCPUも同じ扱い）
-//      CpuShieldBrain：シールドを張りたいか（毎Tick。反応時間を秒で数えるため）
-//      CpuBoostBrain／CpuSteeringBrainの目標：考え直すTick（難易度のThinkInterval）だけ
-//      CpuSteeringBrainのHorizontal：毎Tick
-//      （2026-11-07 川又：ショートカット廃止のため、CpuShortcutBrainはコメントアウト。
-//        IRaceInputがMove（Vector2、大きさ0～1）になったため、HorizontalをxにしたMoveを追加。上下（y）の判断は未対応で0）
-//   3. CpuButtonLatch：「押し続けたいか」からPressed/Heldを作る
+//      CpuShieldBrain：シールドを張りたいか（毎Tick。反応時間を秒で数えるため。後ろのブースト・妨害弾・爆弾）
+//      CpuJammerBrain：妨害弾を撃つか・どの種類か（考え直すTickだけ）
+//      CpuBoostBrain／CpuSteeringBrainの目標の位置：考え直すTick（難易度のThinkInterval）だけ
+//      CpuSteeringBrainのMove：毎Tick
+//   3. 視界反転：効果がかかると、移動の入力が反転される（RacerManagerBase）。難易度のViewFlipAdaptTimeが経ったら、反転して出し直す（慣れる）
+//   4. CpuButtonLatch：「押し続けたいか」からPressed/Heldを作る
 // ブーストとシールドは同時に使えないため、シールドを優先する（後ろからのブーストを防ぐ方が、損を避けられるため）。
 // 難易度は、CpuDifficultyControllerがシーンにあり、Follow Global DifficultyがONならそちらを、それ以外は自分の難易度を使う。
+// （2026-11-07のショートカット廃止・移動のVector2化に合わせて、上下左右の操作・妨害弾・ギミックに対応した。CpuShortcutBrainは削除）
 public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 {
     // コース上の距離がこれ以上（m）戻ったら、置き直し（レースのやり直し）とみなして、判断の状態を消す。
     private const float RestartDistanceThreshold = 20f;
+
+    // 視界反転に慣れるまでの秒数に掛けるばらつき（0.8～1.2倍）。
+    private const float ViewFlipAdaptJitter = 0.2f;
 
     [Header("難易度・個性")]
     [Tooltip("このCPUの難易度。Follow Global DifficultyがONで、シーンにCpuDifficultyController（難易度の設定あり）があれば、そちらを使う")]
@@ -32,7 +36,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs;
 
-    [Tooltip("選択中に、目標の横位置（黄）・狙う相手（赤）・脅威（青）を表示する")]
+    [Tooltip("選択中に、目標の位置（黄）・狙う相手（赤）・脅威（水色）・前方のギミック（緑＝くぐる、橙＝避ける）を表示する")]
     [SerializeField] private bool _drawGizmos = true;
 
     [Tooltip("頭上に、個性・難易度・今していることを表示する（Gameビュー・Sceneビュー）")]
@@ -47,7 +51,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     private readonly CpuShieldBrain _shieldBrain = new CpuShieldBrain();
     private readonly CpuBoostBrain _boostBrain = new CpuBoostBrain();
     private readonly CpuSteeringBrain _steeringBrain = new CpuSteeringBrain();
-    // [ショートカット廃止] private readonly CpuShortcutBrain _shortcutBrain = new CpuShortcutBrain();
+    private readonly CpuJammerBrain _jammerBrain = new CpuJammerBrain();
     private readonly CpuButtonLatch _boostLatch = new CpuButtonLatch();
     private readonly CpuButtonLatch _shieldLatch = new CpuButtonLatch();
 
@@ -59,11 +63,15 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     private bool _hasWarnedMissingProfile;
     private bool _hasWarnedMissingCourse;
     private int _loggedTargetId = -1;
+    private ECpuThreatKind _loggedThreatKind = ECpuThreatKind.None;
 
-    public float Horizontal { get; private set; }
+    // 視界反転：実際にかかっている向きと、CPUが慣れて打ち消している向き。
+    private EViewFlip _currentViewFlip = EViewFlip.None;
+    private EViewFlip _adaptedViewFlip = EViewFlip.None;
+    private float _viewFlipAdaptTimer;
 
-    // IRaceInputの移動入力。xは左右（Horizontal）、yは上下（未対応のため0）。大きさは0～1に制限する。
-    public Vector2 Move => Vector2.ClampMagnitude(new Vector2(Horizontal, 0f), 1f);
+    // IRaceInputの移動入力（x＝右、y＝上、大きさ0～1）。
+    public Vector2 Move { get; private set; }
 
     public bool BoostPressed => _boostLatch.Pressed;
 
@@ -73,7 +81,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
     public bool ShieldHeld => _shieldLatch.Held;
 
-    // [ショートカット廃止] public bool ShortcutPressed { get; private set; }
+    public bool JammerPressed { get; private set; }
 
     // 今使っている難易度（一括の設定を反映したもの）。
     public CpuDifficultyProfile CurrentDifficulty
@@ -91,6 +99,9 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     }
 
     public CpuPersonalityProfile Personality => _personality;
+
+    // 視界反転に戸惑っている（まだ慣れていない）間か。
+    public bool IsConfusedByViewFlip => _currentViewFlip != _adaptedViewFlip;
 
     // このCPUだけの難易度を変える（Follow Global DifficultyがONで一括の設定があれば、そちらが優先される）。
     public void SetDifficulty(CpuDifficultyProfile difficulty)
@@ -116,13 +127,17 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         _shieldBrain.Reset();
         _boostBrain.Reset();
         _steeringBrain.Reset();
-        // [ショートカット廃止] _shortcutBrain.Reset();
+        _jammerBrain.Reset();
         _boostLatch.Reset();
         _shieldLatch.Reset();
         _thinkTimer = 0f;
         _loggedTargetId = -1;
-        Horizontal = 0f;
-        // [ショートカット廃止] ShortcutPressed = false;
+        _loggedThreatKind = ECpuThreatKind.None;
+        _currentViewFlip = EViewFlip.None;
+        _adaptedViewFlip = EViewFlip.None;
+        _viewFlipAdaptTimer = 0f;
+        Move = Vector2.zero;
+        JammerPressed = false;
     }
 
     public void UpdateInput(CPUManager owner, float deltaTime, IReadOnlyRacerData data)
@@ -162,26 +177,59 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
         _targetSelector.Update(_situation, _personality, think);
         _shieldBrain.Update(_situation, difficulty, _personality, _random);
+        _jammerBrain.Update(_situation, difficulty, _personality, _random, think);
         if (think)
         {
             _boostBrain.Think(_situation, difficulty, _personality, _targetSelector, EvaluateCatchUp(difficulty));
-            _steeringBrain.Think(_situation, _personality, _targetSelector, _shieldBrain, _random);
+            _steeringBrain.Think(_situation, difficulty, _personality, _targetSelector, _shieldBrain, _random);
         }
 
-        float horizontal = _steeringBrain.Evaluate(_situation, difficulty, _personality, _random, _elapsedTime);
-        // [ショートカット廃止] _shortcutBrain.Update(_situation, difficulty, _personality, _random, horizontal);
-        // Horizontal = _shortcutBrain.OverridesHorizontal ? _shortcutBrain.HorizontalOverride : horizontal;
-        // ShortcutPressed = _shortcutBrain.ShortcutPressed;
-        Horizontal = horizontal;
+        Vector2 move = _steeringBrain.Evaluate(_situation, difficulty, _personality, _random, _elapsedTime);
+        Move = ApplyViewFlipAdaptation(owner, move, difficulty, deltaTime);
 
         // スタン中は入力が無視されるので、押していない扱いにする（スタン明けに押し直せるように）。
         bool canControl = !owner.IsStunned;
         bool wantsShield = canControl && _shieldBrain.WantsShield;
-        bool wantsBoost = canControl && _boostBrain.WantsBoost && !wantsShield;
+        bool wantsBoost = canControl && _boostBrain.WantsBoost && !wantsShield && !_shieldBrain.WantsToStopBoost;
         _shieldLatch.Update(wantsShield, owner.IsShielding);
         _boostLatch.Update(wantsBoost, owner.IsBoosting);
+        JammerPressed = canControl && _jammerBrain.FirePressed;
 
         LogChanges();
+    }
+
+    // 視界反転がかかると、RacerManagerBaseが移動の入力を反転する。慣れるまで（難易度のViewFlipAdaptTime）はそのまま出して逆に動き、
+    // 慣れたら、同じ軸を先に反転して出す（反転されて元の向きになる）。効果が切れたときも、同じだけ戸惑う。
+    private Vector2 ApplyViewFlipAdaptation(CPUManager owner, Vector2 move, CpuDifficultyProfile difficulty, float deltaTime)
+    {
+        EViewFlip flip = owner.Effects != null ? owner.Effects.ViewFlip : EViewFlip.None;
+        if (flip != _currentViewFlip)
+        {
+            _currentViewFlip = flip;
+            float jitter = 1f + ((float)_random.NextDouble() * 2f - 1f) * ViewFlipAdaptJitter;
+            _viewFlipAdaptTimer = difficulty.ViewFlipAdaptTime * jitter;
+        }
+
+        if (_adaptedViewFlip != _currentViewFlip)
+        {
+            _viewFlipAdaptTimer -= deltaTime;
+            if (_viewFlipAdaptTimer <= 0f)
+            {
+                _adaptedViewFlip = _currentViewFlip;
+            }
+        }
+
+        if ((_adaptedViewFlip & EViewFlip.Horizontal) != 0)
+        {
+            move.x = -move.x;
+        }
+
+        if ((_adaptedViewFlip & EViewFlip.Vertical) != 0)
+        {
+            move.y = -move.y;
+        }
+
+        return move;
     }
 
     // ＋＝Playerより後ろ（積極的に）、－＝Playerより前（控えめに）。-1～1に難易度の強さを掛けた値。
@@ -197,8 +245,8 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
     private void ClearOutputs()
     {
-        Horizontal = 0f;
-        // [ショートカット廃止] ShortcutPressed = false;
+        Move = Vector2.zero;
+        JammerPressed = false;
         _boostLatch.Reset();
         _shieldLatch.Reset();
     }
@@ -243,6 +291,15 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
                 : $"CpuRaceInput: {name} が狙うのをやめた", this);
         }
 
+        if (_shieldBrain.ThreatKind != _loggedThreatKind)
+        {
+            _loggedThreatKind = _shieldBrain.ThreatKind;
+            if (_loggedThreatKind != ECpuThreatKind.None)
+            {
+                Debug.Log($"CpuRaceInput: {name} が脅威に気づいた（{GetThreatName(_loggedThreatKind)}）", this);
+            }
+        }
+
         if (_boostLatch.Pressed)
         {
             Debug.Log($"CpuRaceInput: {name} がブーストを押した（{(_boostBrain.IsAttacking ? "攻撃" : "加速")}）", this);
@@ -250,14 +307,28 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
         if (_shieldLatch.Pressed)
         {
-            Debug.Log($"CpuRaceInput: {name} がシールドを押した（脅威：{(_shieldBrain.HasThreat ? _shieldBrain.Threat.Data.DisplayName : "なし")}）", this);
+            Debug.Log($"CpuRaceInput: {name} がシールドを押した（脅威：{GetThreatName(_shieldBrain.ThreatKind)}）", this);
         }
 
-        // [ショートカット廃止]
-        // if (ShortcutPressed || _shortcutBrain.OverridesHorizontal && _shortcutBrain.HorizontalOverride != 0f)
-        // {
-        //     Debug.Log($"CpuRaceInput: {name} がショートカットの入力をした", this);
-        // }
+        if (JammerPressed)
+        {
+            Debug.Log($"CpuRaceInput: {name} が妨害弾を撃った（{_jammerBrain.LastTypeName}）", this);
+        }
+    }
+
+    private static string GetThreatName(ECpuThreatKind kind)
+    {
+        switch (kind)
+        {
+            case ECpuThreatKind.BoostRacer:
+                return "後ろからのブースト";
+            case ECpuThreatKind.Jammer:
+                return "妨害弾";
+            case ECpuThreatKind.Bomb:
+                return "爆弾";
+            default:
+                return "なし";
+        }
     }
 
     private void OnGUI()
@@ -312,18 +383,34 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
             return "スタン";
         }
 
+        string confused = IsConfusedByViewFlip ? "（反転で混乱）" : "";
         if (owner.IsShielding)
         {
-            return "シールド";
+            return $"シールド：{GetThreatName(_shieldBrain.ThreatKind)}{confused}";
         }
 
         string target = _targetSelector.HasTarget ? $"→{_targetSelector.Target.Data.DisplayName}" : "";
         if (owner.IsBoosting)
         {
-            return _boostBrain.IsAttacking ? $"攻撃ブースト{target}" : "加速ブースト";
+            return (_boostBrain.IsAttacking ? $"攻撃ブースト{target}" : "加速ブースト") + confused;
         }
 
-        return string.IsNullOrEmpty(target) ? "" : $"狙い{target}";
+        if (JammerPressed)
+        {
+            return $"妨害弾：{_jammerBrain.LastTypeName}{confused}";
+        }
+
+        if (_steeringBrain.IsSeekingRing)
+        {
+            return $"リングへ{confused}";
+        }
+
+        if (_steeringBrain.IsAvoidingGimmick)
+        {
+            return $"ギミック回避{confused}";
+        }
+
+        return string.IsNullOrEmpty(target) ? confused : $"狙い{target}{confused}";
     }
 
     private void OnDrawGizmosSelected()
@@ -335,7 +422,7 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
         Vector3 position = transform.position;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(_situation.CourseCenter + _situation.CourseRight * _steeringBrain.TargetLateral, 0.5f);
+        Gizmos.DrawWireSphere(_situation.ToWorld(_steeringBrain.TargetOffset), 0.5f);
 
         if (_targetSelector.HasTarget && _targetSelector.Target.Data.Transform != null)
         {
@@ -343,10 +430,16 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
             Gizmos.DrawLine(position, _targetSelector.Target.Data.Transform.position);
         }
 
-        if (_shieldBrain.HasThreat && _shieldBrain.Threat.Data.Transform != null)
+        if (_shieldBrain.ThreatKind != ECpuThreatKind.None)
         {
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(position, _shieldBrain.Threat.Data.Transform.position);
+            Gizmos.DrawLine(position, _shieldBrain.ThreatPosition);
+        }
+
+        foreach (CpuGimmickView gimmick in _situation.Gimmicks)
+        {
+            Gizmos.color = gimmick.Kind == ECpuGimmickKind.SpeedRing ? Color.green : new Color(1f, 0.5f, 0f);
+            Gizmos.DrawLine(position, gimmick.Gimmick.transform.position);
         }
     }
 }
