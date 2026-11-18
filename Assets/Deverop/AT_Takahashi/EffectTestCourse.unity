@@ -21383,6 +21383,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 28200230958227253, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _blastRadius
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerRadius
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _pushDuration
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3274694118539919348, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: m_Name
       value: BombRoot
