@@ -41,7 +41,11 @@ namespace Minakuchi.Sky
             var camera = renderingData.cameraData;
             if (camera.cameraType == CameraType.Preview || camera.cameraType == CameraType.Reflection
                 || camera.renderType == CameraRenderType.Overlay) return;
-            if (camera.cameraType == CameraType.Game && !camera.camera.CompareTag("MainCamera")) return;
+            // 雲を描くのは、プレイ用（MainCamera）と演出用（CinematicCamera）のカメラだけ。
+            // ミニマップ・プレイヤー状態UIのサブカメラ（Untagged）には描かない（2026-11-17 川又）。
+            if (camera.cameraType == CameraType.Game
+                && !camera.camera.CompareTag("MainCamera")
+                && !camera.camera.CompareTag("CinematicCamera")) return;
             var controller = SkyTransitionController.Active;
             if (!material || !noise || !controller || !controller.PrepareCloudVolume(material)) return;
             material.SetTexture("_CloudNoise", noise);

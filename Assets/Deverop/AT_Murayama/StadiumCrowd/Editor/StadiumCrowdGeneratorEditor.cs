@@ -75,6 +75,14 @@ namespace AT_Murayama.StadiumCrowd.Editor
         private SerializedProperty _waveIntensityProp;
         private SerializedProperty _waveSpeedProp;
 
+        private SerializedProperty _animCullDistanceProp;
+        private SerializedProperty _maxRenderDistanceProp;
+        private SerializedProperty _castShadowsProp;
+        private SerializedProperty _pauseTrackingWhenFarProp;
+        private SerializedProperty _applyLayerCullDistanceProp;
+        private SerializedProperty _layerCullDistanceProp;
+        private SerializedProperty _isBakedAssetsProp;
+
         private SerializedProperty _sharedCrowdMaterialProp;
         private SerializedProperty _sharedStandMaterialProp;
 
@@ -82,7 +90,7 @@ namespace AT_Murayama.StadiumCrowd.Editor
         private bool _showAppearanceSection = true;
         private bool _showPlacementSection = true;
         private bool _showTrackingSection = true;
-        private bool _showInternalSection = false;
+        private bool _showInternalSection = true;
 
         private void OnEnable()
         {
@@ -150,6 +158,14 @@ namespace AT_Murayama.StadiumCrowd.Editor
             _armWaveAmountProp = serializedObject.FindProperty("_armWaveAmount");
             _waveIntensityProp = serializedObject.FindProperty("_waveIntensity");
             _waveSpeedProp = serializedObject.FindProperty("_waveSpeed");
+
+            _animCullDistanceProp = serializedObject.FindProperty("_animCullDistance");
+            _maxRenderDistanceProp = serializedObject.FindProperty("_maxRenderDistance");
+            _castShadowsProp = serializedObject.FindProperty("_castShadows");
+            _pauseTrackingWhenFarProp = serializedObject.FindProperty("_pauseTrackingWhenFar");
+            _applyLayerCullDistanceProp = serializedObject.FindProperty("_applyLayerCullDistance");
+            _layerCullDistanceProp = serializedObject.FindProperty("_layerCullDistance");
+            _isBakedAssetsProp = serializedObject.FindProperty("_isBakedAssets");
 
             _sharedCrowdMaterialProp = serializedObject.FindProperty("_sharedCrowdMaterial");
             _sharedStandMaterialProp = serializedObject.FindProperty("_sharedStandMaterial");
@@ -364,14 +380,105 @@ namespace AT_Murayama.StadiumCrowd.Editor
             EditorGUILayout.Space(4);
 
             // -----------------------------------------------------------------
-            // Section 4: 内部マテリアル参照
+            // Section 4: 遠景負荷最適化・本採用＆アセット管理
             // -----------------------------------------------------------------
-            _showInternalSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showInternalSection, "4. マテリアル参照 & 最適化ツール");
+            _showInternalSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showInternalSection, "4. 遠景負荷最適化・本採用＆アセット管理");
             if (_showInternalSection)
             {
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+                EditorGUILayout.LabelField("遠景負荷最適化 (GPUカリング / 影 / CPU更新スキップ)", EditorStyles.boldLabel);
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(_animCullDistanceProp, new GUIContent("GPUアニメ省略距離 (m, 0=無制限)"));
+                EditorGUILayout.PropertyField(_maxRenderDistanceProp, new GUIContent("GPU最大描画距離 (m, 0=無制限)"));
+                EditorGUILayout.PropertyField(_castShadowsProp, new GUIContent("観客の影キャスト (ShadowCaster)"));
+                EditorGUILayout.PropertyField(_pauseTrackingWhenFarProp, new GUIContent("遠距離時のCPU視線追従停止"));
+                EditorGUILayout.PropertyField(_applyLayerCullDistanceProp, new GUIContent("Cameraレイヤー距離カリングを適用"));
+                if (_applyLayerCullDistanceProp.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.PropertyField(_layerCullDistanceProp, new GUIContent("レイヤーカリング距離 (m)"));
+                    EditorGUI.indentLevel--;
+
+                    if (!gen.IsLayerSafeForCullDistance)
+                    {
+                        string layerName = LayerMask.LayerToName(gen.gameObject.layer);
+                        EditorGUILayout.HelpBox(
+                            $"安全ガード作動中: 現在の Layer {gen.gameObject.layer} ({(string.IsNullOrEmpty(layerName) ? "名称未設定" : layerName)}) には Camera.layerCullDistances を適用しません。\nDefault(0)・ゲーム共有レイヤー(1〜10)・予約レイヤー(29, 30)を保護しています。使用する場合は専用の観客レイヤー(Layer 11〜28, 31)を割り当ててください。",
+                            MessageType.Error);
+                    }
+                    else
+                    {
+                        EditorGUILayout.HelpBox(
+                            $"Play Mode 中のみ、Layer {gen.gameObject.layer} ({LayerMask.LayerToName(gen.gameObject.layer)}) にカリング距離 {_layerCullDistanceProp.floatValue:0}m が適用されます（終了・リロード時自動復元）。",
+                            MessageType.Info);
+                    }
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    needMaterialUpdate = true;
+                }
+
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("内部マテリアル参照", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_sharedCrowdMaterialProp, new GUIContent("観客共有マテリアル"));
                 EditorGUILayout.PropertyField(_sharedStandMaterialProp, new GUIContent("客席共有マテリアル"));
+
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("本採用・プレハブ化・完全静的化ツール", EditorStyles.boldLabel);
+                string bakeStatus = _isBakedAssetsProp != null && _isBakedAssetsProp.boolValue
+                    ? "保存状態: ✅ .asset / .mat 永続ベイク済み（プレハブ化OK・起動再生成なし）"
+                    : "保存状態: ⚠️ ランタイム生成メッシュ（プレハブ化する場合は下の保存ボタンを押してください）";
+                EditorGUILayout.LabelField(bakeStatus, EditorStyles.miniLabel);
+
+                EditorGUILayout.BeginHorizontal();
+                GUI.backgroundColor = new Color(0.45f, 0.80f, 1.0f);
+                if (GUILayout.Button("💾 メッシュ＆マテリアル永続保存", GUILayout.Height(26)))
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    if (gen.BakeCrowdAssetsToProject(out string savedDir))
+                    {
+                        EditorUtility.DisplayDialog("アセット永続保存完了",
+                            $"チャンクメッシュとマテリアルを Project へ保存しました。\nこの状態でそのまま Prefab 化できます。\n\n保存先:\n{savedDir}",
+                            "OK");
+                    }
+                    serializedObject.Update();
+                }
+
+                GUI.backgroundColor = new Color(0.55f, 0.95f, 0.65f);
+                if (GUILayout.Button("🚀 本番ステージ用設定に切替", GUILayout.Height(26)))
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    gen.ApplyProductionPreset();
+                    serializedObject.Update();
+                }
+                GUI.backgroundColor = Color.white;
+                EditorGUILayout.EndHorizontal();
+
+                GUI.backgroundColor = new Color(1.0f, 0.78f, 0.40f);
+                if (GUILayout.Button("🧹 コントローラーを外して完全静的化 (GPUのみ)", GUILayout.Height(24)))
+                {
+                    bool confirmed = EditorUtility.DisplayDialog(
+                        "コントローラー取り外し確認",
+                        "1. 生成済みメッシュ＆マテリアルを Project に永続保存(Bake)します\n2. プレビューマーカーを削除します\n3. StadiumCrowdGenerator スクリプトを取り外します（Undo可）\n\n※ CPU側の視線追従(TargetPos更新)は停止しC#負荷は完全ゼロになりますが、GPU頂点アニメと遠景距離カリングは引き続き動作します。\n\n実行しますか？",
+                        "完全静的化する",
+                        "キャンセル");
+
+                    if (confirmed)
+                    {
+                        serializedObject.ApplyModifiedProperties();
+                        if (gen.BakeCrowdAssetsToProject(out _))
+                        {
+                            gen.DestroyPreviewMarkerImmediate();
+                            gen.RestoreLayerCullDistance();
+                            Undo.DestroyObjectImmediate(gen);
+                            GUIUtility.ExitGUI();
+                            return;
+                        }
+                    }
+                }
+                GUI.backgroundColor = Color.white;
+
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
@@ -392,8 +499,11 @@ namespace AT_Murayama.StadiumCrowd.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("🏟️ スタジアム観客システム【案A：軽量3D結合メッシュ＋GPU頂点追従】", EditorStyles.boldLabel);
+            string runtimeTag = Application.isPlaying
+                ? (gen.IsTrackingPausedByDistance ? "  |  状態: ⏸️ 遠距離CPU追従停止中" : "  |  状態: ▶️ CPU追従稼働中")
+                : (gen.IsBakedAssets ? "  |  保存: ✅ 永続ベイク済み" : "  |  保存: 未ベイク");
             EditorGUILayout.LabelField(
-                $"現在の配置人数: {gen.GeneratedSpectatorCount:N0} 人  |  描画チャンク数(DrawCall): {gen.GeneratedChunkCount}  |  総ポリゴン: {gen.GeneratedTriangleCount:N0} tris",
+                $"人数: {gen.GeneratedSpectatorCount:N0} 人  |  チャンク: {gen.GeneratedChunkCount}  |  ポリゴン: {gen.GeneratedTriangleCount:N0} tris{runtimeTag}",
                 EditorStyles.miniLabel);
             EditorGUILayout.EndVertical();
         }

@@ -35,7 +35,7 @@ public abstract class JammerTypeProfile : ScriptableObject
 
     public float EffectDuration => Mathf.Max(0f, _effectDuration);
 
-    // true：レーサーではなく、JammerLauncherのRing Targetsのうち一番近いものを狙う。
+    // true：レーサーではなく、シーンの加速リング（JammerTargetRegistry）のうち、前にある一番近いものを狙う。
     public virtual bool TargetsRing => false;
 
     // レーサーが効果を受けるとき（シールドで防がれなかったとき）。
@@ -44,7 +44,7 @@ public abstract class JammerTypeProfile : ScriptableObject
     }
 
     // レーサー以外の標的（リングなど）に当たったとき。
-    public virtual void ApplyToTarget(GameObject target)
+    public virtual void ApplyToTarget(IJammerTarget target)
     {
     }
 }

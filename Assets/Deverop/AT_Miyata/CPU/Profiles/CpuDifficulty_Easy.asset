@@ -23,6 +23,9 @@ MonoBehaviour:
   _curveCheckDistance: 60
   _boostReserve: 0
   _shieldSuccessRate: 0.3
-  _shortcutSuccessRate: 0.4
+  _gimmickAwareness: 0.4
+  _gimmickLookAhead: 35
+  _jammerSmartness: 0.2
+  _viewFlipAdaptTime: 1.5
   _catchUpStrength: 1
   _catchUpDistance: 150

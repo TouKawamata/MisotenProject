@@ -2,6 +2,7 @@ using UnityEngine;
 
 // スタートグリッドの位置・向きの計算だけを担当する。
 // startDistanceを先頭列とし、後ろの列ほど手前、横はコース中央を基準に左右へ等間隔で並べる。
+// 同じ列の中でも右へ行くほどColumnStaggerずつ手前に下げ、斜めに並べる（左端が列の先頭）。
 public class StartGrid
 {
     private readonly CourseSpline _spline;
@@ -19,7 +20,7 @@ public class StartGrid
         int row = gridIndex / columns;
         int col = gridIndex % columns;
 
-        float distance = _settings.StartDistance - row * _settings.RowSpacing;
+        float distance = _settings.StartDistance - row * _settings.RowSpacing - col * _settings.ColumnStagger;
         if (distance < 0f)
         {
             Debug.LogWarning($"StartGrid: グリッド{gridIndex}がコース始点より手前になるため、始点に置きます。RaceSettingsのStartDistanceを大きくしてください");

@@ -14,7 +14,11 @@ public class RaceSettings : ScriptableObject
     [SerializeField] private float _columnSpacing = 5f;
     [Tooltip("1列に並べる人数")]
     [SerializeField] private int _columns = 2;
-    [Tooltip("Playerを置くグリッド番号（0始まり。0＝先頭列の左端）")]
+    [Tooltip("同じ列の中で、右に1人ずれるごとに後ろへ下げる距離（m）。0なら横一列。RowSpacingより小さくすると、後ろの列と重ならず斜めに並ぶ")]
+    [SerializeField] private float _columnStagger = 2f;
+    [Tooltip("オンならPlayerを一番後ろ（最後のグリッド）に置く。オフならPlayerGridIndexの位置に置く")]
+    [SerializeField] private bool _placePlayerLast = true;
+    [Tooltip("Playerを置くグリッド番号（0始まり。0＝先頭列の左端）。PlacePlayerLastがオフのときだけ使う")]
     [SerializeField] private int _playerGridIndex = 0;
 
     [Header("カウントダウン")]
@@ -38,6 +42,10 @@ public class RaceSettings : ScriptableObject
     public float ColumnSpacing => _columnSpacing;
 
     public int Columns => Mathf.Max(1, _columns);
+
+    public float ColumnStagger => Mathf.Max(0f, _columnStagger);
+
+    public bool PlacePlayerLast => _placePlayerLast;
 
     public int PlayerGridIndex => Mathf.Max(0, _playerGridIndex);
 

@@ -273,6 +273,28 @@ namespace AT_Murayama.StadiumCrowdBillboard
         [Range(0.05f, 1.0f)]
         [SerializeField] private float _waveSpeed = 0.22f;
 
+        [Header("4B. 遠景負荷最適化・本採用設定")]
+        [Tooltip("この距離(m)以遠の観客はGPU頂点アニメーション計算(三角関数・視線追従等)を完全スキップし静止ポーズにします（0で無制限）")]
+        [Min(0f)]
+        [SerializeField] private float _animCullDistance = 250f;
+
+        [Tooltip("この距離(m)以遠の観客は縮退させて完全非表示(ピクセル描画0)にします（0で無制限）")]
+        [Min(0f)]
+        [SerializeField] private float _maxRenderDistance = 600f;
+
+        [Tooltip("観客の影キャスト（ビルボードの大量配置・遠景ではOFFにするとShadowCasterパスを削減できます）")]
+        [SerializeField] private bool _castShadows = true;
+
+        [Tooltip("再生中にメインカメラが最大表示距離より離れている間はCPU側の視線追従・MPB更新を自動停止します（0 GC Alloc）")]
+        [SerializeField] private bool _pauseTrackingWhenFar = true;
+
+        [Tooltip("ONにすると再生中にこのオブジェクトのレイヤーへCamera.layerCullDistancesを設定し、描画前段階で完全カリングします（安全ガードによりDefault・共有レイヤー・予約Layer29/30では動作しません）")]
+        [SerializeField] private bool _applyLayerCullDistance = false;
+
+        [Tooltip("Camera.layerCullDistances適用時のカリング距離(m)")]
+        [Min(10f)]
+        [SerializeField] private float _layerCullDistance = 500f;
+
         [Header("5. 内部参照 & 統計情報")]
         [SerializeField] private Shader _billboardShader;
         [SerializeField] private Material _sharedBillboardMaterial;
@@ -280,10 +302,14 @@ namespace AT_Murayama.StadiumCrowdBillboard
         [SerializeField] private int _generatedSpectatorCount;
         [SerializeField] private int _generatedChunkCount;
         [SerializeField] private int _generatedTriangleCount;
+        [SerializeField] private bool _isBakedAssets;
+        [SerializeField] private Vector3 _crowdBoundsCenterLocal;
+        [SerializeField] private float _crowdBoundingRadius = 150f;
 
         private const string CrowdRootName = "Generated_BillboardCrowd_Root";
         private const string MarkerObjectName = "Preview_SkyDiveTargetMarker_BB";
         private const int MaxSpectatorsPerChunk = 8000;
+        private const float SpatialChunkCellSize = 24f;
 
         private readonly List<MeshRenderer> _chunkRenderers = new List<MeshRenderer>();
         private readonly List<SpectatorPlacementPoint> _lastPlacementPoints = new List<SpectatorPlacementPoint>();
@@ -295,6 +321,15 @@ namespace AT_Murayama.StadiumCrowdBillboard
         private bool _delayedPosInitialized;
         private Transform _markerTransform;
         private double _lastEditorTime;
+
+        private Camera _cachedMainCamera;
+        private float _nextCameraLookupTime;
+        private Camera _appliedCullCamera;
+        private int _appliedCullLayer = -1;
+        private float _appliedCullDistanceValue = -1f;
+        private float _savedPrevLayerCullDistance;
+        private bool _hasSavedLayerCullState;
+        private bool _trackingPausedByDistance;
 
         // Shader Property IDs
         private static readonly int UseCustomTextureId = Shader.PropertyToID("_UseCustomTexture");
@@ -315,6 +350,8 @@ namespace AT_Murayama.StadiumCrowdBillboard
         private static readonly int HeightVariationId = Shader.PropertyToID("_HeightVariation");
         private static readonly int WaveIntensityId = Shader.PropertyToID("_WaveIntensity");
         private static readonly int WaveSpeedId = Shader.PropertyToID("_WaveSpeed");
+        private static readonly int AnimCullDistanceId = Shader.PropertyToID("_AnimCullDistance");
+        private static readonly int MaxRenderDistanceId = Shader.PropertyToID("_MaxRenderDistance");
 
         private static readonly int OutfitColorAId = Shader.PropertyToID("_OutfitColorA");
         private static readonly int OutfitColorBId = Shader.PropertyToID("_OutfitColorB");
@@ -329,6 +366,9 @@ namespace AT_Murayama.StadiumCrowdBillboard
         public int GeneratedSpectatorCount => _generatedSpectatorCount;
         public int GeneratedChunkCount => _generatedChunkCount;
         public int GeneratedTriangleCount => _generatedTriangleCount;
+        public bool IsBakedAssets => _isBakedAssets;
+        public bool IsLayerSafeForCullDistance => IsSafeLayerForCull(gameObject.layer);
+        public bool IsTrackingPausedByDistance => _trackingPausedByDistance;
         public int SectorCount => _sectorCount;
         public int SectorActiveMask
         {
@@ -346,12 +386,22 @@ namespace AT_Murayama.StadiumCrowdBillboard
             {
                 GenerateCrowd();
             }
+            else if (!_isBakedAssets && HasMissingChunkMeshes())
+            {
+                GenerateCrowd();
+            }
             else
             {
+                if (_isBakedAssets && HasMissingChunkMeshes())
+                {
+                    Debug.LogWarning("[StadiumCrowdBillboard] ベイク済みメッシュ参照の一部が欠損しています。インスペクターから再生成または再ベイクしてください。", this);
+                }
                 ApplyMaterialSettingsToAllChunks();
             }
 
 #if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.update += OnEditorUpdate;
             _lastEditorTime = EditorApplication.timeSinceStartup;
@@ -360,10 +410,27 @@ namespace AT_Murayama.StadiumCrowdBillboard
 
         private void OnDisable()
         {
+            RestoreLayerCullDistance();
 #if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
             EditorApplication.update -= OnEditorUpdate;
 #endif
         }
+
+        private void OnDestroy()
+        {
+            RestoreLayerCullDistance();
+#if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+#endif
+        }
+
+#if UNITY_EDITOR
+        private void OnBeforeAssemblyReload()
+        {
+            RestoreLayerCullDistance();
+        }
+#endif
 
         private void Start()
         {
@@ -398,13 +465,43 @@ namespace AT_Murayama.StadiumCrowdBillboard
         }
 #endif
 
-        private void TickTrackingAndShader(float deltaTime, float currentTime)
+        private void TickTrackingAndShader(float deltaTime, float currentTime, bool forceUpdate = false)
         {
             if (_chunkRenderers.Count == 0)
             {
                 RefreshChunkRenderersList();
                 if (_chunkRenderers.Count == 0) return;
             }
+
+            if (Application.isPlaying && _applyLayerCullDistance)
+            {
+                UpdateLayerCullDistance();
+            }
+
+            if (_pauseTrackingWhenFar && !forceUpdate && Application.isPlaying)
+            {
+                float effectiveCullDist = _maxRenderDistance > 0f
+                    ? _maxRenderDistance
+                    : (_applyLayerCullDistance && IsSafeLayerForCull(gameObject.layer) ? _layerCullDistance : 0f);
+
+                if (effectiveCullDist > 0f)
+                {
+                    Camera cam = GetMainCameraCached();
+                    if (cam != null)
+                    {
+                        Vector3 lossy = transform.lossyScale;
+                        float maxScale = Mathf.Max(Mathf.Abs(lossy.x), Mathf.Max(Mathf.Abs(lossy.y), Mathf.Abs(lossy.z)));
+                        float pauseThreshold = _crowdBoundingRadius * Mathf.Max(maxScale, 0.01f) + effectiveCullDist + 25f;
+                        Vector3 worldCenter = transform.TransformPoint(_crowdBoundsCenterLocal);
+                        if ((cam.transform.position - worldCenter).sqrMagnitude > pauseThreshold * pauseThreshold)
+                        {
+                            _trackingPausedByDistance = true;
+                            return;
+                        }
+                    }
+                }
+            }
+            _trackingPausedByDistance = false;
 
             float landingExcitementBoost = 0f;
 
@@ -623,9 +720,46 @@ namespace AT_Murayama.StadiumCrowdBillboard
                 _sharedBillboardMaterial.SetFloat(HeightVariationId, _heightVariation);
                 _sharedBillboardMaterial.SetFloat(WaveIntensityId, _waveIntensity);
                 _sharedBillboardMaterial.SetFloat(WaveSpeedId, _waveSpeed);
+                _sharedBillboardMaterial.SetFloat(AnimCullDistanceId, Mathf.Max(0f, _animCullDistance));
+                _sharedBillboardMaterial.SetFloat(MaxRenderDistanceId, Mathf.Max(0f, _maxRenderDistance));
             }
 
-            TickTrackingAndShader(0.016f, Application.isPlaying ? Time.time : 0f);
+            if (_chunkRenderers.Count == 0)
+            {
+                RefreshChunkRenderersList();
+            }
+
+            ShadowCastingMode castMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            for (int i = 0; i < _chunkRenderers.Count; i++)
+            {
+                MeshRenderer mr = _chunkRenderers[i];
+                if (mr == null) continue;
+                if (mr.gameObject.layer != gameObject.layer)
+                {
+                    mr.gameObject.layer = gameObject.layer;
+                }
+                if (mr.shadowCastingMode != castMode)
+                {
+                    mr.shadowCastingMode = castMode;
+                }
+                if (_sharedBillboardMaterial != null && mr.sharedMaterial != _sharedBillboardMaterial)
+                {
+                    mr.sharedMaterial = _sharedBillboardMaterial;
+                }
+            }
+
+            Transform root = transform.Find(CrowdRootName);
+            if (root != null)
+            {
+                Transform stand = root.Find("StadiumBleachers_TierMesh");
+                if (stand != null && stand.gameObject.layer != gameObject.layer)
+                {
+                    stand.gameObject.layer = gameObject.layer;
+                }
+            }
+
+            UpdateLayerCullDistance();
+            TickTrackingAndShader(0.016f, Application.isPlaying ? Time.time : 0f, true);
         }
 
         public void GenerateCrowd()
@@ -677,7 +811,8 @@ namespace AT_Murayama.StadiumCrowdBillboard
             }
 
             UpdateTargetMarkerVisual();
-            TickTrackingAndShader(0.016f, 0f);
+            TickTrackingAndShader(0.016f, 0f, true);
+            UpdateLayerCullDistance();
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)
@@ -704,6 +839,10 @@ namespace AT_Murayama.StadiumCrowdBillboard
             _generatedSpectatorCount = 0;
             _generatedChunkCount = 0;
             _generatedTriangleCount = 0;
+            _isBakedAssets = false;
+            _crowdBoundsCenterLocal = Vector3.zero;
+            _crowdBoundingRadius = 150f;
+            _trackingPausedByDistance = false;
         }
 
         public BillboardExclusionZone AddExclusionZone()
@@ -743,7 +882,28 @@ namespace AT_Murayama.StadiumCrowdBillboard
             _generatedChunkCount = 0;
             _generatedTriangleCount = 0;
 
-            if (points.Count == 0) return;
+            if (points.Count == 0)
+            {
+                _crowdBoundsCenterLocal = Vector3.zero;
+                _crowdBoundingRadius = 50f;
+                return;
+            }
+
+            // 空間グリッド順にソートし、各チャンクのMesh.boundsを局所化してFrustum Cullingを効かせる
+            points.Sort(SpatialSortComparison);
+
+            Vector3 minPt = points[0].localPosition;
+            Vector3 maxPt = points[0].localPosition;
+            for (int i = 1; i < points.Count; i++)
+            {
+                Vector3 p = points[i].localPosition;
+                minPt = Vector3.Min(minPt, p);
+                maxPt = Vector3.Max(maxPt, p);
+            }
+            _crowdBoundsCenterLocal = (minPt + maxPt) * 0.5f;
+            _crowdBoundingRadius = Mathf.Max(10f, Vector3.Distance(minPt, maxPt) * 0.5f);
+
+            ShadowCastingMode shadowMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             bool isCrossQuad = (_billboardOrientation == BillboardOrientation.TargetCrossQuad);
             int quadsPerPerson = isCrossQuad ? 2 : 1;
@@ -852,7 +1012,7 @@ namespace AT_Murayama.StadiumCrowdBillboard
 
                 MeshRenderer mr = chunkObj.AddComponent<MeshRenderer>();
                 mr.sharedMaterial = _sharedBillboardMaterial;
-                mr.shadowCastingMode = ShadowCastingMode.On;
+                mr.shadowCastingMode = shadowMode;
                 mr.receiveShadows = true;
 
                 _chunkRenderers.Add(mr);
@@ -1497,6 +1657,333 @@ namespace AT_Murayama.StadiumCrowdBillboard
                 }
             }
         }
+
+        private static int SpatialSortComparison(SpectatorPlacementPoint a, SpectatorPlacementPoint b)
+        {
+            int ax = Mathf.FloorToInt(a.localPosition.x / SpatialChunkCellSize);
+            int bx = Mathf.FloorToInt(b.localPosition.x / SpatialChunkCellSize);
+            int cmpX = ax.CompareTo(bx);
+            if (cmpX != 0) return cmpX;
+
+            int az = Mathf.FloorToInt(a.localPosition.z / SpatialChunkCellSize);
+            int bz = Mathf.FloorToInt(b.localPosition.z / SpatialChunkCellSize);
+            int cmpZ = ((ax & 1) == 0) ? az.CompareTo(bz) : bz.CompareTo(az);
+            if (cmpZ != 0) return cmpZ;
+
+            int ay = Mathf.FloorToInt(a.localPosition.y / 8f);
+            int by = Mathf.FloorToInt(b.localPosition.y / 8f);
+            int cmpY = ay.CompareTo(by);
+            if (cmpY != 0) return cmpY;
+
+            return a.stadiumAngle01.CompareTo(b.stadiumAngle01);
+        }
+
+        private bool HasMissingChunkMeshes()
+        {
+            for (int i = 0; i < _chunkRenderers.Count; i++)
+            {
+                MeshRenderer mr = _chunkRenderers[i];
+                if (mr == null) return true;
+                MeshFilter mf = mr.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null) return true;
+            }
+            return false;
+        }
+
+        private Camera GetMainCameraCached()
+        {
+            if (_cachedMainCamera != null && _cachedMainCamera.isActiveAndEnabled && _cachedMainCamera.CompareTag("MainCamera"))
+            {
+                return _cachedMainCamera;
+            }
+
+            if (Application.isPlaying)
+            {
+                if (Time.unscaledTime < _nextCameraLookupTime && _cachedMainCamera == null)
+                {
+                    return null;
+                }
+                _nextCameraLookupTime = Time.unscaledTime + 1.0f;
+            }
+
+            _cachedMainCamera = Camera.main;
+            return _cachedMainCamera;
+        }
+
+        public static bool IsSafeLayerForCull(int layer)
+        {
+            return layer >= 11 && layer <= 31 && layer != 29 && layer != 30;
+        }
+
+        public void UpdateLayerCullDistance()
+        {
+            if (!Application.isPlaying || !_applyLayerCullDistance || !IsSafeLayerForCull(gameObject.layer))
+            {
+                RestoreLayerCullDistance();
+                return;
+            }
+
+            Camera cam = GetMainCameraCached();
+            if (cam == null) return;
+
+            int layer = gameObject.layer;
+            float targetDist = Mathf.Max(10f, _layerCullDistance);
+
+            if (_appliedCullCamera == cam && _appliedCullLayer == layer && Mathf.Approximately(_appliedCullDistanceValue, targetDist))
+            {
+                return;
+            }
+
+            RestoreLayerCullDistance();
+
+            float[] dists = cam.layerCullDistances;
+            if (dists != null && layer >= 0 && layer < dists.Length)
+            {
+                _savedPrevLayerCullDistance = dists[layer];
+                _hasSavedLayerCullState = true;
+                dists[layer] = targetDist;
+                cam.layerCullDistances = dists;
+                _appliedCullCamera = cam;
+                _appliedCullLayer = layer;
+                _appliedCullDistanceValue = targetDist;
+            }
+        }
+
+        public void RestoreLayerCullDistance()
+        {
+            if (!_hasSavedLayerCullState) return;
+
+            if (_appliedCullCamera != null && _appliedCullLayer >= 0 && _appliedCullLayer < 32)
+            {
+                float[] dists = _appliedCullCamera.layerCullDistances;
+                if (dists != null && _appliedCullLayer < dists.Length)
+                {
+                    dists[_appliedCullLayer] = _savedPrevLayerCullDistance;
+                    _appliedCullCamera.layerCullDistances = dists;
+                }
+            }
+
+            _hasSavedLayerCullState = false;
+            _appliedCullCamera = null;
+            _appliedCullLayer = -1;
+            _appliedCullDistanceValue = -1f;
+            _savedPrevLayerCullDistance = 0f;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 生成済みビルボードチャンク＆マテリアルを Project フォルダに .asset / .mat として永続保存し、プレハブ化に対応させます。
+        /// </summary>
+        public bool BakeCrowdAssetsToProject(out string savedFolderPath)
+        {
+            savedFolderPath = string.Empty;
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("[StadiumCrowdBillboard] Play Mode 中のベイクは未対応です。編集モードで実行してください。", this);
+                return false;
+            }
+
+            RefreshChunkRenderersList();
+            if (_chunkRenderers.Count == 0 || HasMissingChunkMeshes())
+            {
+                GenerateCrowd();
+                RefreshChunkRenderersList();
+            }
+
+            Transform root = transform.Find(CrowdRootName);
+            if (root == null || _chunkRenderers.Count == 0)
+            {
+                Debug.LogWarning("[StadiumCrowdBillboard] ベイク対象の生成済みチャンクが存在しません。", this);
+                return false;
+            }
+
+            ApplyMaterialSettingsToAllChunks();
+
+            string safeName = MakeSafeFileName(gameObject.name);
+            int idToken = Mathf.Abs(GetInstanceID());
+            savedFolderPath = $"Assets/Deverop/AT_Murayama/StadiumCrowdBillboard/Baked/{safeName}_{idToken}";
+            EnsureAssetFolder(savedFolderPath);
+
+            if (_sharedBillboardMaterial != null)
+            {
+                string bbMatPath = $"{savedFolderPath}/M_{safeName}_BillboardBaked.mat";
+                string currentMatPath = AssetDatabase.GetAssetPath(_sharedBillboardMaterial);
+                if (currentMatPath == bbMatPath)
+                {
+                    EditorUtility.SetDirty(_sharedBillboardMaterial);
+                }
+                else
+                {
+                    Material existingMat = AssetDatabase.LoadAssetAtPath<Material>(bbMatPath);
+                    if (existingMat != null)
+                    {
+                        EditorUtility.CopySerialized(_sharedBillboardMaterial, existingMat);
+                        _sharedBillboardMaterial = existingMat;
+                        EditorUtility.SetDirty(existingMat);
+                    }
+                    else
+                    {
+                        Material bakedMat = new Material(_sharedBillboardMaterial)
+                        {
+                            name = $"M_{safeName}_BillboardBaked"
+                        };
+                        AssetDatabase.CreateAsset(bakedMat, bbMatPath);
+                        _sharedBillboardMaterial = bakedMat;
+                    }
+                }
+            }
+
+            Transform standTransform = root.Find("StadiumBleachers_TierMesh");
+            if (standTransform != null && _sharedStandMaterial != null)
+            {
+                string standMatPath = $"{savedFolderPath}/M_{safeName}_StandBaked.mat";
+                string currentStandMatPath = AssetDatabase.GetAssetPath(_sharedStandMaterial);
+                if (currentStandMatPath == standMatPath)
+                {
+                    EditorUtility.SetDirty(_sharedStandMaterial);
+                }
+                else
+                {
+                    Material existingStandMat = AssetDatabase.LoadAssetAtPath<Material>(standMatPath);
+                    if (existingStandMat != null)
+                    {
+                        EditorUtility.CopySerialized(_sharedStandMaterial, existingStandMat);
+                        _sharedStandMaterial = existingStandMat;
+                        EditorUtility.SetDirty(existingStandMat);
+                    }
+                    else
+                    {
+                        Material bakedStandMat = new Material(_sharedStandMaterial)
+                        {
+                            name = $"M_{safeName}_StandBaked"
+                        };
+                        AssetDatabase.CreateAsset(bakedStandMat, standMatPath);
+                        _sharedStandMaterial = bakedStandMat;
+                    }
+                }
+            }
+
+            int savedMeshCount = 0;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child == null) continue;
+
+                MeshFilter mf = child.GetComponent<MeshFilter>();
+                MeshRenderer mr = child.GetComponent<MeshRenderer>();
+                if (mf == null || mf.sharedMesh == null) continue;
+
+                string meshPath = $"{savedFolderPath}/{child.name}.asset";
+                string currentMeshPath = AssetDatabase.GetAssetPath(mf.sharedMesh);
+                if (currentMeshPath == meshPath)
+                {
+                    EditorUtility.SetDirty(mf.sharedMesh);
+                }
+                else
+                {
+                    if (AssetDatabase.LoadAssetAtPath<Mesh>(meshPath) != null)
+                    {
+                        AssetDatabase.DeleteAsset(meshPath);
+                    }
+                    Mesh meshCopy = Instantiate(mf.sharedMesh);
+                    meshCopy.name = mf.sharedMesh.name;
+                    AssetDatabase.CreateAsset(meshCopy, meshPath);
+                    mf.sharedMesh = meshCopy;
+                }
+
+                if (mr != null)
+                {
+                    mr.sharedMaterial = (child.name == "StadiumBleachers_TierMesh") ? _sharedStandMaterial : _sharedBillboardMaterial;
+                    if (child.name != "StadiumBleachers_TierMesh")
+                    {
+                        mr.shadowCastingMode = _castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                    }
+                    EditorUtility.SetDirty(mr);
+                }
+                child.gameObject.layer = gameObject.layer;
+                EditorUtility.SetDirty(mf);
+                savedMeshCount++;
+            }
+
+            _isBakedAssets = savedMeshCount > 0;
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+            return _isBakedAssets;
+        }
+
+        public void ApplyProductionPreset()
+        {
+            Undo.RecordObject(this, "Apply Production Billboard Crowd Settings");
+
+            _showTargetMarkerMesh = false;
+            _previewInEditMode = false;
+            _trackingMode = TargetTrackingMode.FollowTransform;
+            _autoFindPlayerAtRuntime = true;
+
+            if (_lookAtTarget == null)
+            {
+                TryAutoFindPlayerTarget();
+            }
+
+            DestroyPreviewMarkerImmediate();
+            ApplyMaterialSettingsToAllChunks();
+            EditorUtility.SetDirty(this);
+        }
+
+        public void DestroyPreviewMarkerImmediate()
+        {
+            if (_markerTransform != null)
+            {
+                Undo.DestroyObjectImmediate(_markerTransform.gameObject);
+                _markerTransform = null;
+            }
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != null && child.name == MarkerObjectName)
+                {
+                    Undo.DestroyObjectImmediate(child.gameObject);
+                }
+            }
+        }
+
+        private static void EnsureAssetFolder(string targetFolder)
+        {
+            string normalized = targetFolder.Replace('\\', '/').TrimEnd('/');
+            if (AssetDatabase.IsValidFolder(normalized)) return;
+
+            string[] parts = normalized.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+                current = next;
+            }
+        }
+
+        private static string MakeSafeFileName(string raw)
+        {
+            if (string.IsNullOrEmpty(raw)) return "BillboardCrowd";
+            System.Text.StringBuilder sb = new System.Text.StringBuilder(raw.Length);
+            for (int i = 0; i < raw.Length; i++)
+            {
+                char ch = raw[i];
+                if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '-')
+                {
+                    sb.Append(ch);
+                }
+                else
+                {
+                    sb.Append('_');
+                }
+            }
+            return sb.Length > 0 ? sb.ToString() : "BillboardCrowd";
+        }
+#endif
 
         private static float NextFloat(System.Random rng)
         {

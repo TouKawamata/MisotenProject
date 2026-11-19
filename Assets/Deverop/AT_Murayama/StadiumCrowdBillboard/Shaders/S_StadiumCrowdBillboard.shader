@@ -45,6 +45,10 @@ Shader "AT_Murayama/StadiumCrowdBillboard/S_StadiumCrowdBillboard"
         _WaveIntensity ("Stadium Mexican Wave Intensity", Range(0.0, 1.0)) = 0.18
         _WaveSpeed ("Stadium Wave Speed", Range(0.05, 1.5)) = 0.22
         _WaveCount ("Stadium Wave Repeat Count", Range(1.0, 4.0)) = 1.0
+
+        [Header(Distance Optimization)]
+        _AnimCullDistance ("Animation Cull Distance (m, 0=Off)", Float) = 250.0
+        _MaxRenderDistance ("Max Render Distance (m, 0=Unlimited)", Float) = 600.0
     }
 
     SubShader
@@ -101,6 +105,9 @@ Shader "AT_Murayama/StadiumCrowdBillboard/S_StadiumCrowdBillboard"
             float _WaveIntensity;
             float _WaveSpeed;
             float _WaveCount;
+
+            float _AnimCullDistance;
+            float _MaxRenderDistance;
         CBUFFER_END
 
         // 2D Capsule Signed Distance Function
@@ -146,34 +153,58 @@ Shader "AT_Murayama/StadiumCrowdBillboard/S_StadiumCrowdBillboard"
 
             outQuadUV = float2(cornerX, cornerY);
 
-            // 1. Scale variation
-            float hScale = lerp(1.0 - _HeightVariation, 1.0 + _HeightVariation, frac(seedB * 3.73)) * quadScale;
-            float wScale = lerp(1.0 - _HeightVariation * 0.65, 1.0 + _HeightVariation * 0.65, frac(seedA * 5.17)) * quadScale;
+            // Distance-based GPU culling & animation bypass
+            float3 pivotWS = TransformObjectToWorld(pivotOS);
+            float3 toCamWS = GetCameraPositionWS() - pivotWS;
+            float  camDist = length(toCamWS);
 
-            // 2. Time, Excitement & Stadium Wave
-            float t = _Time.y * _AnimSpeed;
-            float wavePhase = frac(angle01 * _WaveCount - _Time.y * _WaveSpeed + row01 * 0.06);
-            float waveFactor = smoothstep(0.16, 0.0, abs(wavePhase - 0.5)) * _WaveIntensity;
-            float indivExcite = saturate(_Excitement * lerp(0.75, 1.25, seedA) + waveFactor);
-            outAnimParams = float4(seedA, seedB, indivExcite, styleId);
+            if (_MaxRenderDistance > 0.5 && camDist > _MaxRenderDistance)
+            {
+                outPosOS = pivotOS;
+                outNormalOS = float3(0.0, 1.0, 0.0);
+                outAnimParams = float4(seedA, seedB, 0.0, styleId);
+                outGazeAngles = float2(0.0, 0.0);
+                return;
+            }
 
-            // 3. Target Tracking with Per-Person Reaction Lag
-            float lagFactor = frac(seedA * 7.13) * _ReactionLagWeight;
-            float3 myTargetOS = lerp(_TargetPosOS.xyz, _DelayedTargetPosOS.xyz, lagFactor);
+            float distScale = (_MaxRenderDistance > 0.5)
+                ? (1.0 - smoothstep(_MaxRenderDistance * 0.85, _MaxRenderDistance, camDist))
+                : 1.0;
 
-            float3 eyeOS = pivotOS + float3(0.0, 1.45 * hScale, 0.0);
-            float3 toTarget = myTargetOS - eyeOS;
-            float horizDist = max(length(toTarget.xz), 0.01);
+            float animWeight = (_AnimCullDistance > 0.5)
+                ? (1.0 - smoothstep(_AnimCullDistance * 0.75, _AnimCullDistance, camDist))
+                : 1.0;
+
+            // 1. Scale variation (+ distance fade)
+            float hScale = lerp(1.0 - _HeightVariation, 1.0 + _HeightVariation, frac(seedB * 3.73)) * quadScale * distScale;
+            float wScale = lerp(1.0 - _HeightVariation * 0.65, 1.0 + _HeightVariation * 0.65, frac(seedA * 5.17)) * quadScale * distScale;
 
             float sBase, cBase;
             sincos(baseYaw, sBase, cBase);
             float2 seatRightXZ = float2(cBase, -sBase);
             float2 seatFwdXZ   = float2(sBase,  cBase);
 
-            // Camera vector in Object Space
-            float3 pivotWS = TransformObjectToWorld(pivotOS);
-            float3 toCamWS = GetCameraPositionWS() - pivotWS;
-            float3 toCamOS = TransformWorldToObjectDir(normalize(toCamWS));
+            float3 toCamOS = TransformWorldToObjectDir(toCamWS / max(camDist, 0.001));
+
+            // 2. Time, Excitement & Stadium Wave (skip if beyond animation cull distance)
+            float indivExcite = 0.0;
+            float3 toTarget = float3(0.0, 0.0, 10.0);
+            float horizDist = 10.0;
+
+            if (animWeight > 0.001)
+            {
+                float wavePhase = frac(angle01 * _WaveCount - _Time.y * _WaveSpeed + row01 * 0.06);
+                float waveFactor = smoothstep(0.16, 0.0, abs(wavePhase - 0.5)) * _WaveIntensity;
+                indivExcite = saturate(_Excitement * lerp(0.75, 1.25, seedA) + waveFactor) * animWeight;
+
+                // 3. Target Tracking with Per-Person Reaction Lag
+                float lagFactor = frac(seedA * 7.13) * _ReactionLagWeight;
+                float3 myTargetOS = lerp(_TargetPosOS.xyz, _DelayedTargetPosOS.xyz, lagFactor);
+                float3 eyeOS = pivotOS + float3(0.0, 1.45 * hScale, 0.0);
+                toTarget = myTargetOS - eyeOS;
+                horizDist = max(length(toTarget.xz), 0.01);
+            }
+            outAnimParams = float4(seedA, seedB, indivExcite, styleId);
 
             // Determine Billboard Basis (rightOS, upOS, normalOS)
             float3 rightOS;
@@ -209,8 +240,8 @@ Shader "AT_Murayama/StadiumCrowdBillboard/S_StadiumCrowdBillboard"
             else
             {
                 // Mode 2: Seat / Target-Oriented Quad (and 90-degree Cross Quad if planeId > 0.5)
-                float2 dirXZ = (horizDist > 0.1) ? normalize(toTarget.xz) : seatFwdXZ;
-                dirXZ = normalize(lerp(seatFwdXZ, dirXZ, _LookAtWeight * 0.75));
+                float2 dirXZ = (animWeight > 0.001 && horizDist > 0.1) ? normalize(toTarget.xz) : seatFwdXZ;
+                dirXZ = normalize(lerp(seatFwdXZ, dirXZ, _LookAtWeight * animWeight * 0.75));
                 if (planeId > 0.5)
                 {
                     dirXZ = float2(dirXZ.y, -dirXZ.x);
@@ -220,25 +251,35 @@ Shader "AT_Murayama/StadiumCrowdBillboard/S_StadiumCrowdBillboard"
                 fwdOS   = float3(dirXZ.x, 0.0,  dirXZ.y);
             }
 
-            // Compute relative gaze angles (Yaw & Pitch) in the Billboard's visual frame
-            float targetAlongRight = dot(toTarget.xz, rightOS.xz) / horizDist;
-            float rawPitch = atan2(toTarget.y, horizDist);
+            float gazeYaw   = 0.0;
+            float gazePitch = 0.0;
+            float hop       = 0.0;
+            float swayOffset = 0.0;
 
-            float microYaw   = sin(t * lerp(0.9, 1.8, seedB) + seedA * 6.28318) * 0.08;
-            float microPitch = cos(t * lerp(1.1, 2.0, seedA) + seedB * 6.28318) * 0.05;
+            if (animWeight > 0.001)
+            {
+                float t = _Time.y * _AnimSpeed;
 
-            float gazeYaw   = clamp(targetAlongRight + microYaw, -1.0, 1.0) * _LookAtWeight;
-            float gazePitch = clamp((rawPitch / 1.05) + microPitch, -0.8, 1.0) * _LookAtWeight;
+                // Compute relative gaze angles (Yaw & Pitch) in the Billboard's visual frame
+                float targetAlongRight = dot(toTarget.xz, rightOS.xz) / horizDist;
+                float rawPitch = atan2(toTarget.y, horizDist);
+
+                float microYaw   = sin(t * lerp(0.9, 1.8, seedB) + seedA * 6.28318) * 0.08;
+                float microPitch = cos(t * lerp(1.1, 2.0, seedA) + seedB * 6.28318) * 0.05;
+
+                gazeYaw   = clamp(targetAlongRight + microYaw, -1.0, 1.0) * _LookAtWeight * animWeight;
+                gazePitch = clamp((rawPitch / 1.05) + microPitch, -0.8, 1.0) * _LookAtWeight * animWeight;
+
+                // 4. Quad Vertex Animation (Jump, Sway, Upper-Body Target Lean)
+                float canJump = step(1.0 - _JumpRatio, frac(seedB * 9.17 + indivExcite * 0.35));
+                float jumpFreq = lerp(3.4, 6.2, frac(seedA * 3.1));
+                float rawSin = sin(t * jumpFreq + seedA * 12.56637);
+                hop = pow(max(0.0, rawSin), 1.7) * _JumpHeight * saturate(indivExcite * 1.15 + 0.15) * canJump * animWeight;
+
+                float swayFreq = lerp(1.6, 3.6, frac(seedA * 2.9));
+                swayOffset = sin(t * swayFreq + seedB * 6.28318) * _SwayAmount * (0.45 + 0.65 * indivExcite) * cornerY * animWeight;
+            }
             outGazeAngles = float2(gazeYaw, gazePitch);
-
-            // 4. Quad Vertex Animation (Jump, Sway, Upper-Body Target Lean)
-            float canJump = step(1.0 - _JumpRatio, frac(seedB * 9.17 + indivExcite * 0.35));
-            float jumpFreq = lerp(3.4, 6.2, frac(seedA * 3.1));
-            float rawSin = sin(t * jumpFreq + seedA * 12.56637);
-            float hop = pow(max(0.0, rawSin), 1.7) * _JumpHeight * saturate(indivExcite * 1.15 + 0.15) * canJump;
-
-            float swayFreq = lerp(1.6, 3.6, frac(seedA * 2.9));
-            float swayOffset = sin(t * swayFreq + seedB * 6.28318) * _SwayAmount * (0.45 + 0.65 * indivExcite) * cornerY;
 
             // Lean upper body toward the target horizontally & vertically
             float targetLeanX = gazeYaw * 0.14 * cornerY;

@@ -42,6 +42,10 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
         _WaveIntensity ("Stadium Mexican Wave Intensity", Range(0.0, 1.0)) = 0.0
         _WaveSpeed ("Stadium Wave Speed", Range(0.05, 1.5)) = 0.25
         _WaveCount ("Stadium Wave Repeat Count", Range(1.0, 4.0)) = 1.0
+
+        [Header(Distance Optimization)]
+        _AnimCullDistance ("Animation Cull Distance (m, 0=Off)", Float) = 250.0
+        _MaxRenderDistance ("Max Render Distance (m, 0=Unlimited)", Float) = 600.0
     }
 
     SubShader
@@ -93,6 +97,9 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float _WaveIntensity;
             float _WaveSpeed;
             float _WaveCount;
+
+            float _AnimCullDistance;
+            float _MaxRenderDistance;
         CBUFFER_END
 
         // Rotate 2D vector (a, b) by angle rad
@@ -128,6 +135,27 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float armCode    = vColor.b;
             float height01   = vColor.a;
 
+            // Distance-based GPU culling & animation bypass
+            float3 pivotWS = TransformObjectToWorld(pivotOS);
+            float camDist  = distance(pivotWS, _WorldSpaceCameraPos);
+
+            if (_MaxRenderDistance > 0.5 && camDist > _MaxRenderDistance)
+            {
+                // Collapse to degenerate triangle so rasterizer discards 0-area triangles with zero pixel cost
+                positionOS = pivotOS;
+                outExcitement = 0.0;
+                outPitchNormalized = 0.5;
+                return;
+            }
+
+            float distScale = (_MaxRenderDistance > 0.5)
+                ? (1.0 - smoothstep(_MaxRenderDistance * 0.85, _MaxRenderDistance, camDist))
+                : 1.0;
+
+            float animWeight = (_AnimCullDistance > 0.5)
+                ? (1.0 - smoothstep(_AnimCullDistance * 0.75, _AnimCullDistance, camDist))
+                : 1.0;
+
             // Basis vectors of this spectator's seat in Object Space
             float sBase, cBase;
             sincos(baseYaw, sBase, cBase);
@@ -139,11 +167,21 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float3 localPos = float3(dot(relOS.xz, rightXZ), relOS.y, dot(relOS.xz, fwdXZ));
             float3 localNrm = float3(dot(normalOS.xz, rightXZ), normalOS.y, dot(normalOS.xz, fwdXZ));
 
-            // 1. Individual Body Build & Height Variation
-            float hScale = lerp(1.0 - _HeightVariation, 1.0 + _HeightVariation, frac(seedB * 3.73));
-            float wScale = lerp(1.0 - _HeightVariation * 0.65, 1.0 + _HeightVariation * 0.65, frac(seedA * 5.17));
+            // 1. Individual Body Build & Height Variation (+ smooth distance scale fade)
+            float hScale = lerp(1.0 - _HeightVariation, 1.0 + _HeightVariation, frac(seedB * 3.73)) * distScale;
+            float wScale = lerp(1.0 - _HeightVariation * 0.65, 1.0 + _HeightVariation * 0.65, frac(seedA * 5.17)) * distScale;
             localPos.y  *= hScale;
             localPos.xz *= wScale;
+
+            // Early return for far spectators beyond animation cull distance (skip all trig & LookAt math)
+            if (animWeight <= 0.001)
+            {
+                positionOS.xz = pivotOS.xz + rightXZ * localPos.x + fwdXZ * localPos.z;
+                positionOS.y  = pivotOS.y  + localPos.y;
+                outExcitement = 0.0;
+                outPitchNormalized = 0.5;
+                return;
+            }
 
             // 2. Time, Excitement & Stadium Mexican Wave
             float t = _Time.y * _AnimSpeed;
@@ -151,7 +189,7 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float waveFactor = smoothstep(0.16, 0.0, abs(wavePhase - 0.5)) * _WaveIntensity;
 
             float indivExcite = saturate(_Excitement * lerp(0.75, 1.25, seedA) + waveFactor);
-            outExcitement = indivExcite;
+            outExcitement = indivExcite * animWeight;
 
             // 3. Target Tracking with Per-Person Reaction Lag
             float lagFactor = frac(seedA * 7.13) * _ReactionLagWeight;
@@ -171,8 +209,8 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float rawYaw   = atan2(targetRight, targetFwd) + microYaw;
             float rawPitch = atan2(toTarget.y, horizDist) + microPitch;
 
-            float clampedYaw   = clamp(rawYaw, -_MaxYawRad, _MaxYawRad) * _LookAtWeight;
-            float clampedPitch = clamp(rawPitch, -_MaxPitchDownRad, _MaxPitchUpRad) * _LookAtWeight;
+            float clampedYaw   = clamp(rawYaw, -_MaxYawRad, _MaxYawRad) * _LookAtWeight * animWeight;
+            float clampedPitch = clamp(rawPitch, -_MaxPitchDownRad, _MaxPitchUpRad) * _LookAtWeight * animWeight;
             outPitchNormalized = saturate((clampedPitch + _MaxPitchDownRad) / max(_MaxPitchUpRad + _MaxPitchDownRad, 0.01));
 
             // 4. Articulated Arm Animation (Cheering / Pointing / Waving)
@@ -202,10 +240,10 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
                 float raiseBase = lerp(0.25, 2.35, saturate(indivExcite * 0.85 + 0.25)) * armActive;
                 // Follow vertical look pitch so arms point toward descending character
                 float pitchFollow = max(0.0, clampedPitch) * 0.45 * armActive;
-                float armPitch = (raiseBase + pitchFollow + waveOsc * 0.42 * _ArmWaveAmount * armActive) * armWeight;
+                float armPitch = (raiseBase + pitchFollow + waveOsc * 0.42 * _ArmWaveAmount * armActive) * armWeight * animWeight;
 
                 // Slight outward splay and side-to-side wave
-                float armRoll = ((isRightArm ? -0.18 : 0.18) + cos(t * waveFreq * 0.5 + seedB * 6.28) * 0.16 * _ArmWaveAmount) * armWeight * armActive;
+                float armRoll = ((isRightArm ? -0.18 : 0.18) + cos(t * waveFreq * 0.5 + seedB * 6.28) * 0.16 * _ArmWaveAmount) * armWeight * armActive * animWeight;
 
                 // Rotate around shoulder X axis (forward/upward raise)
                 Rotate2D(armVec.z, armVec.y, armPitch);
@@ -237,7 +275,7 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
 
             // 6. Body Rhythmic Sway (Left-Right Groove)
             float swayFreq = lerp(1.6, 3.6, frac(seedA * 2.9));
-            float swayAngle = sin(t * swayFreq + seedB * 6.28318) * _SwayAmount * (0.45 + 0.65 * indivExcite) * height01;
+            float swayAngle = sin(t * swayFreq + seedB * 6.28318) * _SwayAmount * (0.45 + 0.65 * indivExcite) * height01 * animWeight;
             Rotate2D(localPos.x, localPos.y, swayAngle);
             Rotate2D(localNrm.x, localNrm.y, swayAngle);
 
@@ -251,9 +289,9 @@ Shader "AT_Murayama/StadiumCrowd/S_StadiumCrowd3D"
             float canJump = step(1.0 - _JumpRatio, frac(seedB * 9.17 + indivExcite * 0.35));
             float jumpFreq = lerp(3.4, 6.2, frac(seedA * 3.1));
             float rawSin = sin(t * jumpFreq + seedA * 12.56637);
-            float hop = pow(max(0.0, rawSin), 1.7) * _JumpHeight * saturate(indivExcite * 1.15 + 0.15) * canJump;
+            float hop = pow(max(0.0, rawSin), 1.7) * _JumpHeight * saturate(indivExcite * 1.15 + 0.15) * canJump * animWeight;
             // Slight knee-bend squash before jump
-            float squash = min(0.0, rawSin) * 0.03 * height01 * canJump * indivExcite;
+            float squash = min(0.0, rawSin) * 0.03 * height01 * canJump * indivExcite * animWeight;
             localPos.y += hop + squash;
 
             // Reconstruct Object Space position and normal

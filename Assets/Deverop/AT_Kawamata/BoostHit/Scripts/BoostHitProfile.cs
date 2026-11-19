@@ -3,12 +3,19 @@ using UnityEngine;
 // ブースト接触を受けたときの効果の設定の塊。PlayerとCPUで同じアセットを使う。
 // ・ブースト中でない相手に当たった → 当てられた側がスタン（入力不可・減速）＋横ずれし、その後しばらく無敵
 //   横ずれの距離は、当てた側の左右方向で見た中心どうしの近さ（BoostHitInfo.Closeness）で変わる
+//   スタン・横ずれは、それぞれApply Stun On Hit／Apply Push On HitでON/OFFできる
 // ・お互いにブースト中 → お互いを少しはじくだけ（ブーストは解除しない）
 // ・シールド中の相手の後方のshild_01に当たった → 防がれる。防いだ側は少し前へ押し出される（加速）
 //   押し出しは初速で決める。検証用の切り替えで、初速をぶつかってきた速さで変えたり（ビリヤードの玉突きのイメージ）、当てた側のブーストを解除したりできる
 [CreateAssetMenu(fileName = "BoostHitProfile", menuName = "Race/BoostHitProfile")]
 public class BoostHitProfile : ScriptableObject
 {
+    [Header("ブーストを当てられたときの効果（切り替え）")]
+    [Tooltip("ON：当てられた側をスタンさせる（入力不可・減速）。OFF：スタンさせない（横ずれがONなら、横ずれの後に無敵の秒数だけ当たらなくなる）")]
+    [SerializeField] private bool _applyStunOnHit = true;
+    [Tooltip("ON：当てられた側を横へ押し出す（吹っ飛ばし）。OFF：押し出さない")]
+    [SerializeField] private bool _applyPushOnHit = true;
+
     [Header("スタン")]
     [Tooltip("入力を受け付けない秒数")]
     [SerializeField] private float _stunDuration = 1f;
@@ -56,6 +63,10 @@ public class BoostHitProfile : ScriptableObject
     [SerializeField] private float _attackerBoostLockDuration = 1f;
     [Tooltip("ON：ブーストを解除されたとき、Attacker Boost Lock Durationの秒数だけ横入力も受け付けない（Cancel Attacker Boost On BlockがONのときだけ）。OFF：横入力は受け付ける")]
     [SerializeField] private bool _lockAttackerSteeringOnCancel;
+
+    public bool ApplyStunOnHit => _applyStunOnHit;
+
+    public bool ApplyPushOnHit => _applyPushOnHit;
 
     public float StunDuration => Mathf.Max(0f, _stunDuration);
 

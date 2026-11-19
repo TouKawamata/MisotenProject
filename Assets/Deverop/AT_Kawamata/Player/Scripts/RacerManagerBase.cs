@@ -86,8 +86,8 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // 引数は押し出しの初速（m/s）と、押し出す秒数。演出の強さ・長さを押し出しに合わせるのに使う。
     public event Action<float, float> ShieldBlockPushStarted;
 
-    // 自分のブーストを相手に当てて、効果があった瞬間（はじいた／シールドで防がれた／スタンさせた）。
-    // タックル成功はEBoostHitResult.Stunned。バックミラーの表示条件・当てたときの演出に使う。
+    // 自分のブーストを相手に当てて、効果があった瞬間（はじいた／シールドで防がれた／スタンさせた／横ずれだけさせた）。
+    // タックル成功はEBoostHitResult.Stunned（BoostHitProfileでスタンOFFのときはPushed）。バックミラーの表示条件・当てたときの演出に使う。
     public event Action<EBoostHitResult> BoostHitLanded;
 
     // ブーストを当てられてスタンした瞬間・スタンが解けた瞬間（入力を受け付けない間の始まりと終わり）。
@@ -371,7 +371,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // ブースト中に他のレーサーと重なったとき、BoostHitDetectorから呼ばれる。
     // ゴール後・無敵中 → 無視、お互いにブースト中 → 少しはじくだけ（ブーストは解除しない）、
     // シールド中 → 後方のshild_01に当たったら防いでシールドが消え、前へ押し出される（加速。初速はBoostHitProfileの設定で、一定かぶつかってきた速さ次第）。体に当たっただけなら無視
-    // （シールド中はshild_01同士で判定する）、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す）。
+    // （シールド中はshild_01同士で判定する）、それ以外 → スタン＋横ずれ（中心どうしが近いほど大きく押し出す。どちらもBoostHitProfileでON/OFFできる）。
     // BoostHitDetector専用の入口なので、IBoostHitReceiverとしてだけ呼べるよう明示的に実装する。
     EBoostHitResult IBoostHitReceiver.ReceiveBoostHit(BoostHitInfo hit)
     {
@@ -413,12 +413,35 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
             return EBoostHitResult.Blocked;
         }
 
-        _boost.ForceStop();
-        _stun.BeginStun(_boostHitProfile.StunDuration, _boostHitProfile.InvincibleDuration);
-        float pushDistance = _boostHitProfile.EvaluatePushDistance(hit.Closeness);
-        _flightController.ApplyLateralPush(hit.PushDirection, pushDistance, _boostHitProfile.PushDuration);
-        Log($"ブーストを当てられた（スタン） 近さ {hit.Closeness:F2} 横ずれ {pushDistance:F1}m{(hit.HasPushDirection ? "" : "（向き未確定→コース中央側）")}");
-        return EBoostHitResult.Stunned;
+        // スタン・横ずれは、BoostHitProfileでそれぞれON/OFFできる（両方OFFなら何も起きない）。
+        bool applyStun = _boostHitProfile.ApplyStunOnHit;
+        bool applyPush = _boostHitProfile.ApplyPushOnHit;
+        if (!applyStun && !applyPush)
+        {
+            return EBoostHitResult.Ignored;
+        }
+
+        if (applyStun)
+        {
+            _boost.ForceStop();
+            _stun.BeginStun(_boostHitProfile.StunDuration, _boostHitProfile.InvincibleDuration);
+        }
+        else
+        {
+            // スタンしないときも、重なったまま何度も押し出されないよう無敵にする。
+            _stun.BeginInvincible(_boostHitProfile.InvincibleDuration);
+        }
+
+        string pushLog = "横ずれなし";
+        if (applyPush)
+        {
+            float pushDistance = _boostHitProfile.EvaluatePushDistance(hit.Closeness);
+            _flightController.ApplyLateralPush(hit.PushDirection, pushDistance, _boostHitProfile.PushDuration);
+            pushLog = $"横ずれ {pushDistance:F1}m{(hit.HasPushDirection ? "" : "（向き未確定→コース中央側）")}";
+        }
+
+        Log($"ブーストを当てられた（{(applyStun ? "スタン" : "スタンなし")}） 近さ {hit.Closeness:F2} {pushLog}");
+        return applyStun ? EBoostHitResult.Stunned : EBoostHitResult.Pushed;
     }
 
     // 自分のブーストが相手に効果を与えたとき（BoostHitDetectorから）。演出・UI向けにそのまま通知する。
@@ -464,6 +487,16 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     void IGimmickRacer.ApplyLateralPush(Vector3 direction, float distance, float duration)
     {
         _flightController.ApplyLateralPush(direction, distance, duration);
+    }
+
+    void IGimmickRacer.ApplyPush(Vector3 direction, float distance, float duration)
+    {
+        _flightController.ApplyPush(direction, distance, duration);
+    }
+
+    void IGimmickRacer.ApplyPlanarPush(Vector3 direction, float distance, float duration)
+    {
+        _flightController.ApplyPlanarPush(direction, distance, duration);
     }
 
     void IGimmickRacer.Stun(float duration)

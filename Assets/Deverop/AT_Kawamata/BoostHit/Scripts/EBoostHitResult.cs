@@ -11,5 +11,8 @@ public enum EBoostHitResult
     Blocked,
 
     // スタンさせた（タックル成功）
-    Stunned
+    Stunned,
+
+    // 横ずれだけさせた（BoostHitProfileでスタンがOFFのとき。これもタックル成功）
+    Pushed
 }

@@ -16,17 +16,18 @@ public static class CpuProfilePresetCreator
             AssetDatabase.CreateFolder(ParentFolder, "Profiles");
         }
 
-        // 考え直す間隔, 反応時間, 操作の強さ, 操作の打ち消し, ぶれ, ぶれの速さ, 攻撃のそろい, カーブの限界, カーブを見る距離, ゲージの下限, シールド成功率, ショートカット成功率, 追い上げの強さ, 追い上げの距離
-        CreateDifficulty("CpuDifficulty_Easy", 0.25f, 0.6f, 0.35f, 0.08f, 0.25f, 0.5f, 2.5f, 90f, 60f, 0f, 0.3f, 0.4f, 1f, 150f);
-        CreateDifficulty("CpuDifficulty_Normal", 0.15f, 0.35f, 0.5f, 0.12f, 0.12f, 0.7f, 1.5f, 35f, 60f, 0.05f, 0.6f, 0.7f, 0.6f, 150f);
-        CreateDifficulty("CpuDifficulty_Hard", 0.08f, 0.15f, 0.7f, 0.15f, 0.04f, 1f, 0.8f, 25f, 70f, 0.1f, 0.9f, 1f, 0.3f, 150f);
+        // 考え直す間隔, 反応時間, 操作の強さ, 操作の打ち消し, ぶれ, ぶれの速さ, 攻撃のそろい, カーブの限界, カーブを見る距離, ゲージの下限, シールド成功率,
+        // ギミックに気づく確率, ギミックを見る距離, 妨害弾の選び方, 視界反転に慣れる秒数, 追い上げの強さ, 追い上げの距離
+        CreateDifficulty("CpuDifficulty_Easy", 0.25f, 0.6f, 0.35f, 0.08f, 0.25f, 0.5f, 2.5f, 90f, 60f, 0f, 0.3f, 0.4f, 35f, 0.2f, 1.5f, 1f, 150f);
+        CreateDifficulty("CpuDifficulty_Normal", 0.15f, 0.35f, 0.5f, 0.12f, 0.12f, 0.7f, 1.5f, 35f, 60f, 0.05f, 0.6f, 0.7f, 55f, 0.6f, 0.8f, 0.6f, 150f);
+        CreateDifficulty("CpuDifficulty_Hard", 0.08f, 0.15f, 0.7f, 0.15f, 0.04f, 1f, 0.8f, 25f, 70f, 0.1f, 0.9f, 1f, 80f, 1f, 0.3f, 0.3f, 150f);
 
-        // 表示名, 表示の色, 攻撃性, 慎重さ, ブーストの使い方, 走行ライン, ライン変更の頻度, 執念, ショートカット志向
-        CreatePersonality("CpuPersonality_Attacker", "アタッカー", new Color(1f, 0.35f, 0.3f), 0.9f, 0.2f, 0.8f, 0.3f, 0.6f, 0.6f, 0.5f);
-        CreatePersonality("CpuPersonality_Guardian", "ガーディアン", new Color(0.35f, 0.6f, 1f), 0.25f, 0.9f, 0.3f, 0.5f, 0.3f, 0.3f, 0.5f);
-        CreatePersonality("CpuPersonality_Speedster", "スピードスター", new Color(1f, 0.85f, 0.2f), 0.05f, 0.3f, 0.9f, 0f, 0.1f, 0f, 0.6f);
-        CreatePersonality("CpuPersonality_Trickster", "トリックスター", new Color(0.8f, 0.45f, 1f), 0.5f, 0.4f, 0.5f, 0.8f, 0.9f, 1f, 1f);
-        CreatePersonality("CpuPersonality_Balance", "バランス", new Color(0.4f, 0.9f, 0.45f), 0.5f, 0.5f, 0.5f, 0.4f, 0.5f, 0.4f, 0.6f);
+        // 表示名, 表示の色, 攻撃性, 慎重さ, ブーストの使い方, 走行ライン, ライン変更の頻度, 執念, 加速リング志向, 妨害弾の撃ちたがり, ひねくれ度
+        CreatePersonality("CpuPersonality_Attacker", "アタッカー", new Color(1f, 0.35f, 0.3f), 0.9f, 0.2f, 0.8f, 0.3f, 0.6f, 0.6f, 0.4f, 0.9f, 0.3f);
+        CreatePersonality("CpuPersonality_Guardian", "ガーディアン", new Color(0.35f, 0.6f, 1f), 0.25f, 0.9f, 0.3f, 0.5f, 0.3f, 0.3f, 0.5f, 0.3f, 0.1f);
+        CreatePersonality("CpuPersonality_Speedster", "スピードスター", new Color(1f, 0.85f, 0.2f), 0.05f, 0.3f, 0.9f, 0f, 0.1f, 0f, 1f, 0.2f, 0.1f);
+        CreatePersonality("CpuPersonality_Trickster", "トリックスター", new Color(0.8f, 0.45f, 1f), 0.5f, 0.4f, 0.5f, 0.8f, 0.9f, 1f, 0.6f, 0.7f, 1f);
+        CreatePersonality("CpuPersonality_Balance", "バランス", new Color(0.4f, 0.9f, 0.45f), 0.5f, 0.5f, 0.5f, 0.4f, 0.5f, 0.4f, 0.6f, 0.5f, 0.4f);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -35,7 +36,8 @@ public static class CpuProfilePresetCreator
 
     private static void CreateDifficulty(string assetName, float thinkInterval, float reactionTime, float steeringGain, float steeringDamping,
         float steeringNoise, float steeringNoiseFrequency, float attackAlignTolerance, float boostCurveLimit, float curveCheckDistance,
-        float boostReserve, float shieldSuccessRate, float shortcutSuccessRate, float catchUpStrength, float catchUpDistance)
+        float boostReserve, float shieldSuccessRate, float gimmickAwareness, float gimmickLookAhead, float jammerSmartness, float viewFlipAdaptTime,
+        float catchUpStrength, float catchUpDistance)
     {
         SerializedObject serialized = CreateAsset<CpuDifficultyProfile>(assetName);
         if (serialized == null)
@@ -54,7 +56,10 @@ public static class CpuProfilePresetCreator
         serialized.FindProperty("_curveCheckDistance").floatValue = curveCheckDistance;
         serialized.FindProperty("_boostReserve").floatValue = boostReserve;
         serialized.FindProperty("_shieldSuccessRate").floatValue = shieldSuccessRate;
-        serialized.FindProperty("_shortcutSuccessRate").floatValue = shortcutSuccessRate;
+        serialized.FindProperty("_gimmickAwareness").floatValue = gimmickAwareness;
+        serialized.FindProperty("_gimmickLookAhead").floatValue = gimmickLookAhead;
+        serialized.FindProperty("_jammerSmartness").floatValue = jammerSmartness;
+        serialized.FindProperty("_viewFlipAdaptTime").floatValue = viewFlipAdaptTime;
         serialized.FindProperty("_catchUpStrength").floatValue = catchUpStrength;
         serialized.FindProperty("_catchUpDistance").floatValue = catchUpDistance;
         serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -62,7 +67,7 @@ public static class CpuProfilePresetCreator
 
     // 既にあるアセットは、調整した好みの値は変えず、表示名が空のときだけ表示名・色を入れる（表示の項目を後から足したため）。
     private static void CreatePersonality(string assetName, string displayName, Color labelColor, float aggression, float caution, float boostEagerness,
-        float preferredLine, float lineChangeFrequency, float vengefulness, float shortcutPreference)
+        float preferredLine, float lineChangeFrequency, float vengefulness, float ringPreference, float jammerEagerness, float trickiness)
     {
         CpuPersonalityProfile existing = AssetDatabase.LoadAssetAtPath<CpuPersonalityProfile>($"{ProfileFolder}/{assetName}.asset");
         if (existing != null)
@@ -91,7 +96,9 @@ public static class CpuProfilePresetCreator
         serialized.FindProperty("_preferredLine").floatValue = preferredLine;
         serialized.FindProperty("_lineChangeFrequency").floatValue = lineChangeFrequency;
         serialized.FindProperty("_vengefulness").floatValue = vengefulness;
-        serialized.FindProperty("_shortcutPreference").floatValue = shortcutPreference;
+        serialized.FindProperty("_ringPreference").floatValue = ringPreference;
+        serialized.FindProperty("_jammerEagerness").floatValue = jammerEagerness;
+        serialized.FindProperty("_trickiness").floatValue = trickiness;
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
