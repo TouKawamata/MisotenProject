@@ -4,7 +4,7 @@ using UnityEngine;
 // 妨害弾の発射台。レーサー（Player／CPU）のプレハブに付け、RacerManagerBaseのJammer Launcherに入れる（ゴール前のTickごとにTickが呼ばれる）。
 // 残弾・発射間隔・再装填を管理し、入力の「撃つ」（IRaceInput.JammerPressed。キーボードはQ）で、今の種類（Typesのうち選んでいるもの）の弾を標的へ撃つ。
 // ・レーサーを狙う種類：自分より順位が高いレーサーのうち、コース上の距離が一番近いレーサー（ゴール済みは除く）
-// ・リングを狙う種類：Ring Targetsのうち、自分より前にある一番近いもの（加速リングができるまでの仮の標的）
+// ・リングを狙う種類：シーンの加速リング（JammerTargetRegistry）のうち、自分より前にある一番近い、まだ減速リングになっていないもの
 // 標的がいなければ撃たない（弾は減らない）。弾は1発ずつ回復する（最大数より少ない間だけタイマーが進み、撃ってもリセットしない）。
 // 種類の切り替えは、Inspectorのボタン（JammerLauncherEditor）かSelectTypeで行う。
 public class JammerLauncher : MonoBehaviour
@@ -16,9 +16,6 @@ public class JammerLauncher : MonoBehaviour
 
     [Tooltip("今の種類（Typesの番号）")]
     [SerializeField] private int _currentTypeIndex;
-
-    [Tooltip("リングを狙う種類の標的（加速リングができるまでの仮の標的）。このうち、自分より前にある一番近いものを狙う")]
-    [SerializeField] private List<GameObject> _ringTargets = new List<GameObject>();
 
     [Header("デバッグ")]
     [SerializeField] private bool _showDebugLogs = true;
@@ -129,7 +126,7 @@ public class JammerLauncher : MonoBehaviour
 
         if (type.TargetsRing)
         {
-            GameObject ring = FindRingTarget(ownerTransform.position, ownerGuide != null ? ownerGuide.GetForward(ownerTransform.position) : forward);
+            IJammerTarget ring = FindRingTarget(ownerTransform.position, ownerGuide != null ? ownerGuide.GetForward(ownerTransform.position) : forward);
             if (ring == null)
             {
                 Log($"妨害弾（{type.DisplayName}）を撃てない（前に標的のリングが無い）");
@@ -137,7 +134,7 @@ public class JammerLauncher : MonoBehaviour
             }
 
             CreateProjectile(position, forward).LaunchAtObject(_profile, type, owner, ring, ownerGuide, forward);
-            Log($"妨害弾（{type.DisplayName}）を発射 標的 {ring.name} 残弾 {Ammo - 1}/{MaxAmmo}");
+            Log($"妨害弾（{type.DisplayName}）を発射 標的 {(ring as Object)?.name} 残弾 {Ammo - 1}/{MaxAmmo}");
         }
         else
         {
@@ -185,20 +182,20 @@ public class JammerLauncher : MonoBehaviour
         return nearest;
     }
 
-    // Ring Targetsのうち、自分より前（コースの前向きに対して前方）にあり、一番近い有効なもの。いなければnull。
-    private GameObject FindRingTarget(Vector3 position, Vector3 courseForward)
+    // シーンの加速リングのうち、自分より前（コースの前向きに対して前方）にあり、一番近い、妨害弾を受けられるもの。いなければnull。
+    private static IJammerTarget FindRingTarget(Vector3 position, Vector3 courseForward)
     {
-        GameObject nearest = null;
+        IJammerTarget nearest = null;
         float nearestSqrDistance = float.MaxValue;
 
-        foreach (GameObject ring in _ringTargets)
+        foreach (IJammerTarget ring in JammerTargetRegistry.Targets)
         {
-            if (ring == null || !ring.activeInHierarchy)
+            if (ring == null || !ring.CanReceiveJammer)
             {
                 continue;
             }
 
-            Vector3 toRing = ring.transform.position - position;
+            Vector3 toRing = ring.JammerAimPosition - position;
             if (Vector3.Dot(toRing, courseForward) <= 0f)
             {
                 continue;

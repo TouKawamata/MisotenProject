@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+// 加速リング。妨害弾（RingSwapJammerType）が当たる、または切り替え対象タグのものが触れると減速リングに変わる。
 [DisallowMultipleComponent]
 [RequireComponent(typeof(BoxCollider), typeof(Rigidbody))]
-public sealed class SpeedRing : CourseGimmickBase
+public sealed class SpeedRing : CourseGimmickBase, IJammerTarget
 {
     [SerializeField, InspectorName("最初から減速リング")] private bool _startSlowing;
+    [Tooltip("妨害弾・タグで減速リングになってから、加速リングに戻るまでの秒数。0なら戻らない（最初から減速リングのものは戻らない）")]
+    [SerializeField, InspectorName("加速リングに戻るまでの秒数"), Min(0f)] private float _revertDelay = 5f;
     [SerializeField, InspectorName("切り替え対象タグ")] private string _switchTag = "Untagged";
     [SerializeField, InspectorName("加速の強さ（m/s）"), Min(0f)] private float _extraSpeed = 15f;
     [SerializeField, InspectorName("減速時の最高速度倍率"), Range(0f, 1f)] private float _slowMultiplier = 0.55f;
@@ -17,6 +20,7 @@ public sealed class SpeedRing : CourseGimmickBase
 
 
     private bool _isSlowing;
+    private float _revertTimer;
     private readonly HashSet<IGimmickRacer> _activatedRacers = new HashSet<IGimmickRacer>();
 
     // 今、減速リングになっているか（CPUが読む）。
@@ -98,8 +102,45 @@ public sealed class SpeedRing : CourseGimmickBase
         if (!IsInsideEllipse(other.ClosestPoint(transform.TransformPoint(GetComponent<BoxCollider>().center))))
             return;
 
+        SwitchToSlowing();
+    }
+
+    private void SwitchToSlowing()
+    {
         _isSlowing = true;
+        _revertTimer = _revertDelay;
         _visual?.SetSlowing(true);
+    }
+
+    private void Update()
+    {
+        // 秒数が0（戻らない）か、最初から減速リングのものはタイマーが0のまま。
+        if (!_isSlowing || _revertTimer <= 0f)
+            return;
+
+        _revertTimer -= Time.deltaTime;
+        if (_revertTimer > 0f)
+            return;
+
+        _isSlowing = false;
+        _visual?.SetSlowing(false);
+    }
+
+    // 妨害弾が狙う位置（リングの中心）。
+    public Vector3 JammerAimPosition => transform.TransformPoint(GetComponent<BoxCollider>().center);
+
+    // まだ加速リングのときだけ、妨害弾の標的になる。
+    public bool CanReceiveJammer => isActiveAndEnabled && !_isSlowing;
+
+    public void ReceiveJammer(JammerTypeProfile type)
+    {
+        if (CanReceiveJammer)
+            SwitchToSlowing();
+    }
+
+    private void OnEnable()
+    {
+        JammerTargetRegistry.Register(this);
     }
 
     public override void OnRacerEnter(in GimmickContact contact)
@@ -120,6 +161,7 @@ public sealed class SpeedRing : CourseGimmickBase
 
     private void OnDisable()
     {
+        JammerTargetRegistry.Unregister(this);
         _activatedRacers.Clear();
     }
 

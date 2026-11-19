@@ -734,7 +734,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0b9dcfe97e13dc049873e2fb7f75d732, type: 2}
   - {fileID: 11400000, guid: d05df263716ab244489965aaa20657fb, type: 2}
   _currentTypeIndex: 0
-  _ringTargets: []
   _showDebugLogs: 1
 --- !u!114 &4903786750010904836
 MonoBehaviour:
