@@ -1,9 +1,8 @@
 using UnityEngine;
 
 // 妨害弾：レーサーではなく加速リングを狙い、当たったリングを減速リングに変える。
-// 標的はJammerLauncherのRing Targetsのうち、撃ったレーサーより前にある一番近いもの。
-// 当たった標的がIJammerTargetを持っていればReceiveJammerを呼ぶ（減速リングへの切り替えはリング側が行う）。
-// 加速リングができるまでは仮の標的（ただのGameObject）を置けるよう、持っていなければログだけ出す。
+// 標的はシーンの加速リング（JammerTargetRegistryに登録されたIJammerTarget）のうち、撃ったレーサーより前にある一番近いもの。
+// 当たるとReceiveJammerを呼ぶ（減速リングへの切り替えはリング側が行う）。
 [CreateAssetMenu(fileName = "RingSwapJammer", menuName = "Jammer/Type/加速リングを減速リングに")]
 public class RingSwapJammerType : JammerTypeProfile
 {
@@ -15,21 +14,15 @@ public class RingSwapJammerType : JammerTypeProfile
 
     public float RingHitRadius => Mathf.Max(0f, _ringHitRadius);
 
-    public override void ApplyToTarget(GameObject target)
+    public override void ApplyToTarget(IJammerTarget target)
     {
-        if (target == null)
+        if (target == null || !target.CanReceiveJammer)
         {
             return;
         }
 
-        IJammerTarget jammerTarget = target.GetComponentInParent<IJammerTarget>();
-        if (jammerTarget != null)
-        {
-            jammerTarget.ReceiveJammer(this);
-            Debug.Log($"RingSwapJammerType: {target.name} に当たった（減速リングへ切り替え）", target);
-            return;
-        }
-
-        Debug.Log($"RingSwapJammerType: {target.name} に当たった（IJammerTargetを持っていないので、何も変わらない）", target);
+        target.ReceiveJammer(this);
+        Object context = target as Object;
+        Debug.Log($"RingSwapJammerType: {(context != null ? context.name : "リング")} に当たった（減速リングへ切り替え）", context);
     }
 }

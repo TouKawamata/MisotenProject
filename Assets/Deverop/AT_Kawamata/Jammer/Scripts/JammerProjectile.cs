@@ -4,7 +4,7 @@ using UnityEngine;
 // 妨害弾。標的が遠い間はコースに沿って飛び、近づくほど標的へ狙いを寄せる（最後はまっすぐ向かう）。
 // ・レーサーを狙う弾：標的のコースのガイド（分岐のあるコースでは標的のルート）に沿って飛ぶ。自分とゴール済みを除く全員が当たる対象で、
 //   標的以外でも進路上にいれば当たる。効果を受けるかはIJammerHitReceiverが決める。持たないレーサー（DummyRacerなど）は素通りする
-// ・リングを狙う弾：撃ったレーサーのガイドに沿って飛び、標的のリングにだけ当たる
+// ・リングを狙う弾：撃ったレーサーのガイドに沿って飛び、標的のリングにだけ当たる（届く前に標的が減速リングになったら消える）
 // 速いので物理のTriggerではすり抜けることがある。そのため、このフレームで進んだ線分と、標的の中心との距離で当たりを見る。
 // 当たったら消える（効果が無かったとき（無敵中など）も消える）。寿命が尽きた・標的がゴールした・標的のリングが無効になったときも消える。
 public class JammerProjectile : MonoBehaviour
@@ -13,7 +13,7 @@ public class JammerProjectile : MonoBehaviour
     private JammerTypeProfile _type;
     private IReadOnlyRacerData _owner;
     private IReadOnlyRacerData _targetRacer;
-    private GameObject _targetObject;
+    private IJammerTarget _targetObject;
     private IReadOnlyList<IReadOnlyRacerData> _racers;
     private ICourseGuide _guide;
     private Vector3 _direction;
@@ -29,7 +29,7 @@ public class JammerProjectile : MonoBehaviour
     }
 
     // リングなど、レーサー以外を狙う弾を撃つ。
-    public void LaunchAtObject(JammerProfile profile, JammerTypeProfile type, IReadOnlyRacerData owner, GameObject target,
+    public void LaunchAtObject(JammerProfile profile, JammerTypeProfile type, IReadOnlyRacerData owner, IJammerTarget target,
         ICourseGuide ownerGuide, Vector3 direction)
     {
         Launch(profile, type, owner, null, ownerGuide, direction);
@@ -82,10 +82,10 @@ public class JammerProjectile : MonoBehaviour
             return !_targetRacer.IsFinished && _targetRacer.Transform != null;
         }
 
-        return _targetObject != null && _targetObject.activeInHierarchy;
+        return _targetObject != null && _targetObject.CanReceiveJammer;
     }
 
-    private Vector3 TargetPosition => _targetRacer != null ? _targetRacer.Transform.position : _targetObject.transform.position;
+    private Vector3 TargetPosition => _targetRacer != null ? _targetRacer.Transform.position : _targetObject.JammerAimPosition;
 
     private void Move(Vector3 position, float deltaTime)
     {
@@ -152,7 +152,7 @@ public class JammerProjectile : MonoBehaviour
     private bool TryHitObject(Vector3 start, Vector3 end)
     {
         float radius = _type is RingSwapJammerType ring ? ring.RingHitRadius : _profile.HitRadius;
-        if (GetSqrDistanceToSegment(_targetObject.transform.position, start, end) > radius * radius)
+        if (GetSqrDistanceToSegment(_targetObject.JammerAimPosition, start, end) > radius * radius)
         {
             return false;
         }
