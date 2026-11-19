@@ -4580,6 +4580,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CPURacer (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 6929844204703215832, guid: 492ec4466f589c34dad1d854952ba84b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13665,6 +13669,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CPURacer (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 6929844204703215832, guid: 492ec4466f589c34dad1d854952ba84b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -17431,6 +17439,10 @@ PrefabInstance:
     - target: {fileID: 6929844204703215832, guid: 492ec4466f589c34dad1d854952ba84b, type: 3}
       propertyPath: m_Name
       value: CPURacer
+      objectReference: {fileID: 0}
+    - target: {fileID: 6929844204703215832, guid: 492ec4466f589c34dad1d854952ba84b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -21399,24 +21411,52 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showLabels
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _blastRadius
-      value: 50
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _innerRadius
-      value: 50
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _pushDuration
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _effectDuration
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerBlastMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showHitResults
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _retreatDistance
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showBlastRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showInnerRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showMaxPushReach
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _innerPushDistance
-      value: 30
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _innerStunDuration
@@ -21424,6 +21464,26 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _canBeBlockedByShield
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerPushMaxDistance
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerPushMinDistance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerSlowFadeDuration
+      value: 0.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _innerMaxSpeedMultiplier
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: _showGizmosWhenNotSelected
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
@@ -21436,23 +21496,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 950215142}
+      objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Play
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -21468,7 +21528,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
-      value: ScreenNoiseEffectController, Assembly-CSharp
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -21476,7 +21536,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onExploded.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
-      value: UnityEngine.Object, UnityEngine
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 906230349973877442, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: _onEffectStopped.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
@@ -21485,6 +21545,22 @@ PrefabInstance:
     - target: {fileID: 3274694118539919348, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: m_Name
       value: BombRoot
+      objectReference: {fileID: 0}
+    - target: {fileID: 4102719973884161062, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4102719973884161062, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4102719973884161062, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4102719973884161062, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4453954494089799130, guid: c8fb8543de1b35b468ee403b61560d65, type: 3}
       propertyPath: m_LocalPosition.x
