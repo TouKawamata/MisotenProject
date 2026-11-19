@@ -43,6 +43,12 @@ public interface IGimmickRacer
     // 速度ではなく位置に足すので、最高速度に関係なく動く。
     void ApplyPush(Vector3 direction, float distance, float duration);
 
+    // コースの断面（左右・上下）の、directionの向きへdistance（m）をduration秒かけて押し出す（爆風など）。
+    // 機首の向きの成分は使わないので、真後ろから押されても、距離は全部上下左右へ使う（前後へは動かない）。
+    // directionの断面の成分が小さく向きが決まらないとき（真正面から当たったときなど）は、コースの中央側へ押し出す。
+    // トンネルの壁の外へは出ない。速度ではなく位置に足すので、最高速度に関係なく動く。
+    void ApplyPlanarPush(Vector3 direction, float distance, float duration);
+
     // スタンさせる（入力を受け付けない。ブーストも止める）。解けた後は、BoostHitProfileの無敵時間が続く。
     void Stun(float duration);
 
