@@ -38,18 +38,22 @@ public class PoseCalibrator : MonoBehaviour {
 	private readonly List<float> _torsoLengths = new List<float>();
 	// 測定を始めてからの経過時間
 	private float _elapsed;
+	// 今回の測定の秒数（StartCalibration(float) で指定されたらその値、無ければ _duration）。0なら時間で終わらない（CompleteNow で終える）
+	private float _currentDuration;
+	// 測定中に受信したフレームの数（肩・腰が見えていないフレームも含む。失敗の理由を出す用）
+	private int _receivedFrameCount;
 
 	// 測定中か
 	public bool IsCalibrating { get; private set; }
 
-	// 測定の進み具合（0～1）。測定していないときは0
-	public float Progress => IsCalibrating ? Mathf.Clamp01(_elapsed / _duration) : 0f;
+	// 測定の進み具合（0～1）。測定していないとき・時間で終わらない測定のときは0
+	public float Progress => IsCalibrating && _currentDuration > 0f ? Mathf.Clamp01(_elapsed / _currentDuration) : 0f;
 
-	// 測定する秒数
-	public float Duration => _duration;
+	// 測定する秒数（測定中は今回の秒数、それ以外は Inspector の値）
+	public float Duration => IsCalibrating ? _currentDuration : _duration;
 
 	// 測定を始めてからの経過秒数。測定していないときは0
-	public float ElapsedTime => IsCalibrating ? Mathf.Min(_elapsed, _duration) : 0f;
+	public float ElapsedTime => IsCalibrating ? (_currentDuration > 0f ? Mathf.Min(_elapsed, _currentDuration) : _elapsed) : 0f;
 
 	// 直近の測定が失敗した理由（成功・未測定ならnull）
 	public string LastFailureReason { get; private set; }
@@ -83,8 +87,31 @@ public class PoseCalibrator : MonoBehaviour {
 		CancelCalibration();
 	}
 
-	// 測定を始める。測定中に呼ぶと最初からやり直す。
+	// 今、測定に必要な関節（肩・腰の4点）が見えているか。人物が映っていない（IsTracking が false）ときは false。
+	// Entry で、体全体が映ってから測定を始めるために使う（顔・肩だけ映っている状態で始めると、腰が見えずに失敗するため）。
+	public bool IsBodyVisible {
+		get {
+			// 判定：人物が映っているか
+			if (_receiver == null || !_receiver.IsTracking) {
+				return false;
+			}
+
+			PoseLandmark[] landmarks = _receiver.NormalizedLandmarks;
+			return IsVisible(landmarks, PoseLandmarkIndex.LeftShoulder) && IsVisible(landmarks, PoseLandmarkIndex.RightShoulder)
+				&& IsVisible(landmarks, PoseLandmarkIndex.LeftHip) && IsVisible(landmarks, PoseLandmarkIndex.RightHip);
+		}
+	}
+
+	// 測定を始める（測定時間は Inspector の _duration）。測定中に呼ぶと最初からやり直す。
 	public void StartCalibration() {
+		StartCalibration(_duration);
+	}
+
+	// 測定時間を指定して測定を始める。測定中に呼ぶと最初からやり直す。
+	// duration が0以下なら時間では終わらず、CompleteNow() を呼んだときに終わる（Entry でリングが上がり切ったときに終える用）。
+	public void StartCalibration(float duration) {
+		_currentDuration = duration > 0f ? Mathf.Max(0.1f, duration) : 0f;
+		_receivedFrameCount = 0;
 		// 判定：Receiverが無いか（無ければ測定できないので失敗にする）
 		if (_receiver == null) {
 			Debug.LogError("PoseCalibrator: PoseLandmarkReceiverが見つかりません", this);
@@ -97,6 +124,14 @@ public class PoseCalibrator : MonoBehaviour {
 		_elapsed = 0f;
 		LastFailureReason = null;
 		IsCalibrating = true;
+	}
+
+	// 測定中なら、今までに集めたフレームで測定を終える（結果の確認・保存・イベントは時間で終わったときと同じ）。
+	public void CompleteNow() {
+		// 判定：測定中か
+		if (IsCalibrating) {
+			Complete();
+		}
 	}
 
 	// 測定を中止する（結果は保存せず、イベントも呼ばない）。
@@ -113,8 +148,8 @@ public class PoseCalibrator : MonoBehaviour {
 
 		// 時間で区切る（ゲームの一時停止の影響を受けないようunscaledDeltaTimeを使う）
 		_elapsed += Time.unscaledDeltaTime;
-		// 判定：測定時間が過ぎたか
-		if (_elapsed >= _duration) {
+		// 判定：測定時間が過ぎたか（時間で終わらない測定なら CompleteNow を待つ）
+		if (_currentDuration > 0f && _elapsed >= _currentDuration) {
 			Complete();
 		}
 	}
@@ -126,6 +161,7 @@ public class PoseCalibrator : MonoBehaviour {
 			return;
 		}
 
+		_receivedFrameCount++;
 		PoseLandmark[] landmarks = _receiver.NormalizedLandmarks;
 		// 判定：肩・腰の4点が見えているか（見えていないフレームは使わない）
 		if (!IsVisible(landmarks, PoseLandmarkIndex.LeftShoulder) || !IsVisible(landmarks, PoseLandmarkIndex.RightShoulder)
@@ -148,7 +184,7 @@ public class PoseCalibrator : MonoBehaviour {
 
 		// 判定：十分な数のフレームが集まったか
 		if (_shoulderHeights.Count < _minSampleCount) {
-			Finish(false, $"肩・腰が見えていたフレームが足りません（{_shoulderHeights.Count} / {_minSampleCount}）");
+			Finish(false, $"肩・腰が見えていたフレームが足りません（{_shoulderHeights.Count} / {_minSampleCount}。受信したフレーム {_receivedFrameCount}、測定 {_elapsed:F2}秒）");
 			return;
 		}
 

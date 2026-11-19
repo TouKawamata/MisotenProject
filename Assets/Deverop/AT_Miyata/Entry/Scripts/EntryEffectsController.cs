@@ -46,6 +46,15 @@ public class EntryEffectsController : MonoBehaviour {
 	private float _time = 0.0f;
 
 
+	// リングの上がり具合（0～1）。上昇前（展開・遅延中）は0、上がり切ったら1。
+	// EntryTrackingFlow が、キャリブレーションの%の表示と、測定を終えるタイミング（1になったとき）に使う。
+	public float RiseProgress {
+		get {
+			float range = _revealHeightMax - _revealHeightMin;
+			return range > 0.0f ? Mathf.Clamp01((_revealHeight - _revealHeightMin) / range) : 1.0f;
+		}
+	}
+
 	private readonly int _revealHeightId = Shader.PropertyToID("_RevealHeight");
 	private readonly int _revealHeightIdVFX = Shader.PropertyToID("RevealHeight");
 

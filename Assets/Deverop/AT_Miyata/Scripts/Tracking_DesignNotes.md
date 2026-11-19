@@ -112,6 +112,7 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 
 ## キャリブレーション（PoseCalibrator / PoseCalibration）
 - 目的：しゃがみ（y－）の基準になる直立時の肩の高さと胴の長さを測る。
+- `StartCalibration(秒数)` で測定時間をその回だけ変えられる。0以下なら時間では終わらず、`CompleteNow()` で終える（Entry ではリングが上がり切ったときに終える）。`IsBodyVisible`：今、肩・腰の4点が見えているか。`Duration`・`Progress` は測定中はその回の秒数で計算する。
 - `StartCalibration()` から `_duration`（1.5秒）の間、受信したフレームのうち肩・腰の4点が見えているものを集めて平均する。
 - 失敗の条件（失敗したら保存済みの値は変えない。理由は `LastFailureReason`）：
   - 集まったフレームが `_minSampleCount`（15）未満
@@ -127,7 +128,7 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 - **X キー**：キャリブレーションの結果を消す（`PoseCalibration.Clear()`）。開始待ち・測定中なら中止する。未キャリブレーションの動きを確かめる用。
   - なお、このプロジェクトは再生のたびに Domain Reload するので、再生し直しても static の結果は消える。
 - `_useKeyboardForDebug`：機材なしで画面を確認する（WASD／矢印、Space、左Shift）。
-- Unity を使わないコンパイル確認は CPU_DesignNotes.md の「デバッグ」のコマンドを使う。対象のファイルを差し替え、参照に `uOSC.Runtime.dll` と `Unity.InputSystem.dll`（どちらも `Library/ScriptAssemblies/`）を足す。`Assembly-CSharp.dll` が古いときは `AT_Kawamata/Input/Scripts` の `IRaceInput.cs`・`KeyboardRaceInput.cs`・`RaceInputProvider.cs` も一緒にコンパイルする。
+- Unity を使わないコンパイル確認は CPU_DesignNotes.md の「デバッグ」のコマンドを使う。対象のファイルを差し替え、参照に `uOSC.Runtime.dll` と `Unity.InputSystem.dll`（どちらも `Library/ScriptAssemblies/`）を足す。`Assembly-CSharp.dll` が古いときは `AT_Kawamata/Input/Scripts` の `IRaceInput.cs`・`KeyboardRaceInput.cs`・`RaceInputProvider.cs` も一緒にコンパイルする。Entry のスクリプト（`Entry/Scripts/*.cs`）も含めるときは、`Unity.TextMeshPro.dll`・`UnityEngine.UI.dll`・`Unity.VisualEffectGraph.Runtime.dll`（`Library/ScriptAssemblies/`）、`DOTween.dll`（`find Assets -name DOTween.dll`）、DOTween 用に `NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll`（Unity の Data フォルダ内）も足す。
 
 ## 経緯
 - 2026-11-07（川又）：`IRaceInput` が `Horizontal`（float）から `Move`（Vector2）に変更、ショートカット廃止。トラッキング側は暫定対応（Move.x に傾きを入れ、y は0）。
