@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fdd6ae3c74f47bf928f9a4fd99fd79f, type: 3}
+  m_Name: TrackingRaceInputSettings
+  m_EditorClassIdentifier: Assembly-CSharp::TrackingRaceInputSettingsAsset
+  _settings:
+    maxTiltAngle: 25
+    tiltDeadZoneAngle: 2
+    tiltResponseCurve: 0.6
+    horizontalSmoothingTime: 0.1
+    invertHorizontal: 0
+    raiseStartRatio: 0.1
+    raiseFullRatio: 0.6
+    crouchDeadZoneRatio: 0.08
+    crouchFullRatio: 0.35
+    verticalResponseCurve: 0.6
+    verticalSmoothingTime: 0.01
+    invertVertical: 0
+    boostHeightRatio: 0.5
+    boostHeightToleranceRatio: 0.25
+    boostHorizontalToleranceRatio: 0.3
+    chestHeightOffsetRatio: 0.15
+    shieldHeightToleranceRatio: 0.3
+    shieldForearmLevelToleranceRatio: 0.3
+    shieldInwardMarginRatio: 0.1
+    shieldMinForearmRatio: 0.3
+    jammerWristRadiusRatio: 0.35
+    jammerElbowRadiusRatio: 0.3
+    jammerMaxForearmRatio: 0.25
+    jammerUseDepth: 1
+    jammerDepthRatio: 0.2
+    jammerMinVisibility: 0.3
+    jammerHoldTime: 0.08
+    jammerReleaseTime: 0.15
+    minVisibility: 0.5
