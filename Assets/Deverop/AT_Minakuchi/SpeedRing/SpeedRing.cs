@@ -19,6 +19,9 @@ public sealed class SpeedRing : CourseGimmickBase
     private bool _isSlowing;
     private readonly HashSet<IGimmickRacer> _activatedRacers = new HashSet<IGimmickRacer>();
 
+    // 今、減速リングになっているか（CPUが読む）。
+    public bool IsSlowing => _isSlowing;
+
     private bool IsInsideEllipse(Vector3 worldPoint)
     {
         BoxCollider area = GetComponent<BoxCollider>();

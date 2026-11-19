@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 // CPUの個性＝「好み」。何をしたがるかを0～1の重みで決める（うまさはCpuDifficultyProfileが決める）。
 // 難易度とはどの組み合わせでも使える（例：Easyのアタッカーは、よく狙うがよく外す）。
@@ -30,11 +31,11 @@ public class CpuPersonalityProfile : ScriptableObject
     [Range(0f, 1f)]
     [SerializeField] private float _boostEagerness = 0.5f;
 
-    [Tooltip("走行ライン。0＝コース中央寄り、1＝外寄り（トンネルの壁の近く）")]
+    [Tooltip("走行ライン。0＝コース中央寄り、1＝外寄り（トンネルの壁の近く）。方向（上下左右）はCPUごとにずらす")]
     [Range(0f, 1f)]
     [SerializeField] private float _preferredLine = 0.4f;
 
-    [Tooltip("ライン変更の頻度。高いほどよく左右のラインを変える")]
+    [Tooltip("ライン変更の頻度。高いほどよく走行ラインの方向を変える")]
     [Range(0f, 1f)]
     [SerializeField] private float _lineChangeFrequency = 0.5f;
 
@@ -42,9 +43,18 @@ public class CpuPersonalityProfile : ScriptableObject
     [Range(0f, 1f)]
     [SerializeField] private float _vengefulness = 0.4f;
 
-    [Tooltip("ショートカット志向。高いほどショートカットを狙う（難易度のショートカット成功率に掛かる）")]
+    [Tooltip("加速リング志向。高いほど、走行ラインや狙う相手から外れてでも加速リングをくぐりに行く")]
     [Range(0f, 1f)]
-    [SerializeField] private float _shortcutPreference = 0.6f;
+    [FormerlySerializedAs("_shortcutPreference")]
+    [SerializeField] private float _ringPreference = 0.6f;
+
+    [Tooltip("妨害弾の撃ちたがり。高いほど短い間隔で、遠くの相手にも撃つ")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _jammerEagerness = 0.5f;
+
+    [Tooltip("ひねくれ度。高いほど、からめ手の妨害弾（視界反転・加速リングを減速リングに）を好む")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _trickiness = 0.3f;
 
     public string DisplayName => string.IsNullOrEmpty(_displayName) ? name.Replace(AssetNamePrefix, "") : _displayName;
 
@@ -62,5 +72,9 @@ public class CpuPersonalityProfile : ScriptableObject
 
     public float Vengefulness => _vengefulness;
 
-    public float ShortcutPreference => _shortcutPreference;
+    public float RingPreference => _ringPreference;
+
+    public float JammerEagerness => _jammerEagerness;
+
+    public float Trickiness => _trickiness;
 }
