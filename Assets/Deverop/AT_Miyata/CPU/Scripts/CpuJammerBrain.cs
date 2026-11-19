@@ -51,6 +51,15 @@ public class CpuJammerBrain
     // 最後に撃った（撃とうとした）種類の表示名（頭上の表示・ログ用）。
     public string LastTypeName { get; private set; } = "";
 
+    // 最後に撃った（撃とうとした）ときの標的（頭上の表示・Gizmos用）。まだ撃っていなければnull。
+    public IReadOnlyRacerData LastTarget { get; private set; }
+
+    // 次に撃てるようになるまでの、個性の間隔の残り（秒）。
+    public float CooldownRemaining => _cooldown;
+
+    // 発射台があるか（無ければ妨害弾は撃たない）。
+    public bool HasLauncher { get; private set; }
+
     // 毎Tick呼ぶ。think：考え直すTickか（撃つかを決めるのはこのときだけ）。
     public void Update(CpuSituation situation, CpuDifficultyProfile difficulty, CpuPersonalityProfile personality, System.Random random, bool think)
     {
@@ -60,6 +69,7 @@ public class CpuJammerBrain
         _ringSwapBlockedTimer = Mathf.Max(0f, _ringSwapBlockedTimer - deltaTime);
 
         JammerLauncher launcher = situation.Launcher;
+        HasLauncher = launcher != null;
         if (launcher == null)
         {
             return;
@@ -96,6 +106,7 @@ public class CpuJammerBrain
 
         FirePressed = true;
         LastTypeName = launcher.CurrentType != null ? launcher.CurrentType.DisplayName : "";
+        LastTarget = target.Data;
         _wasRingSwap = launcher.CurrentType is RingSwapJammerType;
         _ammoBeforeFire = launcher.Ammo;
         _isCheckingFire = true;
@@ -111,6 +122,7 @@ public class CpuJammerBrain
         _isCheckingFire = false;
         FirePressed = false;
         LastTypeName = "";
+        LastTarget = null;
     }
 
     // 撃った次のTickで、弾が減ったかを見る。リングの切り替えが撃てなかったら（リングの標的が無い）、しばらく選ばない。

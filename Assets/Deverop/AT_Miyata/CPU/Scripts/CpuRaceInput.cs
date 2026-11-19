@@ -21,6 +21,17 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     // 視界反転に慣れるまでの秒数に掛けるばらつき（0.8～1.2倍）。
     private const float ViewFlipAdaptJitter = 0.2f;
 
+    // 頭上の表示：妨害弾を撃ったことを表示し続ける秒数（撃つ入力は1Tickだけなので、そのままでは見えない）。
+    private const float FireDisplayDuration = 1.5f;
+
+    // 頭上の表示：この秒数より長くUpdateInputが呼ばれていなければ、待機中（カウントダウン中・ゴール後など）とみなす。
+    private const float IdleDisplayDelay = 0.2f;
+
+    // 頭上の表示：前に進む速さをならす強さ・止まっているとみなす速さ（m/s）・移動の入力がないとみなす大きさ。
+    private const float SpeedSmoothing = 5f;
+    private const float StoppedSpeed = 1f;
+    private const float MoveDeadZone = 0.15f;
+
     [Header("難易度・個性")]
     [Tooltip("このCPUの難易度。Follow Global DifficultyがONで、シーンにCpuDifficultyController（難易度の設定あり）があれば、そちらを使う")]
     [SerializeField] private CpuDifficultyProfile _difficulty;
@@ -70,6 +81,11 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
     private EViewFlip _adaptedViewFlip = EViewFlip.None;
     private float _viewFlipAdaptTimer;
 
+    // 頭上の表示用：最後にUpdateInputが呼ばれた時刻、前に進む速さ、最後に妨害弾を撃った時刻。
+    private float _lastUpdateTime = float.NegativeInfinity;
+    private float _forwardSpeed;
+    private float _lastFireTime = float.NegativeInfinity;
+
     // IRaceInputの移動入力（x＝右、y＝上、大きさ0～1）。
     public Vector2 Move { get; private set; }
 
@@ -102,6 +118,28 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
 
     // 視界反転に戸惑っている（まだ慣れていない）間か。
     public bool IsConfusedByViewFlip => _currentViewFlip != _adaptedViewFlip;
+
+    // 頭上の表示・CpuDebugViewerの色（個性の色）。
+    public Color LabelColor => GetLabelColor();
+
+    // 狙っている相手の位置（CpuDebugViewerの線用）。狙っていなければnull。
+    public Transform AimTargetTransform =>
+        Application.isPlaying && _hasSituation && _targetSelector.HasTarget ? _targetSelector.Target.Data.Transform : null;
+
+    // 妨害弾を撃った直後（FireDisplayDuration以内）の標的の位置（CpuDebugViewerの線用）。撃った直後でなければnull。
+    public Transform RecentFireTargetTransform =>
+        Time.time - _lastFireTime < FireDisplayDuration && _jammerBrain.LastTarget != null ? _jammerBrain.LastTarget.Transform : null;
+
+    // 頭上の表示と同じ内容（CpuDebugViewerの一覧用）。
+    public string DebugText => BuildLabelText();
+
+    // 今いる場所のコースの前・上（CpuDebugViewerのカメラ用。機体の傾きに左右されない向き）。判断していなければfalse。
+    public bool TryGetCourseFrame(out Vector3 forward, out Vector3 up)
+    {
+        forward = _situation.CourseForward;
+        up = _situation.CourseUp;
+        return Application.isPlaying && _hasSituation && forward.sqrMagnitude > 0.5f && up.sqrMagnitude > 0.5f;
+    }
 
     // このCPUだけの難易度を変える（Follow Global DifficultyがONで一括の設定があれば、そちらが優先される）。
     public void SetDifficulty(CpuDifficultyProfile difficulty)
@@ -136,12 +174,15 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         _currentViewFlip = EViewFlip.None;
         _adaptedViewFlip = EViewFlip.None;
         _viewFlipAdaptTimer = 0f;
+        _forwardSpeed = 0f;
+        _lastFireTime = float.NegativeInfinity;
         Move = Vector2.zero;
         JammerPressed = false;
     }
 
     public void UpdateInput(CPUManager owner, float deltaTime, IReadOnlyRacerData data)
     {
+        _lastUpdateTime = Time.time;
         CpuDifficultyProfile difficulty = CurrentDifficulty;
         if (difficulty == null || _personality == null)
         {
@@ -156,6 +197,11 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         if (data != null && data.DistanceOnCourse < _lastDistanceOnCourse - RestartDistanceThreshold)
         {
             ResetState();
+        }
+        else if (data != null && deltaTime > 0f)
+        {
+            float rawSpeed = (data.DistanceOnCourse - _lastDistanceOnCourse) / deltaTime;
+            _forwardSpeed = Mathf.Lerp(_forwardSpeed, rawSpeed, 1f - Mathf.Exp(-SpeedSmoothing * deltaTime));
         }
 
         _lastDistanceOnCourse = data != null ? data.DistanceOnCourse : 0f;
@@ -194,6 +240,10 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         _shieldLatch.Update(wantsShield, owner.IsShielding);
         _boostLatch.Update(wantsBoost, owner.IsBoosting);
         JammerPressed = canControl && _jammerBrain.FirePressed;
+        if (JammerPressed)
+        {
+            _lastFireTime = Time.time;
+        }
 
         LogChanges();
     }
@@ -358,16 +408,99 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
         return _personality != null ? _personality.LabelColor : Color.white;
     }
 
-    // 1行目：個性 / 難易度、2行目：今していること（再生中だけ）。
+    // 1行目：個性 / 難易度。再生中は続けて、移動・狙い・妨害弾・今していること（あれば）を1行ずつ出す。
     private string BuildLabelText()
     {
         CpuDifficultyProfile difficulty = CurrentDifficulty;
         string personalityName = _personality != null ? _personality.DisplayName : "個性なし";
         string difficultyName = difficulty != null ? difficulty.DisplayName : "難易度なし";
         string header = $"{personalityName} / {difficultyName}";
+        if (!Application.isPlaying)
+        {
+            return header;
+        }
 
-        string status = Application.isPlaying && _hasSituation ? BuildStatusText() : "";
-        return string.IsNullOrEmpty(status) ? header : $"{header}\n{status}";
+        // カウントダウン中・ゴール後は、CPUManagerがUpdateInputを呼ばない。
+        if (Time.time - _lastUpdateTime > IdleDisplayDelay)
+        {
+            return $"{header}\n待機中（判断していない）";
+        }
+
+        if (difficulty == null || _personality == null)
+        {
+            return $"{header}\n停止：難易度・個性が未設定";
+        }
+
+        if (!_hasSituation)
+        {
+            return $"{header}\n停止：Course Spline が未設定";
+        }
+
+        string text = $"{header}\n{BuildMoveText()}\n{BuildAimText()}\n{BuildJammerText()}";
+        string status = BuildStatusText();
+        return string.IsNullOrEmpty(status) ? text : $"{text}\n{status}";
+    }
+
+    // 移動：前に進む速さと、上下左右の入力の向き。
+    private string BuildMoveText()
+    {
+        string speed = _forwardSpeed < StoppedSpeed ? "止まっている" : $"{_forwardSpeed:0}m/s";
+        return $"移動：{speed} {GetMoveArrow(Move)}";
+    }
+
+    // 狙い：ブーストで狙っている相手と、前後の距離（＋＝前）。
+    private string BuildAimText()
+    {
+        if (!_targetSelector.HasTarget)
+        {
+            return "狙い：なし";
+        }
+
+        CpuRacerView target = _targetSelector.Target;
+        string grudge = target.RacerId == _targetSelector.GrudgeId ? "（執念）" : "";
+        return $"狙い：{target.Data.DisplayName} {target.ForwardGap:+0;-0}m{grudge}";
+    }
+
+    // 妨害弾：撃った直後はしばらく「撃った」を出し続ける。それ以外は、撃てない理由か、次に撃てるまでの秒数。
+    private string BuildJammerText()
+    {
+        if (Time.time - _lastFireTime < FireDisplayDuration)
+        {
+            IReadOnlyRacerData target = _jammerBrain.LastTarget;
+            string targetName = target != null ? $"→{target.DisplayName}" : "";
+            return $"妨害弾：★撃った！ {_jammerBrain.LastTypeName}{targetName}";
+        }
+
+        if (!_jammerBrain.HasLauncher)
+        {
+            return "妨害弾：発射台なし";
+        }
+
+        if (!_situation.Owner.CanFireJammer)
+        {
+            return "妨害弾：撃てない（弾・発射間隔）";
+        }
+
+        if (_jammerBrain.CooldownRemaining > 0f)
+        {
+            return $"妨害弾：次まで {_jammerBrain.CooldownRemaining:0.0}秒";
+        }
+
+        return "妨害弾：好機を待っている";
+    }
+
+    // 移動の入力（Move）の向きを矢印で表す。x＝右、y＝上。
+    private static string GetMoveArrow(Vector2 move)
+    {
+        if (move.magnitude < MoveDeadZone)
+        {
+            return "・";
+        }
+
+        string[] arrows = { "→", "↗", "↑", "↖", "←", "↙", "↓", "↘" };
+        float angle = Mathf.Atan2(move.y, move.x) * Mathf.Rad2Deg;
+        int index = Mathf.RoundToInt(angle / 45f);
+        return arrows[(index % 8 + 8) % 8];
     }
 
     private string BuildStatusText()
@@ -395,11 +528,6 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
             return (_boostBrain.IsAttacking ? $"攻撃ブースト{target}" : "加速ブースト") + confused;
         }
 
-        if (JammerPressed)
-        {
-            return $"妨害弾：{_jammerBrain.LastTypeName}{confused}";
-        }
-
         if (_steeringBrain.IsSeekingRing)
         {
             return $"リングへ{confused}";
@@ -410,7 +538,8 @@ public class CpuRaceInput : MonoBehaviour, ICpuRaceInput
             return $"ギミック回避{confused}";
         }
 
-        return string.IsNullOrEmpty(target) ? confused : $"狙い{target}{confused}";
+        // 狙いは別の行に出しているので、ここでは何もしていないことにする。
+        return confused;
     }
 
     private void OnDrawGizmosSelected()

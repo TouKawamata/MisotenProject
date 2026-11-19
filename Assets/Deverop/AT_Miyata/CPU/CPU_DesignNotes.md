@@ -38,6 +38,7 @@ Scripts/
   CpuJammerBrain.cs          妨害弾（撃つ好機か、どの種類か）
   CpuButtonLatch.cs          「押し続けたい」→ Pressed/Held。始まらなければ一度離して押し直す
   CpuLabelDrawer.cs          頭上の表示（Game：OnGUI、Scene：Handles）
+  CpuDebugViewer.cs          デバッグ用：全CPUの一覧・CPUを追う観察用カメラ・狙いの線（テストシーンに置く）
 Editor/
   CpuProfilePresetCreator.cs メニュー Tools > CPU > Create Default Profiles
   CpuGimmickTestSceneCreator.cs メニュー Tools > CPU > Create Gimmick Test Scene（CPUTest_2 から背景・UIを省いたシーンを作る）
@@ -98,7 +99,17 @@ Prefabs/                     CPURacer の Prefab Variant（個性ごと。ユー
 ## デバッグ
 - Show Debug Logs：狙う相手の変更、脅威に気づいた、ブースト（攻撃／加速）、シールド、妨害弾を Console に出す。
 - Gizmos（選択中）：黄＝目標の位置、赤＝狙う相手、水色＝脅威、緑＝前方の加速リング、橙＝前方の避けるギミック。
-- 頭上の表示（Show Label / Label Height）：「個性 / 難易度」と今していること（シールド：脅威の種類、リングへ、ギミック回避、反転で混乱 など）。
+- 頭上の表示（Show Label / Label Height）：「個性 / 難易度」の下に、1行ずつ次を出す（2026-11-19 に行を分けた）。
+  - 移動：前に進む速さ（`DistanceOnCourse` の差。1m/s 未満は「止まっている」）と、上下左右の入力の向き（矢印。入力なしは「・」）。
+  - 狙い：ブーストで狙っている相手と前後の距離（＋＝前）。執念の相手なら（執念）。
+  - 妨害弾：撃ってから1.5秒は「★撃った！ 種類→標的」。それ以外は「発射台なし／撃てない（弾・発射間隔）／次まで○秒（個性の間隔）／好機を待っている」。
+  - 今していること（あれば）：スタン、シールド：脅威の種類、攻撃・加速ブースト、リングへ、ギミック回避、反転で混乱。
+  - 判断していないときは「待機中」（カウントダウン中・ゴール後）、「停止：Course Spline が未設定」「停止：難易度・個性が未設定」。
+- **CpuDebugViewer**（2026-11-19）：テストシーンに空のオブジェクトを置いて付ける。本番のシーンには置かない。
+  - 画面の左上に全CPUの頭上の表示と同じ内容を1行ずつ出す（カメラから遠くても見える）。F5 で表示・非表示。
+  - 観察用カメラ：選んだCPUの後ろに付いていく（位置は遅らせずにぴったり付けるので、高速でも離れない。向きはコースの前・上が基準）。F2 で 小窓（右下）→ 全画面 → 切る、F3/F4 で次・前のCPU。Player のカメラはそのまま。
+  - 線（Gizmos）：狙っている相手へ赤、妨害弾を撃った直後の標的へ紫。選択していなくても全CPU分。Game ビューでは Gizmos ボタンが ON のときだけ（ユーザーの希望で Gizmos だけにした。2026-11-19）。
+  - Player のカメラは1人称で、先を走るCPUは画面外か遠い（頭上の表示は300mより遠いと出さない）ため、Gizmos の線や頭上の表示だけでは見えなかった（2026-11-19 にユーザーが確認）。
 - **パスについて**：作業するPCがよく変わるため、このメモにはユーザー名入りのパス（`C:/Users/<名前>/...`）を書かない。プロジェクトの場所は `git rev-parse --show-toplevel`、Unity のバージョンは `ProjectSettings/ProjectVersion.txt`、ユーザーのフォルダは環境変数（`$LOCALAPPDATA` など）から、その場で求める。
 - Unity を使わないコンパイル確認（プロジェクトの Unity バージョンの Roslyn を使う。Git Bash で、リポジトリ内のどこからでも実行できる）。
   **注意**：`Library/ScriptAssemblies/Assembly-CSharp.dll` は最後に Unity を開いた時点のもの。他のメンバーの変更を pull した後や、他のメンバーのファイルを変えたときは古いので、Assets の全スクリプト（Editor・Plugins以外）をまとめてコンパイルする。参照に `NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll`、Assets 内の DLL（DOTween など）、`Library/ScriptAssemblies` の Assembly-CSharp 以外の DLL を足し、ソースに `DOTween/Modules/*.cs` も足す（無いと PauseMenu の DOFade がエラーになる）。ファイルが多くてコマンドが長すぎる（exit 126）ので、引数は応答ファイル（`@csc.rsp`、パスは `cygpath -w` で Windows 形式）に書いて渡す。CPU だけを変えたときは下のコマンドでよい：
