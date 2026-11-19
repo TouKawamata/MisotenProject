@@ -58,6 +58,19 @@ Canvas は Screen Space - Overlay。そのため VFX Graph や ParticleSystem �
 - 帯の縁に沿って空の RectTransform を2つ置き、`_lineStart` / `_lineEnd` に割り当てる。
 - `EntryCanvasController._edgeEmitters` に登録する。
 
+## トラッキングの流れ（EntryTrackingFlow）
+`EntryTest.unity` に `TrackingReceiver`（Prefab。uOscServer＋Receiver）と `EntryTrackingFlow`（＋`TrackingLossWarningView`）を置いている。PoseCalibrator は実行時に自動で追加、EntryEffectsController はシーン内から自動で探す。
+1. **待機**（WaitingPerson）：人物が `_personStableTime`（1秒）続けて映るまで待つ。
+2. **キャリブレーション**（Calibrating）：`PoseCalibrator.StartCalibration()` と `EntryEffectsController.StartAnimation()` を**同時に**始める（キャンバスの演出は EntryEffectsController が続けて出す）。失敗したら `_retryDelay`（1秒）待って測り直す（RetryWait）。演出はやり直さない。
+3. **合図待ち**（WaitingTrigger）：成功したら、合図のポーズ `_triggerButton`（初期値：妨害弾＝片手を前に突き出す。Boost・Shield にも変えられる）を待つ。成功してから `_triggerEnableDelay`（0.3秒）は受け付けない。
+4. 合図が来たら `_nextSceneName`（初期値 `GameScene`）に移る。空なら移らない。Build Settings に無ければエラーを出して移らない。
+- 演出が始まった後に人物が `_abandonTime`（5秒）映らなかったら、プレイヤーが去ったとみなして最初に戻る（測定の中止・`ResetAnimation()`・`PoseCalibration.Clear()`）。
+- 合図の判定は `TrackingRaceInput`（設定アセットを共有）。「腕を戻すまで次は出ない」仕組みを保つため、どの状態でも毎フレーム評価している（合図待ちになる前から突き出していた腕では反応しない）。
+- キーボード（`_allowKeyboard`）：合図は Q／Space／左Shift、**Enter で待機とキャリブレーションを飛ばす**（カメラなしのテスト用）。
+- 案内のメッセージは画面の下の帯の上に出す（仮の表示。自分で Canvas を作る。sortingOrder 900＝見失いの警告より奥）。文言と帯の色はメッセージごとに Inspector で変えられる（初期値はどれも見失いの警告と同じ赤。透明度0で帯なし）。合図のポーズを変えたら `_triggerMessage` も変える。
+- イベント：On Entry Started / On Ready / On Triggered / On Abandoned（正式な UI・演出をつなぐ用）。
+
 ## 現状と残っていること
+- 2026-11-19：EntryTrackingFlow を追加し、EntryTest に配置。コンパイル確認済み（Unity 外）。**Unity での確認はまだ**。待機中は、見失いの警告（赤い帯、3秒後）と下の案内が両方出る。気になる場合は相談する。
 - 2026-11-05：上記を実装。`EntryTest.unity` にはエミッターが2つ配置済みで、`_edgeEmitters` にも登録済み。
 - コンパイルと見た目の確認は Unity 上でユーザーが行う。値の調整はこれから（線と粒のパラメータは仮の初期値）。

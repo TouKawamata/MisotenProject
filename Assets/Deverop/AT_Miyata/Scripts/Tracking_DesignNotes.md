@@ -12,6 +12,8 @@
   → RaceInputProvider（AT_Kawamata）→ PlayerManager
 ```
 - `TrackingRaceInputBootstrapper` が起動時に `RaceInputProvider.SetInputSource` で `TrackingRaceInput` に差し替える（Receiver が無い・デバッグ設定ONならキーボード）。
+  - `_allowKeyboard`（初期値 ON）：`CombinedRaceInput` でトラッキング＋キーボードを併用する（Move は大きい方、ボタンは OR）。カメラが無いメンバーもキーボードでテストできるので、`_useKeyboardForDebug`（キーボードだけ）を ON にしておく必要はない。
+  - 判定の調整値は `Settings/TrackingRaceInputSettings.asset`（`TrackingRaceInputSettingsAsset`）を Bootstrapper（TrackingInput.prefab）・DebugViewer（PoseTest）・EntryTrackingFlow で共有する。**PoseTest で再生中に調整した値がそのままレースにも使われる**（アセットなので再生を止めても残る）。アセットが未指定のときだけ、各コンポーネントの Inspector の `_trackingSettings` を使う（アセットを指定すると、シーン側の `_trackingSettings.*` の上書きは無視される）。
 - しゃがみの判定に使う直立姿勢は、Entry シーンで `PoseCalibrator` が測って `PoseCalibration`（static）に保存する。
 
 ## 前提（既存の仕組み。AT_Kawamata側、変更しない）
@@ -26,7 +28,9 @@
 PoseLandmarkReceiver.cs           OSC受信。2D/3Dを33点の並びにそろえ、縦横比を補正。IsTracking（見失い判定）
                                   PoseLandmark（構造体）・PoseLandmarkIndex（関節番号の定数）もここ
 TrackingRaceInput.cs              IRaceInput実装。Move（傾き・バンザイ・しゃがみ）とBoost/Shield/Jammerの判定
-TrackingRaceInputSettings.cs      判定の調整値（Serializable。Bootstrapper・DebugViewerのInspectorで編集）
+TrackingRaceInputSettings.cs      判定の調整値（Serializable）
+TrackingRaceInputSettingsAsset.cs 判定の調整値のアセット（ScriptableObject）。実体は AT_Miyata/Settings/TrackingRaceInputSettings.asset
+CombinedRaceInput.cs              2つの IRaceInput を合わせる（トラッキング＋キーボード）
 TrackingRaceInputBootstrapper.cs  起動時に RaceInputProvider の入力元を差し替える
 PoseCalibration.cs                キャリブレーション結果（static。シーンをまたいで残る）
 PoseCalibrator.cs                 直立姿勢を測るコンポーネント（Entryシーン用）
@@ -36,7 +40,8 @@ TrackingRaceInputDebugViewer.cs   PoseTestシーン用の表示（Move・Boost/S
 PoseDebugViewer.cs                受信状況の表示（FPS・受信回数）
 PoseLandmarkVisualizer.cs         33点を球で表示
 ```
-テストシーン：`AT_Miyata/Scenes/PoseTest.unity`。Prefab：`AT_Miyata/Prefabs/Completed/TrackingInput.prefab`。
+テストシーン：`AT_Miyata/Scenes/PoseTest.unity`。Prefab：`AT_Miyata/Prefabs/Completed/TrackingInput.prefab`（レース用。uOscServer＋Receiver＋Bootstrapper）、`TrackingReceiver.prefab`（受信だけ。uOscServer＋Receiver。RaceInputProvider が無いシーン＝Entry 用）。
+Entry の流れ（待機 → キャリブレーション＋演出 → 合図のポーズでシーン遷移）は `Entry/Scripts/EntryTrackingFlow.cs`。詳しくは `Entry/Entry_DesignNotes.md`。
 
 ## Python 側（pose_sender.py）から届くデータ
 Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。起動時にカメラ・モード（2D/3D）・送信先IP・カメラの向き（回転補正）を選ぶ。
@@ -149,5 +154,9 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
   - (c) 反対の腕がシールドの形になっている → 判定の問題ではなく、ポーズの取り方の問題。
   - どれにするかは、切り分けの結果を見てユーザーと相談して決める。
 - 妨害弾：コンパイル確認済み（Unity 外）。**Unity での確認と値の調整はまだ**。腕がカメラを向く姿勢は姿勢推定が苦手なので、特に 2Dモード（YOLO）で関節が取れるかを確認する。シールドの前腕の長さの条件で、今までのシールドが出にくくなっていないかも確認する。
-- 見失いの警告：コンパイル確認済み（Unity 外）。**シーンへの配置と Unity での確認はまだ**（レース・Entry・PoseTest）。Entry には Receiver がまだ無い（TrackingInput.prefab は Bootstrapper が RaceInputProvider を必要とするので、Entry には uOscServer＋Receiver だけを置く必要がある）。正式な見た目は別途。
-- Entry シーンへの `PoseCalibrator` の組み込み（いつ `StartCalibration()` を呼ぶか、失敗時の演出）はこれから。
+- 見失いの警告：コンパイル確認済み（Unity 外）。EntryTest には配置済み（2026-11-19）。**GameScene への配置と Unity での確認はまだ**。正式な見た目は別途。
+- 2026-11-19：Entry への組み込みと、GameScene で使うための準備（`CombinedRaceInput`・設定アセット・`TrackingReceiver.prefab`・`EntryTrackingFlow`）。コンパイル確認済み（Unity 外）。**Unity での確認はまだ**。
+  - 設定アセットの値は PoseTest のシーンの値をコピーし、`verticalSmoothingTime` だけ 2026-11-12 の決定どおり 0.01 にした（PoseTest のシーンには 0.1 が保存されていた）。
+  - TrackingInput.prefab にアセットを割り当てたので、Prefab を使っている他のシーン（GameScene・各メンバーのテストシーン）のインスタンスで上書きしていた `_trackingSettings.*` は使われなくなる。
+  - **GameScene（他メンバーのシーン）の変更はユーザーの承認待ち**：TrackingInput の `_useKeyboardForDebug` の上書き（1）を消す、`TrackingLossWarningView` を置く。
+  - Entry → GameScene に移るとき、uOscServer（9000番）はシーンごとに閉じて開き直す。ポートが開けないエラーが出ないかを Unity で確認する。

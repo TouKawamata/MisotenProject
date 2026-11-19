@@ -666,6 +666,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrackingRaceInputDebugViewer
   _poseLandmarkReceiver: {fileID: 1782884702}
+  _settingsAsset: {fileID: 11400000, guid: 3a33bebef91b4661825d60b093ed0abe, type: 2}
   _trackingSettings:
     maxTiltAngle: 25
     tiltDeadZoneAngle: 2

@@ -11,7 +11,9 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
 {
     // 姿勢データの取得元。未指定ならシーン内から自動検索する。
     [SerializeField] private PoseLandmarkReceiver _poseLandmarkReceiver;
-    // トラッキング入力の判定に使う調整用パラメータ。
+    [Tooltip("判定の調整値のアセット。指定すると下の Tracking Settings より優先する（再生中にアセットの値を変えると、止めても値が残る）")]
+    [SerializeField] private TrackingRaceInputSettingsAsset _settingsAsset;
+    // トラッキング入力の判定に使う調整用パラメータ（アセットが未指定のときだけ使う）。
     [SerializeField] private TrackingRaceInputSettings _trackingSettings = new TrackingRaceInputSettings();
 
     [Header("キャリブレーション")]
@@ -97,6 +99,9 @@ public class TrackingRaceInputDebugViewer : MonoBehaviour
         {
             _poseLandmarkReceiver = FindFirstObjectByType<PoseLandmarkReceiver>();
         }
+
+        // アセットが指定されていれば、表示（しきい値）と判定の両方でアセットの値を使う
+        _trackingSettings = TrackingRaceInputSettingsAsset.Resolve(_settingsAsset, _trackingSettings);
 
         // 判定：デバッグ用にキーボードを使う設定になっているか（ONなら常にキーボード入力を使う）
         if (_useKeyboardForDebug)
