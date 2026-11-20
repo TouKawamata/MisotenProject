@@ -32,6 +32,8 @@ public class EntryTrackingFlow : MonoBehaviour {
 		Calibrating,
 		// キャリブレーションに失敗し、測り直すまで待っている
 		RetryWait,
+		// キャリブレーションに成功し、演出のテキストが入り込むのを待っている（メッセージは出さない）
+		WaitingText,
 		// 合図のポーズを待っている
 		WaitingTrigger,
 		// シーンを移っている
@@ -45,6 +47,8 @@ public class EntryTrackingFlow : MonoBehaviour {
 	[SerializeField] private PoseCalibrator _calibrator;
 	[Tooltip("エントリー演出（3D）。キャリブレーションと同時に StartAnimation() を呼ぶ。未指定ならシーン内から探す")]
 	[SerializeField] private EntryEffectsController _effectsController;
+	[Tooltip("エントリー演出（UI）。テキストが入り込んだら合図のメッセージを出す。未指定ならシーン内から探す")]
+	[SerializeField] private EntryCanvasController _canvasController;
 
 	[Header("判定の調整値（合図のポーズの判定に使う）")]
 	[Tooltip("判定の調整値のアセット。指定すると下の Tracking Settings より優先する")]
@@ -53,10 +57,12 @@ public class EntryTrackingFlow : MonoBehaviour {
 	[SerializeField] private TrackingRaceInputSettings _trackingSettings = new TrackingRaceInputSettings();
 
 	[Header("待機")]
-	[Tooltip("人物がこの秒数続けて映ったら、キャリブレーションと演出を始める")]
+	[Tooltip("肩と腰（キャリブレーションに使う関節）がこの秒数続けて見えたら、キャリブレーションと演出を始める")]
 	[SerializeField, Min(0f)] private float _personStableTime = 1f;
 
 	[Header("キャリブレーション")]
+	[Tooltip("ONにすると、最初のキャリブレーションをリングが上がり切った瞬間に終わらせる（%もリングの上がり具合）。OFFなら PoseCalibrator の Duration。測り直しはどちらも PoseCalibrator の Duration")]
+	[SerializeField] private bool _syncCalibrationWithRise = true;
 	[Tooltip("キャリブレーションに失敗してから測り直すまでの秒数")]
 	[SerializeField, Min(0f)] private float _retryDelay = 1f;
 
@@ -138,6 +144,8 @@ public class EntryTrackingFlow : MonoBehaviour {
 	private float _stateTime;
 	// キャリブレーションの直近の結果（Finished で受け取り、Update で処理する）
 	private bool? _calibrationResult;
+	// 今のキャリブレーションがリングの上昇に合わせたものか（進み具合の表示をリングの上がり具合にする）
+	private bool _isCalibrationSyncedWithRise;
 
 	// 今の状態
 	public FlowState State { get; private set; } = FlowState.WaitingPerson;
@@ -151,6 +159,11 @@ public class EntryTrackingFlow : MonoBehaviour {
 		// 判定：演出が未設定か（未設定ならシーン内から探す）
 		if (_effectsController == null) {
 			_effectsController = FindFirstObjectByType<EntryEffectsController>();
+		}
+
+		// 判定：UI演出が未設定か（未設定ならシーン内から探す）
+		if (_canvasController == null) {
+			_canvasController = FindFirstObjectByType<EntryCanvasController>();
 		}
 
 		// 判定：キャリブレーションが未設定か（シーン内 → 追加 の順に用意する）
@@ -208,6 +221,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 			case FlowState.RetryWait:
 				UpdateRetryWait(tracking);
 				break;
+			case FlowState.WaitingText:
+				UpdateWaitingText();
+				break;
 			case FlowState.WaitingTrigger:
 				UpdateWaitingTrigger(triggered);
 				break;
@@ -216,26 +232,47 @@ public class EntryTrackingFlow : MonoBehaviour {
 		}
 	}
 
-	// 待機：人物が続けて映ったら始める。
+	// 待機：肩と腰が続けて見えたら始める（顔・肩だけ映っている状態で始めると、腰が見えずにキャリブレーションが失敗するため）。
 	private void UpdateWaitingPerson(bool tracking, float deltaTime) {
-		_personTime = tracking ? _personTime + deltaTime : 0f;
+		_personTime = tracking && _calibrator.IsBodyVisible ? _personTime + deltaTime : 0f;
 
-		// 判定：テスト用に Enter で飛ばすか（キャリブレーションをせずに合図待ちへ）
+		// 判定：テスト用に Enter で飛ばすか（キャリブレーションをせずに、テキストが入り込むのを待って合図待ちへ）
 		if (_allowKeyboard && Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame) {
 			StartEntryEffect();
-			EnterReady();
+			SetState(FlowState.WaitingText);
 			return;
 		}
 
 		// 判定：人物が _personStableTime 秒続けて映ったか
 		if (_personTime >= _personStableTime) {
 			StartEntryEffect();
-			StartCalibration();
+			// 判定：リングの上昇に合わせるか（合わせるなら、測定時間をリングが上がり切るまでの秒数にする）
+			if (_syncCalibrationWithRise && _effectsController != null) {
+				// 時間では終わらせず、リングが上がり切ったときに UpdateCalibrating で終える
+				// （時間で区切ると、演出の読み込みなどで画面が止まったときに測定だけが先に終わってしまうため）
+				StartCalibration(0f);
+				_isCalibrationSyncedWithRise = true;
+			} else {
+				StartCalibration(_calibrator.Duration);
+			}
+		}
+	}
+
+	// テキスト待ち：演出のテキストが入り込んだら合図待ちへ（UI演出が無ければすぐ）。
+	private void UpdateWaitingText() {
+		// 判定：テキストが着いたか
+		if (_canvasController == null || _canvasController.IsTextArrived) {
+			EnterReady();
 		}
 	}
 
 	// キャリブレーション中：結果を待つ。
 	private void UpdateCalibrating() {
+		// 判定：リングに合わせた測定で、リングが上がり切ったか（上がり切ったら、そこまでのフレームで測定を終える）
+		if (_isCalibrationSyncedWithRise && _effectsController != null && _effectsController.RiseProgress >= 1f) {
+			_calibrator.CompleteNow();
+		}
+
 		// 判定：結果が届いたか
 		if (!_calibrationResult.HasValue) {
 			UpdateMessage();
@@ -244,9 +281,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 
 		bool succeeded = _calibrationResult.Value;
 		_calibrationResult = null;
-		// 判定：成功したか（成功なら合図待ち、失敗なら測り直し）
+		// 判定：成功したか（成功ならテキストを待って合図待ち、失敗なら測り直し）
 		if (succeeded) {
-			EnterReady();
+			SetState(FlowState.WaitingText);
 		} else {
 			SetState(FlowState.RetryWait);
 		}
@@ -254,9 +291,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 
 	// 測り直しの待ち：時間がたち、人物が映っていれば測り直す。
 	private void UpdateRetryWait(bool tracking) {
-		// 判定：待ち時間が過ぎ、人物が映っているか
-		if (_stateTime >= _retryDelay && tracking) {
-			StartCalibration();
+		// 判定：待ち時間が過ぎ、肩と腰が見えているか
+		if (_stateTime >= _retryDelay && tracking && _calibrator.IsBodyVisible) {
+			StartCalibration(_calibrator.Duration);
 		}
 	}
 
@@ -282,10 +319,14 @@ public class EntryTrackingFlow : MonoBehaviour {
 		_onEntryStarted.Invoke();
 	}
 
-	private void StartCalibration() {
+	// duration 秒かけてキャリブレーションする。
+	private void StartCalibration(float duration) {
+		Debug.Log(duration > 0f ? $"EntryTrackingFlow: キャリブレーション開始（{duration:F2}秒）" : "EntryTrackingFlow: キャリブレーション開始（リングが上がり切るまで）", this);
 		_calibrationResult = null;
+		// リングに合わせるときは呼んだ側で true にする（測り直しはキャリブレーション自体の進み具合を出す）
+		_isCalibrationSyncedWithRise = false;
 		SetState(FlowState.Calibrating);
-		_calibrator.StartCalibration();
+		_calibrator.StartCalibration(duration);
 	}
 
 	private void EnterReady() {
@@ -389,7 +430,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 				bandColor = _waitingBandColor;
 				break;
 			case FlowState.Calibrating:
-				int percent = Mathf.RoundToInt(_calibrator.Progress * 100f);
+				// 判定：リングの上昇に合わせた測定か（合わせたならリングの上がり具合、測り直しなら測定の進み具合）
+				float progress = _isCalibrationSyncedWithRise && _effectsController != null ? _effectsController.RiseProgress : _calibrator.Progress;
+				int percent = Mathf.RoundToInt(progress * 100f);
 				_messageText.text = $"{_calibratingMessage}\n<size=60%>{percent}%</size>";
 				bandColor = _calibratingBandColor;
 				break;
