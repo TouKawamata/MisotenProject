@@ -35,6 +35,10 @@ public class CourseNetwork : MonoBehaviour
     // 使える分岐（分岐点の距離の順）。Build前は空。
     public IReadOnlyList<CourseBranch> Branches => _validBranches;
 
+    // Inspectorに入れてある分岐そのまま（null・本線違いも含む。Buildしない）。エディタの配置ツールなど、
+    // Buildの結果を残したくないところで使う（EnsureBuiltは1回しか計算しないため）。
+    public IReadOnlyList<CourseBranch> ConfiguredBranches => _branches;
+
     public CourseRoute CreateRoute()
     {
         return new CourseRoute(this);
