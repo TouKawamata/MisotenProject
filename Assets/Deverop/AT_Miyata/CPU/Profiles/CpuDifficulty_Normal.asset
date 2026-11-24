@@ -29,3 +29,5 @@ MonoBehaviour:
   _viewFlipAdaptTime: 0.8
   _catchUpStrength: 0.6
   _catchUpDistance: 150
+  _playerGainsBoostOnJammerHit: 1
+  _playerBoostGainOnJammerHit: 15

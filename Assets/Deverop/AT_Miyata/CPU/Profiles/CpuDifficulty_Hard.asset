@@ -22,10 +22,12 @@ MonoBehaviour:
   _boostCurveLimit: 25
   _curveCheckDistance: 70
   _boostReserve: 0.1
-  _shieldSuccessRate: 0.9
+  _shieldSuccessRate: 0.75
   _gimmickAwareness: 1
   _gimmickLookAhead: 80
   _jammerSmartness: 1
   _viewFlipAdaptTime: 0.3
   _catchUpStrength: 0.3
   _catchUpDistance: 150
+  _playerGainsBoostOnJammerHit: 1
+  _playerBoostGainOnJammerHit: 20
