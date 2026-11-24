@@ -109,10 +109,12 @@ public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
         }
         finally
         {
-            director.stopped -= OnDirectorStopped;
+            // シーン破棄によるキャンセルでは、参照先が既に破棄されている場合がある。
+            if (director != null)
+                director.stopped -= OnDirectorStopped;
 
-            // スキップ時も降下アニメの最後の姿勢に移動させてから止める。
-            if (skipRequested && director.playableAsset != null)
+            // キャンセル中は終端の姿勢を評価せず、生きている参照だけを後片付けする。
+            if (!token.IsCancellationRequested && skipRequested && director != null && director.playableAsset != null)
             {
                 double endTime = director.duration;
                 if (!double.IsNaN(endTime) && !double.IsInfinity(endTime) && endTime > 0)
@@ -126,11 +128,13 @@ public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
             // Stop により Animation の値や再生位置がリセットされても、演出カメラを映さない。
             isPlaying = false;
             SetIntroCameraActive(false);
-            director.Stop();
+            if (director != null)
+                director.Stop();
 
             // 今の降下Animationは、終了時のlocalPositionが(0, 0, 0)。
             // スキップでも必ずスタート位置に戻して、レース側の座標に影響させない。
-            playerModelAnimator.transform.localPosition = Vector3.zero;
+            if (playerModelAnimator != null)
+                playerModelAnimator.transform.localPosition = Vector3.zero;
         }
     }
 
@@ -222,24 +226,29 @@ public sealed class TimelineRaceIntro : MonoBehaviour, IRaceIntro
 
     private void SetIntroCameraActive(bool active)
     {
-        // 同時に2つのAudioListenerが有効になるのを避ける。
-        AudioListener introListener = introCamera.GetComponent<AudioListener>();
-        AudioListener gameplayListener = gameplayCamera.GetComponent<AudioListener>();
+        // 演出開始は両方のカメラが必要。終了処理は残っている側だけでも行う。
+        if (active && (introCamera == null || gameplayCamera == null))
+            return;
 
-        // 切替前に旧カメラをOFFにする。
+        // 旧カメラとListenerを先にOFFにし、同時に有効になるのを避ける。
         if (active)
         {
-            gameplayCamera.enabled = false;
-            if (gameplayListener != null) gameplayListener.enabled = false;
-            introCamera.enabled = true;
-            if (introListener != null) introListener.enabled = true;
+            SetCameraActive(gameplayCamera, false);
+            SetCameraActive(introCamera, true);
         }
         else
         {
-            introCamera.enabled = false;
-            if (introListener != null) introListener.enabled = false;
-            gameplayCamera.enabled = true;
-            if (gameplayListener != null) gameplayListener.enabled = true;
+            SetCameraActive(introCamera, false);
+            SetCameraActive(gameplayCamera, true);
         }
+    }
+
+    private static void SetCameraActive(Camera camera, bool active)
+    {
+        // Unityの破棄済みオブジェクトも、この比較で除外する。
+        if (camera == null) return;
+        camera.enabled = active;
+        AudioListener listener = camera.GetComponent<AudioListener>();
+        if (listener != null) listener.enabled = active;
     }
 }
