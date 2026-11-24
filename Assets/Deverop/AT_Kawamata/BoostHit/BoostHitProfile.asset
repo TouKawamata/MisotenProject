@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26ac5076d2c104d4ba4cb4c9c773f14b, type: 3}
   m_Name: BoostHitProfile
   m_EditorClassIdentifier: Assembly-CSharp::BoostHitProfile
+  _applyStunOnHit: 0
+  _applyPushOnHit: 1
   _stunDuration: 1
   _stunSpeedMultiplier: 0.5
   _invincibleDuration: 1
@@ -51,3 +53,4 @@ MonoBehaviour:
   _billiardMaxPushSpeed: 100
   _cancelAttackerBoostOnBlock: 1
   _attackerBoostLockDuration: 1
+  _lockAttackerSteeringOnCancel: 0
