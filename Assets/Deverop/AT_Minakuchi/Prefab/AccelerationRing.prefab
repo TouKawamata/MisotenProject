@@ -98,10 +98,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeedRing
   _startSlowing: 0
+  _revertDelay: 1
   _switchTag: Untagged
-  _extraSpeed: 15
-  _slowMultiplier: 0.55
-  _duration: 1
+  _extraSpeed: 50
+  _slowMultiplier: 0.3
+  _duration: 1.5
   _visual: {fileID: 11400001}
   _ellipseScale: 1
 --- !u!114 &11400001
