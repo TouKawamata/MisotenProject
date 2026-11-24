@@ -4797,10 +4797,10 @@ MonoBehaviour:
   _enableStateColorOverride: 0
   _tintOriginalMaterialOnState: 1
   _originalMaterialTintIntensity: 0.35
-  _hologramPattern: 0
+  _hologramPattern: 7
   _syncHologramColorsWithState: 1
-  _disableGhostRimPulse: 0
-  _hologramStyle: 0
+  _disableGhostRimPulse: 1
+  _hologramStyle: 6
   _customMaterial: {fileID: 0}
   _enableEventFlash: 1
   _eventFlashIntensity: 2
@@ -16606,6 +16606,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1576317765098238879, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1576317765098238879, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1576317765098238879, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1576317765098238879, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2152649762119328354, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
       propertyPath: _raceManager
       value: 
@@ -16626,10 +16642,42 @@ PrefabInstance:
       propertyPath: _raceManager
       value: 
       objectReference: {fileID: 1756386251}
+    - target: {fileID: 7883952142087356075, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7883952142087356075, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7883952142087356075, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7883952142087356075, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7922139646160215120, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
       propertyPath: _shield
       value: 
       objectReference: {fileID: 659967152165127083}
+    - target: {fileID: 8145505415207440407, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8145505415207440407, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8145505415207440407, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8145505415207440407, guid: 3a4418e54d58ad145a298145c78696f1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -35044,6 +35092,14 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: 1.5
       objectReference: {fileID: 0}
+    - target: {fileID: 2609314020934096965, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: _radialBlur
+      value: 
+      objectReference: {fileID: 372469061}
+    - target: {fileID: 2609314020934096965, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
+      propertyPath: _speedLines
+      value: 
+      objectReference: {fileID: 372469060}
     - target: {fileID: 4209057477350365912, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _radialBlur
       value: 
