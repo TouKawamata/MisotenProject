@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_CourseTunnel
+  m_Shader: {fileID: 4800000, guid: 3399cb411be685c439efdf5c47c96190, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _FarFadeEnd: 900
+    - _FarFadeStart: 400
+    - _FlameStrength: 0.8
+    - _FlowSpeed: 25
+    - _FresnelMin: 0.15
+    - _FresnelPower: 2
+    - _HitNearFade: 1
+    - _HitOpacity: 1
+    - _HitRadius: 14
+    - _Intensity: 1
+    - _Intersection: 0
+    - _IntersectionWidth: 1
+    - _LineCount: 48
+    - _LineFlicker: 0.5
+    - _LineWidth: 0.06
+    - _NearFadeEnd: 25
+    - _NearFadeStart: 4
+    - _NoiseScaleAlong: 0.05
+    - _NoiseScaleAround: 6
+    - _NoiseToLines: 0.7
+    - _Opacity: 0.05
+    - _PulseInterval: 60
+    - _PulseSpeed: 40
+    - _PulseWidth: 1.5
+    - _SparkleAmount: 0.12
+    - _SparkleCellLength: 4
+    - _SparkleColumns: 64
+    - _SparkleSize: 0.25
+    - _SparkleSpeed: 8
+    m_Colors:
+    - _BaseColor: {r: 0.02, g: 0.08, b: 0.25, a: 1}
+    - _FlameColor: {r: 0.1, g: 0.35, b: 2, a: 1}
+    - _HitColor: {r: 0.6, g: 1.4, b: 4, a: 1}
+    - _IntersectionColor: {r: 0.5, g: 1.2, b: 3, a: 1}
+    - _LineColor: {r: 0.3, g: 0.7, b: 2.5, a: 1}
+    - _PulseColor: {r: 0.5, g: 1.2, b: 3, a: 1}
+    - _SparkleColor: {r: 0.6, g: 1.5, b: 3, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
