@@ -12,16 +12,42 @@ public static class CpuLabelDrawer
     private static GUIStyle _style;
     private static GUIStyle _sceneStyle;
 
+    // CpuDebugViewerの観察用カメラ（無ければnull）。あれば、そのカメラの画面にも表示する。
+    public static Camera ViewerCamera { get; set; }
+
+    // 観察用カメラが全画面か（全画面なら、メインカメラ側の表示は出さない）。
+    public static bool IsViewerFullScreen { get; set; }
+
     public static void DrawGameView(Vector3 worldPosition, string text, Color color)
     {
-        Camera camera = Camera.main;
-        if (camera == null)
+        Camera viewer = ViewerCamera != null && ViewerCamera.isActiveAndEnabled ? ViewerCamera : null;
+        if (viewer != null)
+        {
+            DrawForCamera(viewer, null, worldPosition, text, color);
+            if (IsViewerFullScreen)
+            {
+                return;
+            }
+        }
+
+        Camera main = Camera.main;
+        if (main != null && main != viewer)
+        {
+            DrawForCamera(main, viewer, worldPosition, text, color);
+        }
+    }
+
+    // covered：手前に重なっているカメラ。その画面の範囲に入る表示は出さない（小窓の上に重ならないように）。
+    private static void DrawForCamera(Camera camera, Camera covered, Vector3 worldPosition, string text, Color color)
+    {
+        Vector3 screen = camera.WorldToScreenPoint(worldPosition);
+        if (screen.z <= 0f || screen.z > MaxGameViewDistance)
         {
             return;
         }
 
-        Vector3 screen = camera.WorldToScreenPoint(worldPosition);
-        if (screen.z <= 0f || screen.z > MaxGameViewDistance)
+        Vector2 point = new Vector2(screen.x, screen.y);
+        if (!camera.pixelRect.Contains(point) || (covered != null && covered.pixelRect.Contains(point)))
         {
             return;
         }

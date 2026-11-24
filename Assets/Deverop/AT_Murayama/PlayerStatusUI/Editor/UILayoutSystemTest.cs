@@ -143,6 +143,98 @@ namespace AT_Murayama.PlayerStatusUI.Editor
         }
 
         [Test]
+        public void Test_Minimap_ModeBFovCompensation()
+        {
+            GameObject minimapGo = new GameObject("Test_CourseMinimap_ModeBFov") { hideFlags = HideFlags.DontSave };
+            GameObject camGo = new GameObject("Test_ModeB_Camera") { hideFlags = HideFlags.DontSave };
+            try
+            {
+                CourseMinimapController controller = minimapGo.AddComponent<CourseMinimapController>();
+                Assert.IsTrue(controller.CompensateModeBFov, "FOV compensation should be enabled by default.");
+                Assert.AreEqual(0f, controller.ModeBReferenceFov, 0.001f, "Reference FOV should default to auto (0).");
+
+                Assert.AreEqual(1f, CourseMinimapController.CalculateModeBFovCompensationScale(70f, 70f), 0.0001f);
+                float expectedScale = Mathf.Tan(90f * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(70f * 0.5f * Mathf.Deg2Rad);
+                Assert.AreEqual(expectedScale, CourseMinimapController.CalculateModeBFovCompensationScale(90f, 70f), 0.0001f);
+
+                Camera cam = camGo.AddComponent<Camera>();
+                cam.aspect = 16f / 9f;
+                cam.orthographic = false;
+                cam.fieldOfView = 70f;
+
+                Vector3 baseOffset = new Vector3(0.8f, -0.4f, 0.85f);
+                Vector3 baselineViewport = cam.WorldToViewportPoint(cam.transform.TransformPoint(baseOffset));
+
+                cam.fieldOfView = 90f;
+                controller.ModeBReferenceFov = 70f;
+                controller.CompensateModeBFov = true;
+
+                float fovScale = controller.GetModeBFovCompensationScale(cam);
+                Assert.AreEqual(expectedScale, fovScale, 0.0001f);
+
+                Vector3 compensatedWorldPos = cam.transform.TransformPoint(new Vector3(baseOffset.x * fovScale, baseOffset.y * fovScale, baseOffset.z));
+                Vector3 compensatedViewport = cam.WorldToViewportPoint(compensatedWorldPos);
+                Assert.AreEqual(baselineViewport.x, compensatedViewport.x, 0.0001f, "Viewport X must stay fixed across FOV change.");
+                Assert.AreEqual(baselineViewport.y, compensatedViewport.y, 0.0001f, "Viewport Y must stay fixed across FOV change.");
+
+                controller.CompensateModeBFov = false;
+                Assert.AreEqual(1f, controller.GetModeBFovCompensationScale(cam), 0.0001f);
+
+                controller.CompensateModeBFov = true;
+                cam.orthographic = true;
+                Assert.AreEqual(1f, controller.GetModeBFovCompensationScale(cam), 0.0001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(camGo);
+                UnityEngine.Object.DestroyImmediate(minimapGo);
+            }
+        }
+
+        [Test]
+        public void Test_Minimap_ModeBPostEffectBypassOverlay()
+        {
+            GameObject minimapGo = new GameObject("Test_CourseMinimap_ModeBBypass") { hideFlags = HideFlags.DontSave };
+            GameObject camGo = new GameObject("Test_ModeB_OverlayFovCamera") { hideFlags = HideFlags.DontSave };
+            try
+            {
+                CourseMinimapController controller = minimapGo.AddComponent<CourseMinimapController>();
+
+                Assert.IsTrue(controller.BypassPostEffectsInModeB, "Mode B post-effect bypass should be enabled by default.");
+                Assert.AreEqual(1.0f, controller.ModeBOverlayResolutionScale, 0.001f);
+
+                controller.ModeBOverlayResolutionScale = 0.1f;
+                Assert.AreEqual(0.5f, controller.ModeBOverlayResolutionScale, 0.001f);
+                controller.ModeBOverlayResolutionScale = 2.0f;
+                Assert.AreEqual(1.0f, controller.ModeBOverlayResolutionScale, 0.001f);
+
+                controller.BypassPostEffectsInModeB = false;
+                Assert.IsFalse(controller.BypassPostEffectsInModeB);
+                controller.BypassPostEffectsInModeB = true;
+                Assert.IsTrue(controller.BypassPostEffectsInModeB);
+
+                Assert.AreEqual(new Vector2Int(1920, 1080), CourseMinimapController.CalculateModeBOverlayResolution(1920, 1080, 1.0f));
+                Assert.AreEqual(new Vector2Int(1440, 810), CourseMinimapController.CalculateModeBOverlayResolution(1920, 1080, 0.75f));
+                Assert.AreEqual(new Vector2Int(64, 64), CourseMinimapController.CalculateModeBOverlayResolution(0, 0, 0.5f));
+
+                Camera cam = camGo.AddComponent<Camera>();
+                cam.orthographic = false;
+                cam.fieldOfView = 90f;
+                controller.ModeBReferenceFov = 70f;
+                controller.CompensateModeBFov = true;
+                Assert.AreEqual(70f, controller.GetModeBOverlayRenderFov(cam), 0.001f, "CommandBuffer overlay render FOV must stay locked to reference FOV.");
+
+                controller.CompensateModeBFov = false;
+                Assert.AreEqual(90f, controller.GetModeBOverlayRenderFov(cam), 0.001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(camGo);
+                UnityEngine.Object.DestroyImmediate(minimapGo);
+            }
+        }
+
+        [Test]
         public void Test_PlayerStatusUI_ModeBProperties()
         {
             GameObject go = new GameObject("Test_PlayerPoseStatusUI_ModeB") { hideFlags = HideFlags.DontSave };
@@ -485,6 +577,43 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             }
         }
 
+        [Test]
+        public void Test_HideOutsideRacing_DefaultAndToggle()
+        {
+            GameObject go = new GameObject("Test_HideOutsideRacing") { hideFlags = HideFlags.DontSave };
+            try
+            {
+                CourseMinimapController minimap = go.AddComponent<CourseMinimapController>();
+                PlayerPoseStatusUIController statusUi = go.AddComponent<PlayerPoseStatusUIController>();
+
+                // 本番シーン配置だけで有効になるよう初期値は true
+                Assert.IsTrue(minimap.HideOutsideRacing);
+                Assert.IsTrue(statusUi.HideOutsideRacing);
+
+                // RaceManager不在・EditModeでは03.unity等の作業を妨げないよう表示維持(true)
+                Assert.IsTrue(minimap.ShouldShowInCurrentRaceState());
+                Assert.IsTrue(statusUi.ShouldShowInCurrentRaceState());
+
+                minimap.HideOutsideRacing = false;
+                statusUi.HideOutsideRacing = false;
+                Assert.IsFalse(minimap.HideOutsideRacing);
+                Assert.IsFalse(statusUi.HideOutsideRacing);
+
+                minimap.HideOutsideRacing = true;
+                statusUi.HideOutsideRacing = true;
+                Assert.IsTrue(minimap.HideOutsideRacing);
+                Assert.IsTrue(statusUi.HideOutsideRacing);
+
+                // 手動テストモード中は常に表示維持
+                statusUi.UseManualTestMode = true;
+                Assert.IsTrue(statusUi.ShouldShowInCurrentRaceState());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
         /// <summary>
         /// バッチ実行および結果ログ出力用ランナー
         /// </summary>
@@ -519,6 +648,8 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             RunTest("Test_PlayerStatusUI_SetScreenCornerPreset", tester.Test_PlayerStatusUI_SetScreenCornerPreset);
             RunTest("Test_Minimap_SetScreenAnchor", tester.Test_Minimap_SetScreenAnchor);
             RunTest("Test_Minimap_ModeBMiniaturePresets", tester.Test_Minimap_ModeBMiniaturePresets);
+            RunTest("Test_Minimap_ModeBFovCompensation", tester.Test_Minimap_ModeBFovCompensation);
+            RunTest("Test_Minimap_ModeBPostEffectBypassOverlay", tester.Test_Minimap_ModeBPostEffectBypassOverlay);
             RunTest("Test_PlayerStatusUI_ModeBProperties", tester.Test_PlayerStatusUI_ModeBProperties);
             RunTest("Test_PlayerStatusUI_Apply03SceneDefaults_PreservesBottomCenter", tester.Test_PlayerStatusUI_Apply03SceneDefaults_PreservesBottomCenter);
             RunTest("Test_PlayerPoseStatusUI_StateColorOverride", tester.Test_PlayerPoseStatusUI_StateColorOverride);
@@ -527,6 +658,7 @@ namespace AT_Murayama.PlayerStatusUI.Editor
             RunTest("Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering", tester.Test_SmartArrowSignage_SweepPhaseOffsetAndStaggering);
             RunTest("Test_GhostRim_StaticNoPulseMaterial", tester.Test_GhostRim_StaticNoPulseMaterial);
             RunTest("Test_VerticalAndFirePoseSystem", tester.Test_VerticalAndFirePoseSystem);
+            RunTest("Test_HideOutsideRacing_DefaultAndToggle", tester.Test_HideOutsideRacing_DefaultAndToggle);
 
             sb.AppendLine("==================================================");
             sb.AppendLine($"合計: {pass + fail} 件 ｜ 成功: {pass} 件 ｜ 失敗: {fail} 件");

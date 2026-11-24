@@ -218,17 +218,8 @@ public sealed class ScreenNoiseEffectController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (!_stopAllOnDisable)
-        {
-            return;
-        }
-
-        if (!Application.isPlaying)
-        {
-            return;
-        }
-
-        StopAll();
+        if (!_stopAllOnDisable || !Application.isPlaying) return;
+        StopAllImmediate();
     }
 
     // =========================================================
@@ -298,6 +289,17 @@ public sealed class ScreenNoiseEffectController : MonoBehaviour
             _glitchEffects.StopAllEffects();
         }
 
+        _playingPresetIndex = -1;
+        _isPlaying = false;
+    }
+
+    private void StopAllImmediate()
+    {
+        if (_grainNoise != null) _grainNoise.StopImmediate();
+        if (_triTone != null) _triTone.StopImmediate();
+        if (_chromaticAberration != null) _chromaticAberration.StopImmediate();
+        if (_rgbBlockNoise != null) _rgbBlockNoise.StopImmediate();
+        if (_glitchEffects != null) _glitchEffects.StopAllEffects(); // こちらは元からKillと値のリセットだけ
         _playingPresetIndex = -1;
         _isPlaying = false;
     }

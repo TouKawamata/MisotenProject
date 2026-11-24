@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 905aac5b2fd2c29468ecf7ec12423a5a, type: 3}
+  m_Name: RacerAnimationProfile
+  m_EditorClassIdentifier: Assembly-CSharp::AT_Murayama.PlayerAnimation.RacerAnimationProfile
+  _referenceModelPrefab: {fileID: 919132149155446097, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
+  _generatedAssetFolder: Assets/Deverop/AT_Murayama/PlayerAnimation/Generated
+  _controllerAssetName: AC_RacerFlight
+  _generatedController: {fileID: 9100000, guid: 3a09f5da65efce249a9096968c566199, type: 2}
+  _setUpClip: {fileID: 1827226128182048838, guid: f98d4bfdb1ee9e04590409cac7bcf8dc, type: 3}
+  _takeOffClip: {fileID: 1827226128182048838, guid: 7c2397858d0a77c46abe3bab0217a726, type: 3}
+  _flyClip: {fileID: 1827226128182048838, guid: c990a25f147a13f4f9fd0d3082e9aa4f, type: 3}
+  _rightCurveClip: {fileID: 7400000, guid: e204e31627d46034ab5a8355ed2a65c6, type: 2}
+  _leftCurveClip: {fileID: 7400000, guid: 417fd87b268d04141a90f0cd0b55a57f, type: 2}
+  _stunClip: {fileID: 0}
+  _fireClip: {fileID: 0}
+  _moveUpClip: {fileID: 0}
+  _moveDownClip: {fileID: 0}
+  _boostClip: {fileID: 0}
+  _shieldClip: {fileID: 0}
+  _turnMode: 0
+  _loopSetUpClip: 0
+  _loopFlyClip: 1
+  _loopCurveClips: 0
+  _setUpToTakeOffDuration: 0.08
+  _takeOffExitTime: 0.9
+  _takeOffToFlyDuration: 0.12
+  _curveTransitionDuration: 0.12
+  _stunTransitionDuration: 0.08
+  _fireTransitionDuration: 0.06
+  _fireExitTime: 0.9
+  _optionalStateTransitionDuration: 0.1
+  _turnEnterThreshold: 0.25
+  _turnExitThreshold: 0.12
+  _verticalEnterThreshold: 0.3
+  _verticalExitThreshold: 0.15
+  _moveParameterSmoothSpeed: 12
+  _motionSourceMode: 0
+  _inputMotionWeight: 1
+  _centerReturnWeight: 0.65
+  _centerReturnReferenceSpeed: 8
+  _centerReturnMaxContribution: 0.7
+  _courseCurveWeight: 0.7
+  _courseCurveReferenceYawRate: 35
+  _courseCurveMaxContribution: 0.85
+  _applyAutoMotionToVertical: 1
+  _autoMotionSignalSmoothSpeed: 8
+  _mirrorBakeFrameRate: 60
+  _rawRightCurveSourceClip: {fileID: 1827226128182048838, guid: 97ed200d2344a2148a34e8ed5ec8e2a0, type: 3}

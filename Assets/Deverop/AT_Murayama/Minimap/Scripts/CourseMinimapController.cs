@@ -110,6 +110,12 @@ public class CourseMinimapController : MonoBehaviour
     [Tooltip("他機（ライバル機）の Transform リスト（任意・最大8機など）")]
     [SerializeField] private List<Transform> _racerTargets = new List<Transform>();
 
+    [Tooltip("レース進行管理（未設定時はシーン内から自動検索。存在する場合は走行中のみミニマップを表示）")]
+    [SerializeField] private RaceManager _raceManager;
+
+    [Tooltip("ONのとき、カウントダウン終了（GO）までとプレイヤーのゴール後はミニマップを非表示にします（RaceManagerが存在するシーンのみ有効）")]
+    [SerializeField] private bool _hideOutsideRacing = true;
+
     [Header("コースメッシュ生成設定")]
     [Tooltip("サンプリング間隔（m）。ミニマップなので 3〜5m でも十分滑らかで軽量です")]
     [SerializeField] private float _sampleInterval = 4f;
@@ -207,6 +213,20 @@ public class CourseMinimapController : MonoBehaviour
     [Tooltip("方式Bでコースの壁等にめり込んでも常に最前面に描画するか（ZTest Always）")]
     [SerializeField] private bool _alwaysOnTopInModeB = true;
 
+    [Tooltip("【方式B】ブーストや演出等でメインカメラのFOVが変化しても、画面上の見かけ位置・サイズを一定に保ちます")]
+    [SerializeField] private bool _compensateModeBFov = true;
+
+    [Tooltip("【方式B】FOV補正の基準FOV（度）。0以下の場合は、実行時に対象メインカメラの初期FOVを自動で基準にします")]
+    [Range(0f, 120f)]
+    [SerializeField] private float _modeBReferenceFov = 0f;
+
+    [Tooltip("【方式B】CommandBuffer直接描画＋透過オーバーレイで描画し、ブースト時のブラー・集中線・ノイズ等の全画面ポストエフェクトを完全回避します")]
+    [SerializeField] private bool _bypassPostEffectsInModeB = true;
+
+    [Tooltip("【方式B】ポストエフェクト回避時の透過オーバーレイ解像度倍率（1.0=画面等倍で最も鮮明、0.75=軽量）")]
+    [Range(0.5f, 1.0f)]
+    [SerializeField] private float _modeBOverlayResolutionScale = 1.0f;
+
     [Header("マテリアル（未割当なら自動生成）")]
     [SerializeField] private Material _roadMaterial;
 
@@ -216,8 +236,11 @@ public class CourseMinimapController : MonoBehaviour
 
     private Transform _hologramPivot;
     private Transform _meshRoot;
+    private MeshFilter _roadMeshFilter;
     private MeshRenderer _roadRenderer;
+    private MeshFilter _playerIconMeshFilter;
     private MeshRenderer _playerIconRenderer;
+    private readonly List<MeshFilter> _racerIconMeshFilters = new List<MeshFilter>();
     private readonly List<MeshRenderer> _racerIconRenderers = new List<MeshRenderer>();
 
     private Camera _subCamera;
@@ -225,9 +248,17 @@ public class CourseMinimapController : MonoBehaviour
     private Canvas _uiCanvas;
     private RawImage _uiRawImage;
 
+    private RenderTexture _modeBOverlayRT;
+    private Canvas _modeBOverlayCanvas;
+    private RawImage _modeBOverlayRawImage;
+    private CommandBuffer _modeBCommandBuffer;
+    private int _modeBOverlayRTWidth;
+    private int _modeBOverlayRTHeight;
+
     private Material _runtimeRoadMat;
     private Material _runtimePlayerIconMat;
     private Material _runtimeRacerIconMat;
+    private Material _runtimeModeBOverlayMat;
     private MaterialPropertyBlock _mpb;
 
     private Bounds _courseWorldBounds;
@@ -239,6 +270,7 @@ public class CourseMinimapController : MonoBehaviour
     private int _lastBuiltSegments = -1;
     private int _lastBuiltBranchCount = 0;
     private float _nextAutoFindTime = 0f;
+    private bool _hasSearchedRaceManager;
 
     private static readonly int PlayerLocalPosId    = Shader.PropertyToID("_PlayerLocalPos");
     private static readonly int VisibleRadiusId     = Shader.PropertyToID("_VisibleRadius");
@@ -248,10 +280,14 @@ public class CourseMinimapController : MonoBehaviour
     private static readonly int IsIconId            = Shader.PropertyToID("_IsIcon");
     private static readonly int IconColorId         = Shader.PropertyToID("_IconColor");
     private static readonly int ZTestId             = Shader.PropertyToID("_ZTest");
+    private static readonly int WorldSpaceCameraPosId = Shader.PropertyToID("_WorldSpaceCameraPos");
+    private static readonly int UnityOrthoParamsId    = Shader.PropertyToID("unity_OrthoParams");
 
     private Camera _modifiedMainCamera;
     private int _lastExcludedLayer = -1;
     private bool _hasExcludedLayer;
+    private Camera _modeBReferenceCamera;
+    private float _capturedModeBReferenceFov;
 
     // ──────────────────────────────────────────────
     // ライフサイクル
@@ -264,10 +300,17 @@ public class CourseMinimapController : MonoBehaviour
         UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += RestoreMainCameraCullingMask;
 #endif
         _nextAutoFindTime = 0f;
+        _hasSearchedRaceManager = false;
+        _modeBReferenceCamera = null;
+        _capturedModeBReferenceFov = 0f;
         AutoFindReferences(forceImmediate: true);
         EnsureHierarchyAndRebuild();
         UpdateModeStateAndTransforms();
         UpdateIconsAndShaderProperties();
+        if (!ShouldShowInCurrentRaceState())
+        {
+            SetMinimapVisualsActive(false);
+        }
     }
 
     private void OnDisable()
@@ -276,6 +319,8 @@ public class CourseMinimapController : MonoBehaviour
         UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
 #endif
         RestoreMainCameraCullingMask();
+        _modeBReferenceCamera = null;
+        _capturedModeBReferenceFov = 0f;
         ReleaseRenderTextureSafely();
         CleanupRuntimeMaterials();
     }
@@ -286,6 +331,8 @@ public class CourseMinimapController : MonoBehaviour
         UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= RestoreMainCameraCullingMask;
 #endif
         RestoreMainCameraCullingMask();
+        _modeBReferenceCamera = null;
+        _capturedModeBReferenceFov = 0f;
         ReleaseRenderTextureSafely();
         ClearGeneratedChildren();
         CleanupRuntimeMaterials();
@@ -381,6 +428,49 @@ public class CourseMinimapController : MonoBehaviour
             DestroyObjectSafely(_renderTexture);
             _renderTexture = null;
         }
+
+        ReleaseModeBOverlayRenderTextureSafely();
+    }
+
+    private void ReleaseModeBOverlayRenderTextureSafely()
+    {
+        Transform oldCamTrans = transform.Find("Minimap_ModeBOverlayCamera");
+        if (oldCamTrans != null)
+        {
+            Camera cam = oldCamTrans.GetComponent<Camera>();
+            if (cam != null)
+            {
+                cam.targetTexture = null;
+                cam.enabled = false;
+            }
+            DestroyObjectSafely(oldCamTrans.gameObject);
+        }
+
+        if (_modeBOverlayRawImage != null)
+        {
+            _modeBOverlayRawImage.texture = null;
+        }
+
+        if (_modeBOverlayCanvas != null)
+        {
+            _modeBOverlayCanvas.enabled = false;
+        }
+
+        if (_modeBOverlayRT != null)
+        {
+            _modeBOverlayRT.Release();
+            DestroyObjectSafely(_modeBOverlayRT);
+            _modeBOverlayRT = null;
+        }
+
+        if (_modeBCommandBuffer != null)
+        {
+            _modeBCommandBuffer.Release();
+            _modeBCommandBuffer = null;
+        }
+
+        _modeBOverlayRTWidth = 0;
+        _modeBOverlayRTHeight = 0;
     }
 
     private void CleanupRuntimeMaterials()
@@ -401,6 +491,12 @@ public class CourseMinimapController : MonoBehaviour
         {
             DestroyObjectSafely(_runtimeRacerIconMat);
             _runtimeRacerIconMat = null;
+        }
+
+        if (_runtimeModeBOverlayMat != null)
+        {
+            DestroyObjectSafely(_runtimeModeBOverlayMat);
+            _runtimeModeBOverlayMat = null;
         }
     }
 
@@ -425,11 +521,13 @@ public class CourseMinimapController : MonoBehaviour
         _miniatureScale = Mathf.Clamp(_miniatureScale, 0.00005f, 0.05f);
         _wholeCourseMiniatureApparentSize = Mathf.Clamp(_wholeCourseMiniatureApparentSize, 0.05f, 1.5f);
         _wholeCourseIconScaleMultiplier = Mathf.Max(0.5f, _wholeCourseIconScaleMultiplier);
+        _modeBReferenceFov = Mathf.Clamp(_modeBReferenceFov, 0f, 120f);
+        _modeBOverlayResolutionScale = Mathf.Clamp(_modeBOverlayResolutionScale, 0.5f, 1.0f);
 
         if (_hologramPivot != null && _meshRoot != null)
         {
             UpdateModeStateAndTransforms();
-            UpdateIconsAndShaderProperties();
+            UpdateIconsAndShaderProperties(allowOverlayRender: false);
         }
     }
 
@@ -447,6 +545,17 @@ public class CourseMinimapController : MonoBehaviour
             if (_meshRoot == null) return;
         }
 
+        if (!ShouldShowInCurrentRaceState())
+        {
+            SetMinimapVisualsActive(false);
+            return;
+        }
+
+        if (_hologramPivot != null && !_hologramPivot.gameObject.activeSelf)
+        {
+            _hologramPivot.gameObject.SetActive(true);
+        }
+
         UpdateModeStateAndTransforms();
         UpdateIconsAndShaderProperties();
     }
@@ -458,6 +567,83 @@ public class CourseMinimapController : MonoBehaviour
     public CourseSpline CourseSpline => _courseSpline;
     public CourseNetwork CourseNetwork => _courseNetwork;
     public int ActiveBranchCount => _lastBuiltBranchCount;
+
+    public RaceManager RaceManager
+    {
+        get => _raceManager;
+        set
+        {
+            _raceManager = value;
+            _hasSearchedRaceManager = true;
+        }
+    }
+
+    public bool HideOutsideRacing
+    {
+        get => _hideOutsideRacing;
+        set
+        {
+            _hideOutsideRacing = value;
+            if (_hologramPivot != null && _meshRoot != null)
+            {
+                if (!ShouldShowInCurrentRaceState())
+                {
+                    SetMinimapVisualsActive(false);
+                }
+                else
+                {
+                    if (!_hologramPivot.gameObject.activeSelf)
+                    {
+                        _hologramPivot.gameObject.SetActive(true);
+                    }
+                    UpdateModeStateAndTransforms();
+                    UpdateIconsAndShaderProperties();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 現在のレース状態でミニマップを表示すべきかを判定する（EditModeやRaceManager不在シーンでは常にtrue）
+    /// </summary>
+    public bool ShouldShowInCurrentRaceState()
+    {
+        if (!Application.isPlaying || !_hideOutsideRacing)
+        {
+            return true;
+        }
+
+        if (_raceManager == null)
+        {
+            return true;
+        }
+
+        IReadOnlyRacerData playerData = _raceManager.PlayerData;
+        return _raceManager.State == ERaceState.Racing && playerData != null && !playerData.IsFinished;
+    }
+
+    private void SetMinimapVisualsActive(bool active)
+    {
+        if (!active)
+        {
+            if (_subCamera != null && _subCamera.enabled)
+            {
+                _subCamera.enabled = false;
+            }
+            if (_uiCanvas != null && _uiCanvas.gameObject.activeSelf)
+            {
+                _uiCanvas.gameObject.SetActive(false);
+            }
+            if (_modeBOverlayCanvas != null && _modeBOverlayCanvas.gameObject.activeSelf)
+            {
+                _modeBOverlayCanvas.gameObject.SetActive(false);
+            }
+            if (_hologramPivot != null && _hologramPivot.gameObject.activeSelf)
+            {
+                _hologramPivot.gameObject.SetActive(false);
+            }
+        }
+    }
 
     public void SetDisplayMode(MinimapDisplayMode mode)
     {
@@ -560,6 +746,215 @@ public class CourseMinimapController : MonoBehaviour
     {
         get => _miniatureScale;
         set => _miniatureScale = value;
+    }
+
+    /// <summary>
+    /// 方式BでメインカメラのFOVが変化しても画面上の見かけ位置・サイズを一定に保つかどうか。
+    /// </summary>
+    public bool CompensateModeBFov
+    {
+        get => _compensateModeBFov;
+        set
+        {
+            if (_compensateModeBFov != value)
+            {
+                _compensateModeBFov = value;
+                if (_hologramPivot != null && _meshRoot != null)
+                {
+                    UpdateModeStateAndTransforms();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 方式BのFOV補正における基準FOV（度）。0以下の場合は実行時のメインカメラ初期FOVを自動で基準にします。
+    /// </summary>
+    public float ModeBReferenceFov
+    {
+        get => _modeBReferenceFov;
+        set
+        {
+            float clamped = Mathf.Clamp(value, 0f, 120f);
+            if (!Mathf.Approximately(_modeBReferenceFov, clamped))
+            {
+                _modeBReferenceFov = clamped;
+                if (_hologramPivot != null && _meshRoot != null)
+                {
+                    UpdateModeStateAndTransforms();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 現在の方式B FOV補正で実際に使われる基準FOV（度）。自動モードで未捕捉の場合は Camera.main の現在FOVを返します。
+    /// </summary>
+    public float EffectiveModeBReferenceFov
+    {
+        get
+        {
+            if (_modeBReferenceFov > 0.01f)
+            {
+                return _modeBReferenceFov;
+            }
+            if (_capturedModeBReferenceFov > 0.01f)
+            {
+                return _capturedModeBReferenceFov;
+            }
+            Camera mainCam = Camera.main;
+            return mainCam != null ? mainCam.fieldOfView : 0f;
+        }
+    }
+
+    /// <summary>
+    /// 実行時に自動捕捉した方式B用の基準FOVキャッシュをリセットし、次のフレームで再取得させます。
+    /// </summary>
+    public void ResetCapturedModeBReferenceFov()
+    {
+        _modeBReferenceCamera = null;
+        _capturedModeBReferenceFov = 0f;
+    }
+
+    /// <summary>
+    /// 基準FOVに対する現在FOVの透視投影比率 tan(currentFov/2) / tan(referenceFov/2) を返します。
+    /// </summary>
+    public static float CalculateModeBFovCompensationScale(float currentFov, float referenceFov)
+    {
+        float clampedCurrent = Mathf.Clamp(currentFov, 1f, 179f);
+        float clampedRef = Mathf.Clamp(referenceFov, 1f, 179f);
+        if (Mathf.Approximately(clampedCurrent, clampedRef))
+        {
+            return 1f;
+        }
+
+        float refTan = Mathf.Tan(clampedRef * 0.5f * Mathf.Deg2Rad);
+        if (refTan <= 0.0001f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Tan(clampedCurrent * 0.5f * Mathf.Deg2Rad) / refTan;
+    }
+
+    private float ResolveModeBReferenceFov(Camera mainCam)
+    {
+        if (mainCam == null)
+        {
+            return 60f;
+        }
+
+        if (_modeBReferenceFov > 0.01f)
+        {
+            return Mathf.Clamp(_modeBReferenceFov, 1f, 179f);
+        }
+
+        if (!Application.isPlaying)
+        {
+            _modeBReferenceCamera = null;
+            _capturedModeBReferenceFov = 0f;
+            return Mathf.Clamp(mainCam.fieldOfView, 1f, 179f);
+        }
+
+        if (_modeBReferenceCamera != mainCam || _capturedModeBReferenceFov <= 0.01f)
+        {
+            _modeBReferenceCamera = mainCam;
+            _capturedModeBReferenceFov = Mathf.Clamp(mainCam.fieldOfView, 1f, 179f);
+        }
+
+        return _capturedModeBReferenceFov;
+    }
+
+    /// <summary>
+    /// 方式BのCommandBuffer直接描画で使用する投影FOV（度）を返します。
+    /// FOV補正が有効な場合は基準FOVで固定し、広角FOV変化による位置移動・サイズ変化・画面端パース歪みを完全に防ぎます。
+    /// </summary>
+    public float GetModeBOverlayRenderFov(Camera mainCam)
+    {
+        if (mainCam == null)
+        {
+            return 60f;
+        }
+
+        if (!_compensateModeBFov || mainCam.orthographic)
+        {
+            return Mathf.Clamp(mainCam.fieldOfView, 1f, 179f);
+        }
+
+        return ResolveModeBReferenceFov(mainCam);
+    }
+
+    /// <summary>
+    /// 指定されたメインカメラに対する方式BのFOV補正倍率を返します（補正無効・平行投影・基準未確立時は 1）。
+    /// </summary>
+    public float GetModeBFovCompensationScale(Camera mainCam)
+    {
+        if (!_compensateModeBFov || mainCam == null || mainCam.orthographic)
+        {
+            return 1f;
+        }
+
+        if (_modeBReferenceFov <= 0.01f && !Application.isPlaying)
+        {
+            _modeBReferenceCamera = null;
+            _capturedModeBReferenceFov = 0f;
+            return 1f;
+        }
+
+        float referenceFov = ResolveModeBReferenceFov(mainCam);
+        return CalculateModeBFovCompensationScale(mainCam.fieldOfView, referenceFov);
+    }
+
+    /// <summary>
+    /// 方式BでCommandBuffer直接描画＋透過オーバーレイを使い、ブースト時のブラー・集中線・ノイズ等の全画面ポストエフェクトを完全回避するか。
+    /// </summary>
+    public bool BypassPostEffectsInModeB
+    {
+        get => _bypassPostEffectsInModeB;
+        set
+        {
+            if (_bypassPostEffectsInModeB != value)
+            {
+                _bypassPostEffectsInModeB = value;
+                if (_hologramPivot != null && _meshRoot != null)
+                {
+                    UpdateModeStateAndTransforms();
+                    UpdateIconsAndShaderProperties();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 方式Bポストエフェクト回避時の透過オーバーレイ RenderTexture の解像度倍率（0.5〜1.0）。
+    /// </summary>
+    public float ModeBOverlayResolutionScale
+    {
+        get => _modeBOverlayResolutionScale;
+        set
+        {
+            float clamped = Mathf.Clamp(value, 0.5f, 1.0f);
+            if (!Mathf.Approximately(_modeBOverlayResolutionScale, clamped))
+            {
+                _modeBOverlayResolutionScale = clamped;
+                if (_hologramPivot != null && _meshRoot != null)
+                {
+                    UpdateModeStateAndTransforms();
+                    UpdateIconsAndShaderProperties();
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// カメラのピクセル解像度と倍率から、方式B透過オーバーレイ用 RenderTexture のサイズを算出します。
+    /// </summary>
+    public static Vector2Int CalculateModeBOverlayResolution(int pixelWidth, int pixelHeight, float resolutionScale)
+    {
+        float clampedScale = Mathf.Clamp(resolutionScale, 0.5f, 1.0f);
+        int w = Mathf.Clamp(Mathf.RoundToInt(Mathf.Max(64, pixelWidth) * clampedScale), 64, 4096);
+        int h = Mathf.Clamp(Mathf.RoundToInt(Mathf.Max(64, pixelHeight) * clampedScale), 64, 4096);
+        return new Vector2Int(w, h);
     }
 
     /// <summary>
@@ -772,6 +1167,16 @@ public class CourseMinimapController : MonoBehaviour
 
     private void AutoFindReferences(bool forceImmediate)
     {
+        if ((!_hasSearchedRaceManager || forceImmediate) && _raceManager == null)
+        {
+            _hasSearchedRaceManager = true;
+            _raceManager = FindFirstObjectByType<RaceManager>();
+        }
+        else if (forceImmediate && _raceManager != null)
+        {
+            _hasSearchedRaceManager = true;
+        }
+
         if (!forceImmediate && _courseSpline != null && _playerTarget != null)
         {
             return;
@@ -945,6 +1350,7 @@ public class CourseMinimapController : MonoBehaviour
         Transform oldRoad = _meshRoot.Find("Minimap_Road");
         if (oldRoad != null)
         {
+            _roadMeshFilter = null;
             MeshFilter oldMf = oldRoad.GetComponent<MeshFilter>();
             if (oldMf != null && oldMf.sharedMesh != null)
             {
@@ -970,8 +1376,8 @@ public class CourseMinimapController : MonoBehaviour
         GameObject roadObj = new GameObject("Minimap_Road");
         roadObj.transform.SetParent(_meshRoot, false);
 
-        MeshFilter mf = roadObj.AddComponent<MeshFilter>();
-        mf.sharedMesh = roadMesh;
+        _roadMeshFilter = roadObj.AddComponent<MeshFilter>();
+        _roadMeshFilter.sharedMesh = roadMesh;
 
         _roadRenderer = roadObj.AddComponent<MeshRenderer>();
         _roadRenderer.sharedMaterial = _runtimeRoadMat;
@@ -1355,14 +1761,15 @@ public class CourseMinimapController : MonoBehaviour
         // 自機矢印アイコン
         GameObject playerIconObj = new GameObject("Minimap_PlayerIcon");
         playerIconObj.transform.SetParent(_meshRoot, false);
-        MeshFilter pmf = playerIconObj.AddComponent<MeshFilter>();
-        pmf.sharedMesh = CreateArrowIconMesh();
+        _playerIconMeshFilter = playerIconObj.AddComponent<MeshFilter>();
+        _playerIconMeshFilter.sharedMesh = CreateArrowIconMesh();
         _playerIconRenderer = playerIconObj.AddComponent<MeshRenderer>();
         _playerIconRenderer.sharedMaterial = _runtimePlayerIconMat;
         _playerIconRenderer.shadowCastingMode = ShadowCastingMode.Off;
         _playerIconRenderer.receiveShadows = false;
 
         // 他機ダイヤモンドアイコン
+        _racerIconMeshFilters.Clear();
         _racerIconRenderers.Clear();
         if (_racerTargets.Count > 0)
         {
@@ -1377,6 +1784,7 @@ public class CourseMinimapController : MonoBehaviour
                 rmr.sharedMaterial = _runtimeRacerIconMat;
                 rmr.shadowCastingMode = ShadowCastingMode.Off;
                 rmr.receiveShadows = false;
+                _racerIconMeshFilters.Add(rmf);
                 _racerIconRenderers.Add(rmr);
             }
         }
@@ -1520,6 +1928,224 @@ public class CourseMinimapController : MonoBehaviour
     }
 
     // ──────────────────────────────────────────────
+    // 方式B用：CommandBuffer 直接描画 ＋ 透過オーバーレイ UI 構築
+    // ──────────────────────────────────────────────
+
+    private void SetMinimapRenderersEnabled(bool isEnabled)
+    {
+        if (_roadRenderer != null && _roadRenderer.enabled != isEnabled)
+        {
+            _roadRenderer.enabled = isEnabled;
+        }
+        if (_playerIconRenderer != null && _playerIconRenderer.enabled != isEnabled)
+        {
+            _playerIconRenderer.enabled = isEnabled;
+        }
+        for (int i = 0; i < _racerIconRenderers.Count; i++)
+        {
+            MeshRenderer rmr = _racerIconRenderers[i];
+            if (rmr != null && rmr.enabled != isEnabled)
+            {
+                rmr.enabled = isEnabled;
+            }
+        }
+    }
+
+    private void EnsureModeBOverlayRTAndUI(Camera mainCam)
+    {
+        if (mainCam == null) return;
+
+        Transform oldCamTrans = transform.Find("Minimap_ModeBOverlayCamera");
+        if (oldCamTrans != null)
+        {
+            Camera oldCam = oldCamTrans.GetComponent<Camera>();
+            if (oldCam != null)
+            {
+                oldCam.targetTexture = null;
+                oldCam.enabled = false;
+            }
+            DestroyObjectSafely(oldCamTrans.gameObject);
+        }
+
+        Vector2Int targetSize = CalculateModeBOverlayResolution(mainCam.pixelWidth, mainCam.pixelHeight, _modeBOverlayResolutionScale);
+
+        Transform canvasTrans = transform.Find("Minimap_ModeBOverlayCanvas");
+        if (canvasTrans == null)
+        {
+            GameObject canvasObj = new GameObject("Minimap_ModeBOverlayCanvas")
+            {
+                hideFlags = HideFlags.DontSave
+            };
+            canvasObj.transform.SetParent(transform, false);
+            _modeBOverlayCanvas = canvasObj.AddComponent<Canvas>();
+            _modeBOverlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _modeBOverlayCanvas.sortingOrder = 95;
+
+            GameObject rawImgObj = new GameObject("Minimap_ModeBOverlayRawImage")
+            {
+                hideFlags = HideFlags.DontSave
+            };
+            rawImgObj.transform.SetParent(canvasObj.transform, false);
+            _modeBOverlayRawImage = rawImgObj.AddComponent<RawImage>();
+            _modeBOverlayRawImage.raycastTarget = false;
+            _modeBOverlayRawImage.color = Color.white;
+
+            RectTransform rt = _modeBOverlayRawImage.rectTransform;
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+        }
+        else
+        {
+            _modeBOverlayCanvas = canvasTrans.GetComponent<Canvas>();
+            _modeBOverlayRawImage = canvasTrans.GetComponentInChildren<RawImage>(true);
+        }
+
+        if (_runtimeModeBOverlayMat == null)
+        {
+            Shader overlayShader = Shader.Find("Custom/CourseMinimapOverlayUI");
+            if (overlayShader == null)
+            {
+                overlayShader = Shader.Find("Custom/UI/PremultipliedRawImage");
+            }
+            if (overlayShader != null)
+            {
+                _runtimeModeBOverlayMat = new Material(overlayShader)
+                {
+                    name = "M_CourseMinimap_ModeBOverlayUI_Runtime",
+                    hideFlags = HideFlags.DontSave
+                };
+            }
+        }
+
+        if (_modeBOverlayRawImage != null && _runtimeModeBOverlayMat != null && _modeBOverlayRawImage.material != _runtimeModeBOverlayMat)
+        {
+            _modeBOverlayRawImage.material = _runtimeModeBOverlayMat;
+        }
+
+        if (_modeBOverlayRT == null || _modeBOverlayRTWidth != targetSize.x || _modeBOverlayRTHeight != targetSize.y)
+        {
+            if (_modeBOverlayRawImage != null)
+            {
+                _modeBOverlayRawImage.texture = null;
+            }
+
+            if (_modeBOverlayRT != null)
+            {
+                _modeBOverlayRT.Release();
+                DestroyObjectSafely(_modeBOverlayRT);
+                _modeBOverlayRT = null;
+            }
+
+            RenderTextureFormat rtFormat = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf)
+                ? RenderTextureFormat.ARGBHalf
+                : RenderTextureFormat.ARGB32;
+
+            _modeBOverlayRT = new RenderTexture(targetSize.x, targetSize.y, 16, rtFormat)
+            {
+                name = "RT_CourseMinimap_ModeBOverlay_Runtime",
+                antiAliasing = 1,
+                useMipMap = false,
+                autoGenerateMips = false,
+                filterMode = FilterMode.Bilinear,
+                hideFlags = HideFlags.DontSave
+            };
+            _modeBOverlayRT.Create();
+            _modeBOverlayRTWidth = targetSize.x;
+            _modeBOverlayRTHeight = targetSize.y;
+        }
+
+        if (_modeBOverlayRawImage != null && _modeBOverlayRawImage.texture != _modeBOverlayRT)
+        {
+            _modeBOverlayRawImage.texture = _modeBOverlayRT;
+        }
+    }
+
+    private void RenderModeBOverlayWithCommandBuffer(Camera mainCam)
+    {
+        if (mainCam == null || _hologramPivot == null || _meshRoot == null) return;
+
+        EnsureModeBOverlayRTAndUI(mainCam);
+
+        if (_modeBOverlayCanvas != null)
+        {
+            if (_modeBOverlayCanvas.gameObject.activeSelf != enabled)
+            {
+                _modeBOverlayCanvas.gameObject.SetActive(enabled);
+            }
+            if (_modeBOverlayCanvas.enabled != enabled)
+            {
+                _modeBOverlayCanvas.enabled = enabled;
+            }
+        }
+
+        if (!enabled || _modeBOverlayRT == null) return;
+
+        if (_modeBCommandBuffer == null)
+        {
+            _modeBCommandBuffer = new CommandBuffer { name = "CourseMinimap_ModeBOverlay" };
+        }
+
+        _modeBCommandBuffer.Clear();
+        _modeBCommandBuffer.SetRenderTarget(_modeBOverlayRT);
+        _modeBCommandBuffer.ClearRenderTarget(true, true, Color.clear);
+
+        Matrix4x4 viewMatrix = mainCam.worldToCameraMatrix;
+        Matrix4x4 rawProj;
+        if (mainCam.orthographic)
+        {
+            rawProj = mainCam.projectionMatrix;
+        }
+        else
+        {
+            float renderFov = GetModeBOverlayRenderFov(mainCam);
+            float safeAspect = Mathf.Max(0.01f, mainCam.aspect);
+            float safeNear = Mathf.Max(0.001f, mainCam.nearClipPlane);
+            float safeFar = Mathf.Max(safeNear + 0.1f, mainCam.farClipPlane);
+            rawProj = Matrix4x4.Perspective(renderFov, safeAspect, safeNear, safeFar);
+        }
+        // CommandBuffer直接描画＋RawImage(ScreenSpaceOverlay)表示では renderIntoTexture: false でY軸正立となる
+        Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(rawProj, false);
+        _modeBCommandBuffer.SetViewProjectionMatrices(viewMatrix, projMatrix);
+        _modeBCommandBuffer.SetGlobalVector(WorldSpaceCameraPosId, mainCam.transform.position);
+        float orthoFlag = mainCam.orthographic ? 1f : 0f;
+        float orthoH = mainCam.orthographic ? mainCam.orthographicSize : 0f;
+        float orthoW = orthoH * mainCam.aspect;
+        _modeBCommandBuffer.SetGlobalVector(UnityOrthoParamsId, new Vector4(orthoW, orthoH, 0f, orthoFlag));
+
+        if (_roadMeshFilter != null && _roadMeshFilter.sharedMesh != null && _runtimeRoadMat != null)
+        {
+            _modeBCommandBuffer.DrawMesh(_roadMeshFilter.sharedMesh, _roadMeshFilter.transform.localToWorldMatrix, _runtimeRoadMat, 0, 0, _mpb);
+        }
+
+        if (_runtimeRacerIconMat != null)
+        {
+            int count = Mathf.Min(_racerIconRenderers.Count, _racerIconMeshFilters.Count);
+            for (int i = 0; i < count; i++)
+            {
+                MeshRenderer rmr = _racerIconRenderers[i];
+                MeshFilter rmf = _racerIconMeshFilters[i];
+                if (rmr != null && rmr.gameObject.activeInHierarchy && rmf != null && rmf.sharedMesh != null)
+                {
+                    _modeBCommandBuffer.DrawMesh(rmf.sharedMesh, rmf.transform.localToWorldMatrix, _runtimeRacerIconMat, 0, 0);
+                }
+            }
+        }
+
+        if (_playerIconRenderer != null && _playerIconRenderer.gameObject.activeInHierarchy &&
+            _playerIconMeshFilter != null && _playerIconMeshFilter.sharedMesh != null && _runtimePlayerIconMat != null)
+        {
+            _modeBCommandBuffer.DrawMesh(_playerIconMeshFilter.sharedMesh, _playerIconMeshFilter.transform.localToWorldMatrix, _runtimePlayerIconMat, 0, 0);
+        }
+
+        RenderTexture prevActive = RenderTexture.active;
+        Graphics.ExecuteCommandBuffer(_modeBCommandBuffer);
+        RenderTexture.active = prevActive;
+    }
+
+    // ──────────────────────────────────────────────
     // 毎フレームの座標・回転・モード切り替え更新
     // ──────────────────────────────────────────────
 
@@ -1544,6 +2170,8 @@ public class CourseMinimapController : MonoBehaviour
         }
 
         bool isModeA = (_displayMode == MinimapDisplayMode.ModeA_RenderTexture);
+        Camera mainCam = Camera.main;
+        bool useModeBOverlay = !isModeA && _bypassPostEffectsInModeB && mainCam != null;
 
         if (_subCamera != null)
         {
@@ -1562,17 +2190,30 @@ public class CourseMinimapController : MonoBehaviour
             _uiCanvas.gameObject.SetActive(isModeA);
         }
 
+        if (!useModeBOverlay)
+        {
+            if (_modeBOverlayCanvas != null && _modeBOverlayCanvas.gameObject.activeSelf)
+            {
+                _modeBOverlayCanvas.gameObject.SetActive(false);
+            }
+            if (_modeBOverlayRT != null || _modeBCommandBuffer != null)
+            {
+                ReleaseModeBOverlayRenderTextureSafely();
+            }
+        }
+
+        SetMinimapRenderersEnabled(!useModeBOverlay);
+
         int targetLayer = isModeA ? _minimapLayer : 0;
         SetLayerRecursively(_hologramPivot.gameObject, targetLayer);
 
-        Camera mainCam = Camera.main;
         if (isModeA)
         {
             ApplyMainCameraCullingMaskExclusion();
         }
         else
         {
-            // 方式B（3Dミニチュア）になったらメインカメラのCullingMaskを元通り復元
+            // 方式BはCommandBuffer直接描画または通常描画のためメインカメラのCullingMaskを復元
             RestoreMainCameraCullingMask();
         }
 
@@ -1618,24 +2259,30 @@ public class CourseMinimapController : MonoBehaviour
         {
             // ── 【方式B】メインカメラの画面左下（コックピット前）に3Dミニチュアを直接浮かべる ──
             Transform camTrans = mainCam != null ? mainCam.transform : (_playerTarget != null ? _playerTarget : transform);
+            float fovScale = useModeBOverlay ? 1f : GetModeBFovCompensationScale(mainCam);
 
             // ※重要：Unity左手系において、カメラの目の前にある模型を「手前が下、奥（進行方向）が上」に見下ろすように傾けるには、
             // カメラ回転(+Pitch)の逆変換である「-_pitchAngle」をX軸に掛ける必要がある！
             Quaternion pitchRot = Quaternion.Euler(-_pitchAngle, 0f, 0f);
             Quaternion invYawRot = Quaternion.Euler(0f, -_currentSmoothYaw, 0f);
 
-            _hologramPivot.position = camTrans.TransformPoint(_miniatureScreenOffset);
+            Vector3 compensatedOffset = new Vector3(
+                _miniatureScreenOffset.x * fovScale,
+                _miniatureScreenOffset.y * fovScale,
+                _miniatureScreenOffset.z);
+
+            _hologramPivot.position = camTrans.TransformPoint(compensatedOffset);
             _hologramPivot.rotation = camTrans.rotation * pitchRot * invYawRot;
 
             if (isWholeCourse)
             {
-                float autoScale = _wholeCourseMiniatureApparentSize / Mathf.Max(10f, _courseBoundingRadius * 2f);
+                float autoScale = (_wholeCourseMiniatureApparentSize * fovScale) / Mathf.Max(10f, _courseBoundingRadius * 2f);
                 _hologramPivot.localScale = Vector3.one * autoScale;
                 _meshRoot.localPosition = -_courseWorldBounds.center;
             }
             else
             {
-                _hologramPivot.localScale = Vector3.one * _miniatureScale;
+                _hologramPivot.localScale = Vector3.one * (_miniatureScale * fovScale);
                 _meshRoot.localPosition = -playerPos;
             }
 
@@ -1644,7 +2291,7 @@ public class CourseMinimapController : MonoBehaviour
         }
     }
 
-    private void UpdateIconsAndShaderProperties()
+    private void UpdateIconsAndShaderProperties(bool allowOverlayRender = true)
     {
         if (_hologramPivot == null || _meshRoot == null) return;
 
@@ -1690,7 +2337,7 @@ public class CourseMinimapController : MonoBehaviour
         }
 
         // 3. ZTest 切り替え
-        bool useAlwaysZ = (_displayMode == MinimapDisplayMode.ModeB_3DMiniature && _alwaysOnTopInModeB);
+        bool useAlwaysZ = (_displayMode == MinimapDisplayMode.ModeB_3DMiniature && (_alwaysOnTopInModeB || _bypassPostEffectsInModeB));
         float zTestValue = useAlwaysZ ? (float)CompareFunction.Always : (float)CompareFunction.LessEqual;
 
         if (_runtimeRoadMat != null) _runtimeRoadMat.SetFloat(ZTestId, zTestValue);
@@ -1719,6 +2366,15 @@ public class CourseMinimapController : MonoBehaviour
             _mpb.SetFloat(IsCylinderId, isCylinderFloat);
             _mpb.SetFloat(CylinderWireCountId, _cylinderWireCount);
             _roadRenderer.SetPropertyBlock(_mpb);
+        }
+
+        if (allowOverlayRender && _displayMode == MinimapDisplayMode.ModeB_3DMiniature && _bypassPostEffectsInModeB && enabled && _hologramPivot.gameObject.activeInHierarchy)
+        {
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                RenderModeBOverlayWithCommandBuffer(mainCam);
+            }
         }
     }
 
@@ -1759,6 +2415,13 @@ public class CourseMinimapController : MonoBehaviour
         // 子オブジェクト（SubCamera含む）を破棄する前に、RenderTexture参照を安全に外す
         if (_subCamera != null) _subCamera.targetTexture = null;
         if (_uiRawImage != null) _uiRawImage.texture = null;
+        if (_modeBOverlayRawImage != null) _modeBOverlayRawImage.texture = null;
+        Transform oldCamTrans = transform.Find("Minimap_ModeBOverlayCamera");
+        if (oldCamTrans != null)
+        {
+            Camera oldCam = oldCamTrans.GetComponent<Camera>();
+            if (oldCam != null) oldCam.targetTexture = null;
+        }
 
         // 子階層の動的生成された Mesh インスタンスを重複なく安全に破棄する
         HashSet<Mesh> meshesToDestroy = new HashSet<Mesh>();
@@ -1785,11 +2448,16 @@ public class CourseMinimapController : MonoBehaviour
 
         _hologramPivot = null;
         _meshRoot = null;
+        _roadMeshFilter = null;
         _roadRenderer = null;
+        _playerIconMeshFilter = null;
         _playerIconRenderer = null;
+        _racerIconMeshFilters.Clear();
         _racerIconRenderers.Clear();
         _subCamera = null;
         _uiCanvas = null;
         _uiRawImage = null;
+        _modeBOverlayCanvas = null;
+        _modeBOverlayRawImage = null;
     }
 }

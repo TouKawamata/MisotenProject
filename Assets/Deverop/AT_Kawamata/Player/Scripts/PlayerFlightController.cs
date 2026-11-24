@@ -51,6 +51,10 @@ public class PlayerFlightController : MonoBehaviour
     // コースの上下方向への押し出し（爆風など、ApplyPushで上下の成分があるとき）。横ずれと同じくLateralPushを使い回す。
     private readonly LateralPush _verticalPush = new LateralPush();
 
+    // ApplyPlanarPushで、断面の成分がこれ（m）より短ければ向きが決まらないとみなし、コースの中央側へ押し出す
+    // （BoostHitDetectorの、左右が決まらないとみなす距離と同じ）。
+    private const float UndeterminedPlanarPushLength = 0.05f;
+
     // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。CPUの入力（判断）などが読む。
     public ICourseGuide Guide => _guide;
 
@@ -435,6 +439,38 @@ public class PlayerFlightController : MonoBehaviour
         StartPushIfNeeded(_forwardPush, Vector3.Dot(unit, _playerForward) * distance, duration);
         StartPushIfNeeded(_lateralPush, Vector3.Dot(unit, _guide.GetRight(position)) * distance, duration);
         StartPushIfNeeded(_verticalPush, Vector3.Dot(unit, _guide.GetUp(position)) * distance, duration);
+    }
+
+    // コースの断面（左右・上下）の、directionの向きへdistance（m）をduration秒かけて押し出す（爆風など）。
+    // 機首の向きの成分は使わず、距離は全部上下左右へ使う（ApplyPushと違い、真後ろから押されても横へしっかり動く）。
+    // directionの断面の成分がUndeterminedPlanarPushLength未満で向きが決まらないときは、コースの中央側へ押し出す
+    // （ApplyLateralPushと同じく、壁際で外へ押し出されるのを防ぐ）。中央にいて、それも決まらなければ右へ押し出す。
+    // 押し出している途中で呼ばれたら、そこから押し出し直す（成分が小さい向きは、そのまま続ける）。
+    public void ApplyPlanarPush(Vector3 direction, float distance, float duration)
+    {
+        if (_guide == null || distance <= 0f)
+        {
+            return;
+        }
+
+        Vector3 position = transform.position;
+        Vector3 right = _guide.GetRight(position);
+        Vector3 up = _guide.GetUp(position);
+
+        Vector2 planar = new Vector2(Vector3.Dot(direction, right), Vector3.Dot(direction, up));
+        if (planar.magnitude < UndeterminedPlanarPushLength)
+        {
+            Vector3 offsetToCenter = _guide.GetCenterPosition(position) - position;
+            planar = new Vector2(Vector3.Dot(offsetToCenter, right), Vector3.Dot(offsetToCenter, up));
+            if (planar.magnitude < UndeterminedPlanarPushLength)
+            {
+                planar = Vector2.right;
+            }
+        }
+
+        planar.Normalize();
+        StartPushIfNeeded(_lateralPush, planar.x * distance, duration);
+        StartPushIfNeeded(_verticalPush, planar.y * distance, duration);
     }
 
     private static void StartPushIfNeeded(LateralPush push, float signedDistance, float duration)

@@ -1503,8 +1503,26 @@ namespace AT_Murayama.PlayerStatusUI.Editor
                 SceneView.RepaintAll();
             }
 
+            EditorGUILayout.Space(4);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                Color prevHideBg = GUI.backgroundColor;
+                GUI.backgroundColor = controller.HideOutsideRacing ? new Color(0.45f, 0.95f, 0.65f) : new Color(0.95f, 0.80f, 0.55f);
+                string raceHideLabel = controller.HideOutsideRacing
+                    ? "🏁 レース中のみ表示: [ ON (カウントダウン中・ゴール後は非表示) ]"
+                    : "🏁 レース中のみ表示: [ OFF (常時表示) ]";
+                if (GUILayout.Button(raceHideLabel, GUILayout.Height(24)))
+                {
+                    Undo.RecordObject(controller, "Toggle StatusUI Hide Outside Racing");
+                    controller.HideOutsideRacing = !controller.HideOutsideRacing;
+                    EditorUtility.SetDirty(controller);
+                    SceneView.RepaintAll();
+                }
+                GUI.backgroundColor = prevHideBg;
+            }
+
             EditorGUILayout.Space(6);
-            if (GUILayout.Button("🧪 全UIシステム・上下移動＆発射ポーズ 自動テストを実行 (全13項目)", GUILayout.Height(24)))
+            if (GUILayout.Button("🧪 全UIシステム・上下移動＆発射ポーズ・表示条件 自動テストを実行 (全14項目)", GUILayout.Height(24)))
             {
                 UILayoutSystemTest.RunAllTestsAndSaveLog();
             }

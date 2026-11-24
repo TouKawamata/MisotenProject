@@ -22,6 +22,9 @@ public class BoostPresentation : MonoBehaviour
     [Tooltip("前方のshild_01の見た目（FrontShellの中）")]
     [SerializeField] private ShieldShellView _frontShellView;
 
+    [Tooltip("足裏・背中のブースト炎エフェクト（BoostFlameView）")]
+    [SerializeField] private BoostFlameView _flameView;
+
     private void Awake()
     {
         if (_playerManager == null)
@@ -66,6 +69,11 @@ public class BoostPresentation : MonoBehaviour
         {
             _frontShellView.Show();
         }
+
+        if (_flameView != null)
+        {
+            _flameView.SetBoosting(true);
+        }
     }
 
     private void StopBoostEffect()
@@ -88,6 +96,11 @@ public class BoostPresentation : MonoBehaviour
         if (_frontShellView != null)
         {
             _frontShellView.Hide();
+        }
+
+        if (_flameView != null)
+        {
+            _flameView.SetBoosting(false);
         }
     }
 }

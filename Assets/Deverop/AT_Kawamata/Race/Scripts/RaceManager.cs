@@ -46,6 +46,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
     private RaceProgressTracker _progressTracker;
     private RacerContactResolver _contactResolver;
     private RacerEntry _playerEntry;
+    private int _playerGridIndex; // RaceSettingsのPlacePlayerLastを反映した、実際のPlayerのグリッド番号
     private IRaceIntro _raceIntro;
     private CancellationTokenSource _cancellationTokenSource;
 
@@ -95,7 +96,8 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
 
         _entries.Clear();
         _racerDataList.Clear();
-        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName, _playerManager.Transform), _settings.PlayerGridIndex);
+        _playerGridIndex = _settings.PlacePlayerLast ? CountJoinableCpus() : _settings.PlayerGridIndex;
+        _playerEntry = new RacerEntry(_playerManager, new RacerData(PlayerRacerId, true, PlayerDisplayName, _playerManager.Transform), _playerGridIndex);
         AddEntry(_playerEntry);
         AddCpuEntries();
         SetupCourseRoutes();
@@ -170,6 +172,27 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
         _racerDataList.Add(entry.Data);
     }
 
+    // 参加できるCPU（未設定でなく、IRacerを持つ）の数。Playerを一番後ろに置くとき、そのグリッド番号に使う。
+    // 判定はAddCpuEntriesと同じにする（ずれるとPlayerの後ろに空きができる）。ログはAddCpuEntries側で出す。
+    private int CountJoinableCpus()
+    {
+        if (_cpuRacers == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        foreach (GameObject cpuObject in _cpuRacers)
+        {
+            if (cpuObject != null && cpuObject.TryGetComponent(out IRacer _))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     // CPUはPlayerのグリッド番号を飛ばして、0番から順に空いているグリッドへ割り当てる。RacerIdは1から振る。
     // CPUManagerは、Playerと同じくここで初期化する（DummyRacerは自分のStartで初期化するので呼ばない）。
     private void AddCpuEntries()
@@ -202,7 +225,7 @@ public class RaceManager : MonoBehaviour, IInitializable, IStartable, ITickable,
                 cpu.Initialize();
             }
 
-            if (gridIndex == _settings.PlayerGridIndex)
+            if (gridIndex == _playerGridIndex)
             {
                 gridIndex++;
             }

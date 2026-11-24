@@ -8,12 +8,18 @@ public class TrackingRaceInputBootstrapper : MonoBehaviour {
 	[SerializeField] private RaceInputProvider _raceInputProvider;
 	// 姿勢データの取得元。未指定ならシーン内から自動検索する。
 	[SerializeField] private PoseLandmarkReceiver _poseLandmarkReceiver;
-	// トラッキング入力の判定に使う調整用パラメータ。
+	[Tooltip("判定の調整値のアセット。指定すると下の Tracking Settings より優先する（PoseTest と同じアセットを使うと、調整した値がそのまま反映される）")]
+	[SerializeField] private TrackingRaceInputSettingsAsset _settingsAsset;
+	// トラッキング入力の判定に使う調整用パラメータ（アセットが未指定のときだけ使う）。
 	[SerializeField] private TrackingRaceInputSettings _trackingSettings = new TrackingRaceInputSettings();
 
+	[Header("キーボード")]
+	[Tooltip("ONにすると、トラッキングと一緒にキーボードでも操作できる（カメラが無い環境でのテスト用。ボタンはどちらか一方で押した扱い）")]
+	[SerializeField] private bool _allowKeyboard = true;
+
 	[Header("デバッグ")]
-	[Tooltip("ONにするとトラッキングの代わりにキーボード入力を使う（デバッグ用）")]
-	// ONの場合、トラッキングが使える状態でもキーボード入力を優先して使う（動作確認用のフラグ）。
+	[Tooltip("ONにするとトラッキングを使わず、キーボード入力だけを使う（デバッグ用）")]
+	// ONの場合、トラッキングが使える状態でもキーボード入力だけを使う（動作確認用のフラグ）。
 	[SerializeField] private bool _useKeyboardForDebug = false;
 
 	// シーン開始時に、使用する入力元（キーボード／トラッキング）を決定してRaceInputProviderへ設定する。
@@ -42,7 +48,14 @@ public class TrackingRaceInputBootstrapper : MonoBehaviour {
 		}
 		// 判定：PoseLandmarkReceiverが見つかっているか（見つかっていればトラッキング入力を使う）
 		else if (_poseLandmarkReceiver != null) {
-			input = new TrackingRaceInput(_poseLandmarkReceiver, _trackingSettings);
+			TrackingRaceInputSettings settings = TrackingRaceInputSettingsAsset.Resolve(_settingsAsset, _trackingSettings);
+			IRaceInput tracking = new TrackingRaceInput(_poseLandmarkReceiver, settings);
+			// 判定：キーボードとの併用を許可しているか（許可していればトラッキング＋キーボード）
+			if (_allowKeyboard) {
+				input = new CombinedRaceInput(tracking, new KeyboardRaceInput());
+			} else {
+				input = tracking;
+			}
 		}
 		// どちらにも当てはまらない場合（トラッキング機材／Python側が未起動などでReceiverが見つからない）
 		else {

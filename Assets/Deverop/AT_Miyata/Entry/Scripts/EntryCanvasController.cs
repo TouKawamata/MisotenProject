@@ -57,6 +57,10 @@ public class EntryCanvasController : MonoBehaviour {
 	private AnimState _textState = AnimState.None;
 	private float _textTimer = 0.0f;
 
+	// テキスト（[0]）がターゲットに着いたか（バウンドの前）。StartEffect・ResetEffect で false に戻る。
+	// EntryTrackingFlow が、合図のメッセージをテキストの進入に合わせて出すために使う。
+	public bool IsTextArrived { get; private set; }
+
 
 	void Awake() {
 		InitBackground();
@@ -88,6 +92,7 @@ public class EntryCanvasController : MonoBehaviour {
 
 		_textState = AnimState.None;
 		_textTimer = 0.0f;
+		IsTextArrived = false;
 		for (int i = 0; i < _textImages.Length; i++) {
 			_textImages[i].SetActive(true);
 			_textRects[i].anchoredPosition = _textStart;
@@ -214,6 +219,7 @@ public class EntryCanvasController : MonoBehaviour {
 			}
 			_textState = AnimState.BounceBack;
 			_textTimer = 0.0f;
+			IsTextArrived = true;
 		}
 	}
 
