@@ -368,6 +368,7 @@ GameObject:
   - component: {fileID: 6747192323898554032}
   - component: {fileID: -4873916896732503476}
   - component: {fileID: 790323456299854614}
+  - component: {fileID: 9030891526091597759}
   m_Layer: 6
   m_Name: CPURacer
   m_TagString: Untagged
@@ -613,6 +614,33 @@ MonoBehaviour:
   - {fileID: 6775720404958420846}
   _backFlames:
   - {fileID: 7683382077871339617}
+--- !u!114 &9030891526091597759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5df6c92ca2c0cf9449cf67404e6e589c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AT_Murayama.PlayerAnimation.RacerAnimationController
+  _profile: {fileID: 11400000, guid: 13599c2f44f7dca4c807299ab4e2853a, type: 2}
+  _characterAnimator: {fileID: 7733978675086784249}
+  _applyProfileControllerOnEnable: 1
+  _enforceDisableRootMotion: 1
+  _racerManager: {fileID: -3036962201299618520}
+  _flightController: {fileID: 4748799226068538865}
+  _raceManager: {fileID: 0}
+  _ignoreUnassignedClipTriggers: 1
+  _standaloneInitialPhase: 0
+  _useManualTestOverride: 0
+  _manualIsRacing: 0
+  _manualMoveInput: {x: 0, y: 0}
+  _manualIsStunned: 0
+  _manualIsBoosting: 0
+  _manualIsShielding: 0
 --- !u!1001 &1401646370850267387
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -828,7 +856,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -6054578209280739145, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8105358156750741879}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7733978675086784249}
   m_SourcePrefab: {fileID: 100100000, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
 --- !u!4 &1978205652508545922 stripped
 Transform:
@@ -840,6 +871,33 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
   m_PrefabInstance: {fileID: 3497659450451372853}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4344644798024259172 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
+  m_PrefabInstance: {fileID: 3497659450451372853}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &7733978675086784249
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4344644798024259172}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &7031824042971742923 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3378790397994014210, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
