@@ -9,6 +9,7 @@ public sealed class RaceResultTransition : MonoBehaviour
     [SerializeField] private TMP_FontAsset _font;
     [SerializeField, Min(0.1f)] private float _closeSeconds = 0.65f;
     [SerializeField, Min(0f)] private float _titleHoldSeconds = 0.85f;
+    [SerializeField] private Color _stripeColor = new Color(1f, 0.94f, 0f);
     private GameObject _overlay;
 
     public IEnumerator PlayExit()
@@ -46,7 +47,7 @@ public sealed class RaceResultTransition : MonoBehaviour
         titleGroup.alpha = 1;
         title.rectTransform.localScale = Vector3.one;
         title.rectTransform.localRotation = Quaternion.Euler(0, 0, 5);
-        RectTransform stripe = Panel("Yellow slash", new Vector2(-2400, -140), new Vector2(3000, 110), new Color(1, 0.94f, 0));
+        RectTransform stripe = Panel("Result stripe", new Vector2(-2400, -140), new Vector2(3000, 110), _stripeColor);
         stripe.localRotation = Quaternion.Euler(0, 0, 5);
         var subtitle = Label("RACE RESULT", new Vector2(0, -140), 36, Color.black);
         subtitle.rectTransform.localRotation = Quaternion.Euler(0, 0, 5);

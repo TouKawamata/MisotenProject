@@ -542,7 +542,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -588,7 +588,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1955861482}
   _frameObject: {fileID: 1429560103}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &41464813
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -868,7 +868,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7579346307484195628, guid: c3e3d77412c90464c9aead516bf2e633, type: 3}
       propertyPath: m_text
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8192949680098977770, guid: c3e3d77412c90464c9aead516bf2e633, type: 3}
       propertyPath: m_Name
@@ -1038,7 +1038,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 263a30bb71dc24e4395422cd87581423, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AT_Murayama.PlayerStatusUI.PlayerPoseStatusUIController
   _playerManager: {fileID: 900000002}
   _flightController: {fileID: 858414687}
@@ -3379,6 +3379,1173 @@ MonoBehaviour:
       boneName: thumb_R0_2_jnt
       localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
       localPosition: {x: 0.07661018, y: 0, z: -2.8421708e-15}
+  - state: 6
+    displayLabel: MOVE UP
+    transitionSpeed: 11
+    mainHoloColor: {r: 0, g: 2.6, b: 3.6, a: 0.85}
+    rimGlowColor: {r: 0.5, g: 4.2, b: 4.6, a: 0.95}
+    accentColor: {r: 0.3, g: 4.2, b: 3.8, a: 1}
+    modelRootRotationOffset: {x: -12, y: 0, z: 0}
+    modelRootPositionOffset: {x: 0, y: 0, z: 0}
+    boneSnapshots:
+    - bonePath: mainRig
+      boneName: mainRig
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org
+      boneName: jnt_org
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt
+      boneName: spine_C0_0_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 1.4540075e-17, y: 2.6562128, z: -0.020839166}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt
+      boneName: leg_L0_0_jnt
+      localRotation: {x: 0.54712653, y: 0.44733292, z: 0.5484438, w: 0.44693986}
+      localPosition: {x: -0.20196189, y: -0.12904179, z: -0.000063896645}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt
+      boneName: leg_L0_1_jnt
+      localRotation: {x: -2.7896522e-16, y: 2.584738e-16, z: 7.214513e-32, w: 1}
+      localPosition: {x: -0.39008602, y: -0.000000015095878, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt
+      boneName: leg_L0_2_jnt
+      localRotation: {x: -1.3492896e-16, y: -5.0350307e-16, z: -1.7347102e-18, w: 1}
+      localPosition: {x: -0.39244065, y: -0.000000019184686, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt
+      boneName: leg_L0_3_jnt
+      localRotation: {x: -5.681499e-26, y: 1.0206747e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: -0.3688942, y: -0.00000007526273, z: 3.5527136e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt
+      boneName: leg_L0_4_jnt
+      localRotation: {x: -0.0010987386, y: -0.0030315805, z: 0.16181384, w: 0.9868161}
+      localPosition: {x: -0.023546416, y: -0.000000032216118, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt
+      boneName: leg_L0_5_jnt
+      localRotation: {x: 3.0291986e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: -0.021179413, y: -0.0002322302, z: 0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt
+      boneName: leg_L0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.33183116, y: -0.00000027907038, z: -0.000000005869296}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt
+      boneName: leg_L0_7_jnt
+      localRotation: {x: -3.8781346e-11, y: 8.337982e-22, z: -3.4695404e-18, w: 1}
+      localPosition: {x: -0.3530117, y: 0.000000059026068, z: -0.000000008940524}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt
+      boneName: leg_L0_8_jnt
+      localRotation: {x: -6.025225e-11, y: -0.00000028829578, z: -0.0000027326234, w: 1}
+      localPosition: {x: -0.33183116, y: 0.00000032568116, z: -0.0000000350644}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt
+      boneName: leg_L0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: -0.021180686, y: 0.00000014402562, z: -0.000000015008288}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt
+      boneName: foot_L0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: -0.18146753, y: 0.17238927, z: -0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt/foot_L0_1_jnt
+      boneName: foot_L0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: -0.1574813, y: 7.105427e-17, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt
+      boneName: leg_R0_0_jnt
+      localRotation: {x: -0.44511876, y: 0.54998755, z: -0.4491445, w: 0.54557514}
+      localPosition: {x: 0.20196189, y: -0.12904176, z: -0.000063895815}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt
+      boneName: leg_R0_1_jnt
+      localRotation: {x: 2.4221077e-16, y: 3.9467077e-17, z: 1.7347169e-18, w: 1}
+      localPosition: {x: 0.39008605, y: 0.000000015095877, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt
+      boneName: leg_R0_2_jnt
+      localRotation: {x: -1.3061926e-16, y: -5.9412585e-17, z: 1.9852335e-23, w: 1}
+      localPosition: {x: 0.39244056, y: 0.000000019184666, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt
+      boneName: leg_R0_3_jnt
+      localRotation: {x: -5.4210496e-20, y: 6.983786e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: 0.36889425, y: 0.00000007526273, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt
+      boneName: leg_R0_4_jnt
+      localRotation: {x: -0.0005013031, y: 0.0029961166, z: 0.16181758, w: 0.98681605}
+      localPosition: {x: 0.023546416, y: 0.000000032216118, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt
+      boneName: leg_R0_5_jnt
+      localRotation: {x: 3.0291938e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: 0.021179413, y: 0.0002322302, z: -0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt
+      boneName: leg_R0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.3318311, y: 0.00000027907035, z: 0.0000000058692944}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt
+      boneName: leg_R0_7_jnt
+      localRotation: {x: -3.8780472e-11, y: -4.22193e-21, z: -3.4693814e-18, w: 1}
+      localPosition: {x: 0.35301182, y: -0.00000005902608, z: 0.000000008940527}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt
+      boneName: leg_R0_8_jnt
+      localRotation: {x: -6.025288e-11, y: -0.00000028829558, z: -0.0000027326214, w: 1}
+      localPosition: {x: 0.3318311, y: -0.00000032568101, z: 0.000000035064385}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt
+      boneName: leg_R0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: 0.021180708, y: -0.0000001440257, z: 0.000000015008297}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt
+      boneName: foot_R0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: 0.18146753, y: -0.17238927, z: 0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt/foot_R0_1_jnt
+      boneName: foot_R0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: 0.1574813, y: -1.0658141e-16, z: -1.847411e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt
+      boneName: spine_C0_1_jnt
+      localRotation: {x: -0.0871394, y: 0.000111579895, z: 0.0016836671, w: 0.9961948}
+      localPosition: {x: 1.4032379e-25, y: 0.14235362, z: 9.325873e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt
+      boneName: spine_C0_2_jnt
+      localRotation: {x: -0.06974342, y: 0.00008930308, z: 0.001347553, w: 0.9975641}
+      localPosition: {x: 2.1563215e-25, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt
+      boneName: spine_C0_3_jnt
+      localRotation: {x: -0.06974335, y: 0.000089295594, z: 0.0013475489, w: 0.9975641}
+      localPosition: {x: 2.9742934e-26, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt
+      boneName: spine_C0_4_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -3.8569892e-25, y: 0.14235362, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt
+      boneName: neck_C0_0_jnt
+      localRotation: {x: 0.038141206, y: 0.0005297806, z: 0.002299176, w: 0.9992696}
+      localPosition: {x: -7.045402e-17, y: 0.47889334, z: -0.13659059}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt
+      boneName: neck_C0_1_jnt
+      localRotation: {x: -0.0656941, y: 0, z: -0, w: 0.9978398}
+      localPosition: {x: 2.6032409e-31, y: 0.13079546, z: -0.009323235}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt
+      boneName: neck_C0_2_jnt
+      localRotation: {x: -0.09835827, y: 0, z: -0, w: 0.9951511}
+      localPosition: {x: -6.153115e-31, y: 0.13087915, z: -0.007959284}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt/neck_C0_head_jnt
+      boneName: neck_C0_head_jnt
+      localRotation: {x: 0.0039580716, y: -0, z: -0, w: 0.9999922}
+      localPosition: {x: 4.9698237e-31, y: 0.013953757, z: 0.000110462526}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt
+      boneName: shoulder_L0_shoulder_jnt
+      localRotation: {x: -0.6731062, y: -0.19978717, z: -0.18674037, w: 0.6871253}
+      localPosition: {x: -0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt
+      boneName: arm_L0_0_jnt
+      localRotation: {x: -0.058074668, y: -0.2967819, z: -0.039024286, w: 0.95237863}
+      localPosition: {x: -0.3250718, y: -0.0006963652, z: -0.013850678}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt
+      boneName: arm_L0_1_jnt
+      localRotation: {x: 5.412337e-16, y: -1.8205923e-15, z: 5.89806e-17, w: 1}
+      localPosition: {x: -0.173481, y: -0.00000005257822, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt
+      boneName: arm_L0_2_jnt
+      localRotation: {x: -5.551115e-17, y: -2.0088098e-15, z: 5.551126e-17, w: 1}
+      localPosition: {x: -0.17452818, y: -0.000000066363704, z: 1.7053025e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt
+      boneName: arm_L0_3_jnt
+      localRotation: {x: -1.3877741e-17, y: -1.0408404e-17, z: 0.0000045198753, w: 1}
+      localPosition: {x: -0.16405647, y: -0.00000028765186, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt
+      boneName: arm_L0_4_jnt
+      localRotation: {x: -0.1385043, y: -0.12830569, z: 0.10634836, w: 0.9762399}
+      localPosition: {x: -0.01047168, y: -0.00000011601895, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt
+      boneName: arm_L0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651305, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: -0.012056406, y: -0.00047580193, z: -0.000000002965882}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt
+      boneName: arm_L0_6_jnt
+      localRotation: {x: -0.000008069359, y: 0.000000034204927, z: 0.0000038474864, w: 1}
+      localPosition: {x: -0.18903093, y: -0.0000011808963, z: 0.000000006588566}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt
+      boneName: arm_L0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.20109664, y: -0.00000006783208, z: 0.000000010296096}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt
+      boneName: arm_L0_8_jnt
+      localRotation: {x: 0.000008082723, y: 0.00000060867825, z: -0.0000011159336, w: 1}
+      localPosition: {x: -0.18903093, y: 0.000000057055242, z: 0.000000044634138}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt
+      boneName: arm_L0_end_jnt
+      localRotation: {x: 0.000021347238, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: -0.01206579, y: 0.000000039244064, z: 0.000000018003169}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt
+      boneName: meta_L0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: -0.06490417, y: -0.08140984, z: -0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt
+      boneName: finger_L0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: -0.021059746, y: 0.0042917267, z: 0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt
+      boneName: finger_L0_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -1.2143064e-16, z: 7.13405e-17, w: 1}
+      localPosition: {x: -0.08797966, y: -1.2505552e-14, z: -4.2632563e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt/finger_L0_2_jnt
+      boneName: finger_L0_2_jnt
+      localRotation: {x: -3.400058e-16, y: -1.3183898e-16, z: 4.3584927e-17, w: 1}
+      localPosition: {x: -0.05202929, y: -7.958079e-15, z: -3.1974422e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt
+      boneName: meta_L0_1_jnt
+      localRotation: {x: -5.303375e-16, y: -3.26514e-14, z: -4.2882364e-15, w: 1}
+      localPosition: {x: -0.04346044, y: -1.1368684e-15, z: -1.1368684e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt
+      boneName: finger_L1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: -0.030936847, y: 0.008699009, z: 0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt
+      boneName: finger_L1_1_jnt
+      localRotation: {x: -4.787837e-16, y: 5.551115e-17, z: -3.1008182e-17, w: 1}
+      localPosition: {x: -0.08826504, y: 1.1368684e-15, z: -4.973799e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt/finger_L1_2_jnt
+      boneName: finger_L1_2_jnt
+      localRotation: {x: 3.5229298e-17, y: -5.1681156e-17, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: -0.058172524, y: 7.389644e-15, z: 8.171241e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt
+      boneName: meta_L0_2_jnt
+      localRotation: {x: 8.2507785e-16, y: 2.5666535e-14, z: -3.2265857e-14, w: 1}
+      localPosition: {x: -0.04346044, y: 1.1368684e-15, z: 1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt
+      boneName: finger_L2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: -0.040071946, y: 0.004437097, z: 0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt
+      boneName: finger_L2_1_jnt
+      localRotation: {x: -1.179612e-16, y: -2.7755576e-17, z: -6.071532e-18, w: 1}
+      localPosition: {x: -0.08356581, y: -8.526512e-15, z: -6.0396133e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt/finger_L2_2_jnt
+      boneName: finger_L2_2_jnt
+      localRotation: {x: -1.179612e-16, y: -3.469447e-17, z: -1.2143064e-17, w: 1}
+      localPosition: {x: -0.059481982, y: 5.684342e-16, z: 1.7408296e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt
+      boneName: meta_L0_3_jnt
+      localRotation: {x: 8.2515917e-16, y: 2.5666969e-14, z: -3.2272796e-14, w: 1}
+      localPosition: {x: -0.04346044, y: -2.2737367e-15, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt
+      boneName: finger_L3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: -0.041693, y: -0.0038676157, z: 0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt
+      boneName: finger_L3_1_jnt
+      localRotation: {x: -1.8735014e-16, y: -1.9428903e-16, z: 4.8572257e-17, w: 1}
+      localPosition: {x: -0.06989477, y: 2.2737367e-15, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt/finger_L3_2_jnt
+      boneName: finger_L3_2_jnt
+      localRotation: {x: -1.4571677e-16, y: -2.220446e-16, z: 8.500145e-17, w: 1}
+      localPosition: {x: -0.043147687, y: -1.7053025e-15, z: 2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt
+      boneName: thumb_L0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: -0.015320348, y: -0.016172893, z: 0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt
+      boneName: thumb_L0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: -0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt/thumb_L0_2_jnt
+      boneName: thumb_L0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: -0.07661018, y: 1.4210854e-16, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt
+      boneName: shoulder_R0_shoulder_jnt
+      localRotation: {x: 0.6871253, y: 0.18674037, z: -0.19978717, w: 0.6731062}
+      localPosition: {x: 0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt
+      boneName: arm_R0_0_jnt
+      localRotation: {x: -0.05642811, y: -0.29437664, z: -0.04264309, w: 0.9530686}
+      localPosition: {x: 0.3250718, y: 0.00069635874, z: 0.013850677}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt
+      boneName: arm_R0_1_jnt
+      localRotation: {x: 5.551115e-16, y: -2.1121126e-14, z: 3.4695e-18, w: 1}
+      localPosition: {x: 0.17348105, y: 0.00000005257825, z: -7.958079e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt
+      boneName: arm_R0_2_jnt
+      localRotation: {x: 5.828671e-16, y: -2.0469737e-14, z: 6.938947e-18, w: 1}
+      localPosition: {x: 0.17452812, y: 0.00000006636367, z: -5.6843415e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt
+      boneName: arm_R0_3_jnt
+      localRotation: {x: 1.3877756e-17, y: 6.938957e-18, z: 0.0000045198753, w: 1}
+      localPosition: {x: 0.16405651, y: 0.00000028765191, z: -6.82121e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt
+      boneName: arm_R0_4_jnt
+      localRotation: {x: -0.14206257, y: -0.122862086, z: 0.108441755, w: 0.97619855}
+      localPosition: {x: 0.01047168, y: 0.00000011601895, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt
+      boneName: arm_R0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651302, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: 0.012056406, y: 0.00047580193, z: 0.0000000029658809}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt
+      boneName: arm_R0_6_jnt
+      localRotation: {x: -0.000008069358, y: 0.000000034204916, z: 0.0000038474864, w: 1}
+      localPosition: {x: 0.18903089, y: 0.000001180896, z: -0.000000006588563}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt
+      boneName: arm_R0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.2010967, y: 0.00000006783213, z: -0.000000010296099}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt
+      boneName: arm_R0_8_jnt
+      localRotation: {x: 0.000008082721, y: 0.00000060867796, z: -0.0000011159331, w: 1}
+      localPosition: {x: 0.18903089, y: -0.000000057055225, z: -0.000000044634124}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt
+      boneName: arm_R0_end_jnt
+      localRotation: {x: 0.00002134724, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: 0.012065802, y: -0.000000039244078, z: -0.000000018003176}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt
+      boneName: meta_R0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: 0.06490417, y: 0.08140984, z: 0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt
+      boneName: finger_R0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: 0.021059746, y: -0.0042917267, z: -0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt
+      boneName: finger_R0_1_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -1.2793586e-17, w: 1}
+      localPosition: {x: 0.08797966, y: 1.3073986e-14, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt/finger_R0_2_jnt
+      boneName: finger_R0_2_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -2.6888214e-17, w: 1}
+      localPosition: {x: 0.05202929, y: 8.526512e-15, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt
+      boneName: meta_R0_1_jnt
+      localRotation: {x: 2.9832636e-15, y: -2.9329403e-14, z: 7.96585e-15, w: 1}
+      localPosition: {x: 0.04346044, y: 3.410605e-15, z: -2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt
+      boneName: finger_R1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: 0.030936847, y: -0.008699009, z: -0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt
+      boneName: finger_R1_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -5.7245875e-17, z: 1.4528309e-17, w: 1}
+      localPosition: {x: 0.08826504, y: -3.410605e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt/finger_R1_2_jnt
+      boneName: finger_R1_2_jnt
+      localRotation: {x: -4.848023e-17, y: -9.17405e-18, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: 0.058172524, y: -8.526512e-15, z: -1.3855583e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt
+      boneName: meta_R0_2_jnt
+      localRotation: {x: 2.8542435e-15, y: 2.5106653e-14, z: -2.5854319e-14, w: 1}
+      localPosition: {x: 0.04346044, y: -5.684342e-16, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt
+      boneName: finger_R2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: 0.040071946, y: -0.004437097, z: -0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt
+      boneName: finger_R2_1_jnt
+      localRotation: {x: 1.179612e-16, y: -1.2490009e-16, z: 9.1940344e-17, w: 1}
+      localPosition: {x: 0.08356581, y: 7.389644e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt/finger_R2_2_jnt
+      boneName: finger_R2_2_jnt
+      localRotation: {x: 1.3877788e-16, y: -1.179612e-16, z: 1.07552856e-16, w: 1}
+      localPosition: {x: 0.059481982, y: 0, z: -1.9539926e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt
+      boneName: meta_R0_3_jnt
+      localRotation: {x: 2.8560054e-15, y: 2.510752e-14, z: -2.584738e-14, w: 1}
+      localPosition: {x: 0.04346044, y: 0, z: 2.5579537e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt
+      boneName: finger_R3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: 0.041693, y: 0.0038676157, z: -0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt
+      boneName: finger_R3_1_jnt
+      localRotation: {x: 2.220446e-16, y: -1.3877788e-17, z: 1.9081958e-17, w: 1}
+      localPosition: {x: 0.06989477, y: -6.82121e-15, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt/finger_R3_2_jnt
+      boneName: finger_R3_2_jnt
+      localRotation: {x: 2.5673907e-16, y: 1.3877788e-17, z: 4.1633363e-17, w: 1}
+      localPosition: {x: 0.043147687, y: 2.2737367e-15, z: -2.1316282e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt
+      boneName: thumb_R0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: 0.015320348, y: 0.016172893, z: -0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt
+      boneName: thumb_R0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: 0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt/thumb_R0_2_jnt
+      boneName: thumb_R0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: 0.07661018, y: 0, z: -2.8421708e-15}
+  - state: 7
+    displayLabel: MOVE DOWN
+    transitionSpeed: 11
+    mainHoloColor: {r: 0, g: 2.6, b: 3.6, a: 0.85}
+    rimGlowColor: {r: 0.5, g: 4.2, b: 4.6, a: 0.95}
+    accentColor: {r: 0.3, g: 4.2, b: 3.8, a: 1}
+    modelRootRotationOffset: {x: 12, y: 0, z: 0}
+    modelRootPositionOffset: {x: 0, y: 0, z: 0}
+    boneSnapshots:
+    - bonePath: mainRig
+      boneName: mainRig
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org
+      boneName: jnt_org
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt
+      boneName: spine_C0_0_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 1.4540075e-17, y: 2.6562128, z: -0.020839166}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt
+      boneName: leg_L0_0_jnt
+      localRotation: {x: 0.36925137, y: 0.60511124, z: 0.37553662, w: 0.5970478}
+      localPosition: {x: -0.20196189, y: -0.12904179, z: -0.000063896645}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt
+      boneName: leg_L0_1_jnt
+      localRotation: {x: -2.7896522e-16, y: 2.584738e-16, z: 7.214513e-32, w: 1}
+      localPosition: {x: -0.39008602, y: -0.000000015095878, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt
+      boneName: leg_L0_2_jnt
+      localRotation: {x: -1.3492896e-16, y: -5.0350307e-16, z: -1.7347102e-18, w: 1}
+      localPosition: {x: -0.39244065, y: -0.000000019184686, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt
+      boneName: leg_L0_3_jnt
+      localRotation: {x: -5.681499e-26, y: 1.0206747e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: -0.3688942, y: -0.00000007526273, z: 3.5527136e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt
+      boneName: leg_L0_4_jnt
+      localRotation: {x: -0.0029684198, y: -0.008189929, z: 0.42749098, w: 0.90397763}
+      localPosition: {x: -0.023546416, y: -0.000000032216118, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt
+      boneName: leg_L0_5_jnt
+      localRotation: {x: 3.0291986e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: -0.021179413, y: -0.0002322302, z: 0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt
+      boneName: leg_L0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.33183116, y: -0.00000027907038, z: -0.000000005869296}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt
+      boneName: leg_L0_7_jnt
+      localRotation: {x: -3.8781346e-11, y: 8.337982e-22, z: -3.4695404e-18, w: 1}
+      localPosition: {x: -0.3530117, y: 0.000000059026068, z: -0.000000008940524}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt
+      boneName: leg_L0_8_jnt
+      localRotation: {x: -6.025225e-11, y: -0.00000028829578, z: -0.0000027326234, w: 1}
+      localPosition: {x: -0.33183116, y: 0.00000032568116, z: -0.0000000350644}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt
+      boneName: leg_L0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: -0.021180686, y: 0.00000014402562, z: -0.000000015008288}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt
+      boneName: foot_L0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: -0.18146753, y: 0.17238927, z: -0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt/foot_L0_1_jnt
+      boneName: foot_L0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: -0.1574813, y: 7.105427e-17, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt
+      boneName: leg_R0_0_jnt
+      localRotation: {x: -0.6021029, y: 0.3712516, z: -0.6000826, w: 0.37355772}
+      localPosition: {x: 0.20196189, y: -0.12904176, z: -0.000063895815}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt
+      boneName: leg_R0_1_jnt
+      localRotation: {x: 2.4221077e-16, y: 3.9467077e-17, z: 1.7347169e-18, w: 1}
+      localPosition: {x: 0.39008605, y: 0.000000015095877, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt
+      boneName: leg_R0_2_jnt
+      localRotation: {x: -1.3061926e-16, y: -5.9412585e-17, z: 1.9852335e-23, w: 1}
+      localPosition: {x: 0.39244056, y: 0.000000019184666, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt
+      boneName: leg_R0_3_jnt
+      localRotation: {x: -5.4210496e-20, y: 6.983786e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: 0.36889425, y: 0.00000007526273, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt
+      boneName: leg_R0_4_jnt
+      localRotation: {x: -0.0013543023, y: 0.008094221, z: 0.42750105, w: 0.90397763}
+      localPosition: {x: 0.023546416, y: 0.000000032216118, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt
+      boneName: leg_R0_5_jnt
+      localRotation: {x: 3.0291938e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: 0.021179413, y: 0.0002322302, z: -0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt
+      boneName: leg_R0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.3318311, y: 0.00000027907035, z: 0.0000000058692944}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt
+      boneName: leg_R0_7_jnt
+      localRotation: {x: -3.8780472e-11, y: -4.22193e-21, z: -3.4693814e-18, w: 1}
+      localPosition: {x: 0.35301182, y: -0.00000005902608, z: 0.000000008940527}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt
+      boneName: leg_R0_8_jnt
+      localRotation: {x: -6.025288e-11, y: -0.00000028829558, z: -0.0000027326214, w: 1}
+      localPosition: {x: 0.3318311, y: -0.00000032568101, z: 0.000000035064385}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt
+      boneName: leg_R0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: 0.021180708, y: -0.0000001440257, z: 0.000000015008297}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt
+      boneName: foot_R0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: 0.18146753, y: -0.17238927, z: 0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt/foot_R0_1_jnt
+      boneName: foot_R0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: 0.1574813, y: -1.0658141e-16, z: -1.847411e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt
+      boneName: spine_C0_1_jnt
+      localRotation: {x: 0.1218465, y: -0.00015601514, z: -0.0023542622, w: 0.99254614}
+      localPosition: {x: 1.4032379e-25, y: 0.14235362, z: 9.325873e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt
+      boneName: spine_C0_2_jnt
+      localRotation: {x: 0.087139405, y: -0.00011157473, z: -0.0016836678, w: 0.9961947}
+      localPosition: {x: 2.1563215e-25, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt
+      boneName: spine_C0_3_jnt
+      localRotation: {x: 0.087139405, y: -0.00011156655, z: -0.001683669, w: 0.9961948}
+      localPosition: {x: 2.9742934e-26, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt
+      boneName: spine_C0_4_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -3.8569892e-25, y: 0.14235362, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt
+      boneName: neck_C0_0_jnt
+      localRotation: {x: 0.24503016, y: -0.00037887515, z: -0.0016442762, w: 0.9695141}
+      localPosition: {x: -7.045402e-17, y: 0.47889334, z: -0.13659059}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt
+      boneName: neck_C0_1_jnt
+      localRotation: {x: -0.0656941, y: 0, z: -0, w: 0.9978398}
+      localPosition: {x: 2.6032409e-31, y: 0.13079546, z: -0.009323235}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt
+      boneName: neck_C0_2_jnt
+      localRotation: {x: -0.09835827, y: 0, z: -0, w: 0.9951511}
+      localPosition: {x: -6.153115e-31, y: 0.13087915, z: -0.007959284}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt/neck_C0_head_jnt
+      boneName: neck_C0_head_jnt
+      localRotation: {x: 0.0039580716, y: -0, z: -0, w: 0.9999922}
+      localPosition: {x: 4.9698237e-31, y: 0.013953757, z: 0.000110462526}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt
+      boneName: shoulder_L0_shoulder_jnt
+      localRotation: {x: -0.6731062, y: -0.19978717, z: -0.18674037, w: 0.6871253}
+      localPosition: {x: -0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt
+      boneName: arm_L0_0_jnt
+      localRotation: {x: 0.12414269, y: -0.3244135, z: 0.59829926, w: 0.72206813}
+      localPosition: {x: -0.3250718, y: -0.0006963652, z: -0.013850678}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt
+      boneName: arm_L0_1_jnt
+      localRotation: {x: 5.412337e-16, y: -1.8205923e-15, z: 5.89806e-17, w: 1}
+      localPosition: {x: -0.173481, y: -0.00000005257822, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt
+      boneName: arm_L0_2_jnt
+      localRotation: {x: -5.551115e-17, y: -2.0088098e-15, z: 5.551126e-17, w: 1}
+      localPosition: {x: -0.17452818, y: -0.000000066363704, z: 1.7053025e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt
+      boneName: arm_L0_3_jnt
+      localRotation: {x: -1.3877741e-17, y: -1.0408404e-17, z: 0.0000045198753, w: 1}
+      localPosition: {x: -0.16405647, y: -0.00000028765186, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt
+      boneName: arm_L0_4_jnt
+      localRotation: {x: -0.20085484, y: 0.28945708, z: 0.278525, w: 0.893474}
+      localPosition: {x: -0.01047168, y: -0.00000011601895, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt
+      boneName: arm_L0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651305, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: -0.012056406, y: -0.00047580193, z: -0.000000002965882}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt
+      boneName: arm_L0_6_jnt
+      localRotation: {x: -0.000008069359, y: 0.000000034204927, z: 0.0000038474864, w: 1}
+      localPosition: {x: -0.18903093, y: -0.0000011808963, z: 0.000000006588566}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt
+      boneName: arm_L0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.20109664, y: -0.00000006783208, z: 0.000000010296096}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt
+      boneName: arm_L0_8_jnt
+      localRotation: {x: 0.000008082723, y: 0.00000060867825, z: -0.0000011159336, w: 1}
+      localPosition: {x: -0.18903093, y: 0.000000057055242, z: 0.000000044634138}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt
+      boneName: arm_L0_end_jnt
+      localRotation: {x: 0.000021347238, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: -0.01206579, y: 0.000000039244064, z: 0.000000018003169}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt
+      boneName: meta_L0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: -0.06490417, y: -0.08140984, z: -0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt
+      boneName: finger_L0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: -0.021059746, y: 0.0042917267, z: 0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt
+      boneName: finger_L0_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -1.2143064e-16, z: 7.13405e-17, w: 1}
+      localPosition: {x: -0.08797966, y: -1.2505552e-14, z: -4.2632563e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt/finger_L0_2_jnt
+      boneName: finger_L0_2_jnt
+      localRotation: {x: -3.400058e-16, y: -1.3183898e-16, z: 4.3584927e-17, w: 1}
+      localPosition: {x: -0.05202929, y: -7.958079e-15, z: -3.1974422e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt
+      boneName: meta_L0_1_jnt
+      localRotation: {x: -5.303375e-16, y: -3.26514e-14, z: -4.2882364e-15, w: 1}
+      localPosition: {x: -0.04346044, y: -1.1368684e-15, z: -1.1368684e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt
+      boneName: finger_L1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: -0.030936847, y: 0.008699009, z: 0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt
+      boneName: finger_L1_1_jnt
+      localRotation: {x: -4.787837e-16, y: 5.551115e-17, z: -3.1008182e-17, w: 1}
+      localPosition: {x: -0.08826504, y: 1.1368684e-15, z: -4.973799e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt/finger_L1_2_jnt
+      boneName: finger_L1_2_jnt
+      localRotation: {x: 3.5229298e-17, y: -5.1681156e-17, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: -0.058172524, y: 7.389644e-15, z: 8.171241e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt
+      boneName: meta_L0_2_jnt
+      localRotation: {x: 8.2507785e-16, y: 2.5666535e-14, z: -3.2265857e-14, w: 1}
+      localPosition: {x: -0.04346044, y: 1.1368684e-15, z: 1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt
+      boneName: finger_L2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: -0.040071946, y: 0.004437097, z: 0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt
+      boneName: finger_L2_1_jnt
+      localRotation: {x: -1.179612e-16, y: -2.7755576e-17, z: -6.071532e-18, w: 1}
+      localPosition: {x: -0.08356581, y: -8.526512e-15, z: -6.0396133e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt/finger_L2_2_jnt
+      boneName: finger_L2_2_jnt
+      localRotation: {x: -1.179612e-16, y: -3.469447e-17, z: -1.2143064e-17, w: 1}
+      localPosition: {x: -0.059481982, y: 5.684342e-16, z: 1.7408296e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt
+      boneName: meta_L0_3_jnt
+      localRotation: {x: 8.2515917e-16, y: 2.5666969e-14, z: -3.2272796e-14, w: 1}
+      localPosition: {x: -0.04346044, y: -2.2737367e-15, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt
+      boneName: finger_L3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: -0.041693, y: -0.0038676157, z: 0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt
+      boneName: finger_L3_1_jnt
+      localRotation: {x: -1.8735014e-16, y: -1.9428903e-16, z: 4.8572257e-17, w: 1}
+      localPosition: {x: -0.06989477, y: 2.2737367e-15, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt/finger_L3_2_jnt
+      boneName: finger_L3_2_jnt
+      localRotation: {x: -1.4571677e-16, y: -2.220446e-16, z: 8.500145e-17, w: 1}
+      localPosition: {x: -0.043147687, y: -1.7053025e-15, z: 2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt
+      boneName: thumb_L0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: -0.015320348, y: -0.016172893, z: 0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt
+      boneName: thumb_L0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: -0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt/thumb_L0_2_jnt
+      boneName: thumb_L0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: -0.07661018, y: 1.4210854e-16, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt
+      boneName: shoulder_R0_shoulder_jnt
+      localRotation: {x: 0.6871253, y: 0.18674037, z: -0.19978717, w: 0.6731062}
+      localPosition: {x: 0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt
+      boneName: arm_R0_0_jnt
+      localRotation: {x: 0.12899537, y: -0.32589942, z: 0.59380025, w: 0.724259}
+      localPosition: {x: 0.3250718, y: 0.00069635874, z: 0.013850677}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt
+      boneName: arm_R0_1_jnt
+      localRotation: {x: 5.551115e-16, y: -2.1121126e-14, z: 3.4695e-18, w: 1}
+      localPosition: {x: 0.17348105, y: 0.00000005257825, z: -7.958079e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt
+      boneName: arm_R0_2_jnt
+      localRotation: {x: 5.828671e-16, y: -2.0469737e-14, z: 6.938947e-18, w: 1}
+      localPosition: {x: 0.17452812, y: 0.00000006636367, z: -5.6843415e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt
+      boneName: arm_R0_3_jnt
+      localRotation: {x: 1.3877756e-17, y: 6.938957e-18, z: 0.0000045198753, w: 1}
+      localPosition: {x: 0.16405651, y: 0.00000028765191, z: -6.82121e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt
+      boneName: arm_R0_4_jnt
+      localRotation: {x: -0.19246401, y: 0.29974544, z: 0.2731775, w: 0.89357954}
+      localPosition: {x: 0.01047168, y: 0.00000011601895, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt
+      boneName: arm_R0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651302, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: 0.012056406, y: 0.00047580193, z: 0.0000000029658809}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt
+      boneName: arm_R0_6_jnt
+      localRotation: {x: -0.000008069358, y: 0.000000034204916, z: 0.0000038474864, w: 1}
+      localPosition: {x: 0.18903089, y: 0.000001180896, z: -0.000000006588563}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt
+      boneName: arm_R0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.2010967, y: 0.00000006783213, z: -0.000000010296099}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt
+      boneName: arm_R0_8_jnt
+      localRotation: {x: 0.000008082721, y: 0.00000060867796, z: -0.0000011159331, w: 1}
+      localPosition: {x: 0.18903089, y: -0.000000057055225, z: -0.000000044634124}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt
+      boneName: arm_R0_end_jnt
+      localRotation: {x: 0.00002134724, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: 0.012065802, y: -0.000000039244078, z: -0.000000018003176}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt
+      boneName: meta_R0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: 0.06490417, y: 0.08140984, z: 0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt
+      boneName: finger_R0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: 0.021059746, y: -0.0042917267, z: -0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt
+      boneName: finger_R0_1_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -1.2793586e-17, w: 1}
+      localPosition: {x: 0.08797966, y: 1.3073986e-14, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt/finger_R0_2_jnt
+      boneName: finger_R0_2_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -2.6888214e-17, w: 1}
+      localPosition: {x: 0.05202929, y: 8.526512e-15, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt
+      boneName: meta_R0_1_jnt
+      localRotation: {x: 2.9832636e-15, y: -2.9329403e-14, z: 7.96585e-15, w: 1}
+      localPosition: {x: 0.04346044, y: 3.410605e-15, z: -2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt
+      boneName: finger_R1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: 0.030936847, y: -0.008699009, z: -0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt
+      boneName: finger_R1_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -5.7245875e-17, z: 1.4528309e-17, w: 1}
+      localPosition: {x: 0.08826504, y: -3.410605e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt/finger_R1_2_jnt
+      boneName: finger_R1_2_jnt
+      localRotation: {x: -4.848023e-17, y: -9.17405e-18, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: 0.058172524, y: -8.526512e-15, z: -1.3855583e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt
+      boneName: meta_R0_2_jnt
+      localRotation: {x: 2.8542435e-15, y: 2.5106653e-14, z: -2.5854319e-14, w: 1}
+      localPosition: {x: 0.04346044, y: -5.684342e-16, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt
+      boneName: finger_R2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: 0.040071946, y: -0.004437097, z: -0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt
+      boneName: finger_R2_1_jnt
+      localRotation: {x: 1.179612e-16, y: -1.2490009e-16, z: 9.1940344e-17, w: 1}
+      localPosition: {x: 0.08356581, y: 7.389644e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt/finger_R2_2_jnt
+      boneName: finger_R2_2_jnt
+      localRotation: {x: 1.3877788e-16, y: -1.179612e-16, z: 1.07552856e-16, w: 1}
+      localPosition: {x: 0.059481982, y: 0, z: -1.9539926e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt
+      boneName: meta_R0_3_jnt
+      localRotation: {x: 2.8560054e-15, y: 2.510752e-14, z: -2.584738e-14, w: 1}
+      localPosition: {x: 0.04346044, y: 0, z: 2.5579537e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt
+      boneName: finger_R3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: 0.041693, y: 0.0038676157, z: -0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt
+      boneName: finger_R3_1_jnt
+      localRotation: {x: 2.220446e-16, y: -1.3877788e-17, z: 1.9081958e-17, w: 1}
+      localPosition: {x: 0.06989477, y: -6.82121e-15, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt/finger_R3_2_jnt
+      boneName: finger_R3_2_jnt
+      localRotation: {x: 2.5673907e-16, y: 1.3877788e-17, z: 4.1633363e-17, w: 1}
+      localPosition: {x: 0.043147687, y: 2.2737367e-15, z: -2.1316282e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt
+      boneName: thumb_R0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: 0.015320348, y: 0.016172893, z: -0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt
+      boneName: thumb_R0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: 0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt/thumb_R0_2_jnt
+      boneName: thumb_R0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: 0.07661018, y: 0, z: -2.8421708e-15}
+  - state: 8
+    displayLabel: FIRE
+    transitionSpeed: 18
+    mainHoloColor: {r: 0, g: 2.2, b: 3.2, a: 0.8}
+    rimGlowColor: {r: 0.4, g: 3.8, b: 4.5, a: 0.95}
+    accentColor: {r: 0.2, g: 4, b: 3.5, a: 1}
+    modelRootRotationOffset: {x: 4, y: -10, z: 0}
+    modelRootPositionOffset: {x: 0, y: 0, z: 0}
+    boneSnapshots:
+    - bonePath: mainRig
+      boneName: mainRig
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org
+      boneName: jnt_org
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0, y: 0, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt
+      boneName: spine_C0_0_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 1.4540075e-17, y: 2.6562128, z: -0.020839166}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt
+      boneName: leg_L0_0_jnt
+      localRotation: {x: 0.41077384, y: 0.5768952, z: 0.41605273, w: 0.57040066}
+      localPosition: {x: -0.20196189, y: -0.12904179, z: -0.000063896645}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt
+      boneName: leg_L0_1_jnt
+      localRotation: {x: -2.7896522e-16, y: 2.584738e-16, z: 7.214513e-32, w: 1}
+      localPosition: {x: -0.39008602, y: -0.000000015095878, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt
+      boneName: leg_L0_2_jnt
+      localRotation: {x: -1.3492896e-16, y: -5.0350307e-16, z: -1.7347102e-18, w: 1}
+      localPosition: {x: -0.39244065, y: -0.000000019184686, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt
+      boneName: leg_L0_3_jnt
+      localRotation: {x: -5.681499e-26, y: 1.0206747e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: -0.3688942, y: -0.00000007526273, z: 3.5527136e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt
+      boneName: leg_L0_4_jnt
+      localRotation: {x: -0.0018178702, y: -0.0050156415, z: 0.26405588, w: 0.9644927}
+      localPosition: {x: -0.023546416, y: -0.000000032216118, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt
+      boneName: leg_L0_5_jnt
+      localRotation: {x: 3.0291986e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: -0.021179413, y: -0.0002322302, z: 0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt
+      boneName: leg_L0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.33183116, y: -0.00000027907038, z: -0.000000005869296}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt
+      boneName: leg_L0_7_jnt
+      localRotation: {x: -3.8781346e-11, y: 8.337982e-22, z: -3.4695404e-18, w: 1}
+      localPosition: {x: -0.3530117, y: 0.000000059026068, z: -0.000000008940524}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt
+      boneName: leg_L0_8_jnt
+      localRotation: {x: -6.025225e-11, y: -0.00000028829578, z: -0.0000027326234, w: 1}
+      localPosition: {x: -0.33183116, y: 0.00000032568116, z: -0.0000000350644}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt
+      boneName: leg_L0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: -0.021180686, y: 0.00000014402562, z: -0.000000015008288}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt
+      boneName: foot_L0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: -0.18146753, y: 0.17238927, z: -0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_L0_0_jnt/leg_L0_1_jnt/leg_L0_2_jnt/leg_L0_3_jnt/leg_L0_4_jnt/leg_L0_5_jnt/leg_L0_6_jnt/leg_L0_7_jnt/leg_L0_8_jnt/leg_L0_end_jnt/foot_L0_0_jnt/foot_L0_1_jnt
+      boneName: foot_L0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: -0.1574813, y: 7.105427e-17, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt
+      boneName: leg_R0_0_jnt
+      localRotation: {x: -0.43533564, y: 0.55787885, z: -0.43967322, w: 0.55311984}
+      localPosition: {x: 0.20196189, y: -0.12904176, z: -0.000063895815}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt
+      boneName: leg_R0_1_jnt
+      localRotation: {x: 2.4221077e-16, y: 3.9467077e-17, z: 1.7347169e-18, w: 1}
+      localPosition: {x: 0.39008605, y: 0.000000015095877, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt
+      boneName: leg_R0_2_jnt
+      localRotation: {x: -1.3061926e-16, y: -5.9412585e-17, z: 1.9852335e-23, w: 1}
+      localPosition: {x: 0.39244056, y: 0.000000019184666, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt
+      boneName: leg_R0_3_jnt
+      localRotation: {x: -5.4210496e-20, y: 6.983786e-19, z: 0.0000005566415, w: 1}
+      localPosition: {x: 0.36889425, y: 0.00000007526273, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt
+      boneName: leg_R0_4_jnt
+      localRotation: {x: -0.0006115118, y: 0.0036544802, z: 0.19615184, w: 0.98056656}
+      localPosition: {x: 0.023546416, y: 0.000000032216118, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt
+      boneName: leg_R0_5_jnt
+      localRotation: {x: 3.0291938e-10, y: 0.00000005754869, z: 0.0054829554, w: 0.999985}
+      localPosition: {x: 0.021179413, y: 0.0002322302, z: -0.0000000024761369}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt
+      boneName: leg_R0_6_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.3318311, y: 0.00000027907035, z: 0.0000000058692944}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt
+      boneName: leg_R0_7_jnt
+      localRotation: {x: -3.8780472e-11, y: -4.22193e-21, z: -3.4693814e-18, w: 1}
+      localPosition: {x: 0.35301182, y: -0.00000005902608, z: 0.000000008940527}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt
+      boneName: leg_R0_8_jnt
+      localRotation: {x: -6.025288e-11, y: -0.00000028829558, z: -0.0000027326214, w: 1}
+      localPosition: {x: 0.3318311, y: -0.00000032568101, z: 0.000000035064385}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt
+      boneName: leg_R0_end_jnt
+      localRotation: {x: -0.0000626697, y: -0.002553311, z: -0.024531683, w: 0.9996958}
+      localPosition: {x: 0.021180708, y: -0.0000001440257, z: 0.000000015008297}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt
+      boneName: foot_R0_0_jnt
+      localRotation: {x: 0.0064523653, y: 0.0069116917, z: -0.6260449, w: 0.77972966}
+      localPosition: {x: 0.18146753, y: -0.17238927, z: 0.000575216}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/leg_R0_0_jnt/leg_R0_1_jnt/leg_R0_2_jnt/leg_R0_3_jnt/leg_R0_4_jnt/leg_R0_5_jnt/leg_R0_6_jnt/leg_R0_7_jnt/leg_R0_8_jnt/leg_R0_end_jnt/foot_R0_0_jnt/foot_R0_1_jnt
+      boneName: foot_R0_1_jnt
+      localRotation: {x: 0.00069169176, y: -0.0041489312, z: 0.16444457, w: 0.9863774}
+      localPosition: {x: 0.1574813, y: -1.0658141e-16, z: -1.847411e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt
+      boneName: spine_C0_1_jnt
+      localRotation: {x: -0, y: -0.12309389, z: 0.008157125, w: 0.9923615}
+      localPosition: {x: 1.4032379e-25, y: 0.14235362, z: 9.325873e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt
+      boneName: spine_C0_2_jnt
+      localRotation: {x: 4.6210427e-10, y: -0.10558049, z: 0.006996556, w: 0.99438614}
+      localPosition: {x: 2.1563215e-25, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt
+      boneName: spine_C0_3_jnt
+      localRotation: {x: 0.061914157, y: -0.0021247792, z: -0.0320638, w: 0.9975641}
+      localPosition: {x: 2.9742934e-26, y: 0.14235319, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt
+      boneName: spine_C0_4_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -3.8569892e-25, y: 0.14235362, z: 9.7699626e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt
+      boneName: neck_C0_0_jnt
+      localRotation: {x: 0.1520224, y: 0.099171765, z: -0.036264732, w: 0.98272026}
+      localPosition: {x: -7.045402e-17, y: 0.47889334, z: -0.13659059}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt
+      boneName: neck_C0_1_jnt
+      localRotation: {x: -0.0656941, y: 0, z: -0, w: 0.9978398}
+      localPosition: {x: 2.6032409e-31, y: 0.13079546, z: -0.009323235}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt
+      boneName: neck_C0_2_jnt
+      localRotation: {x: -0.09835827, y: 0, z: -0, w: 0.9951511}
+      localPosition: {x: -6.153115e-31, y: 0.13087915, z: -0.007959284}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/neck_C0_0_jnt/neck_C0_1_jnt/neck_C0_2_jnt/neck_C0_head_jnt
+      boneName: neck_C0_head_jnt
+      localRotation: {x: 0.0039580716, y: -0, z: -0, w: 0.9999922}
+      localPosition: {x: 4.9698237e-31, y: 0.013953757, z: 0.000110462526}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt
+      boneName: shoulder_L0_shoulder_jnt
+      localRotation: {x: -0.6731062, y: -0.19978717, z: -0.18674037, w: 0.6871253}
+      localPosition: {x: -0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt
+      boneName: arm_L0_0_jnt
+      localRotation: {x: 0.15669732, y: -0.42712915, z: 0.057741575, w: 0.8886352}
+      localPosition: {x: -0.3250718, y: -0.0006963652, z: -0.013850678}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt
+      boneName: arm_L0_1_jnt
+      localRotation: {x: 5.412337e-16, y: -1.8205923e-15, z: 5.89806e-17, w: 1}
+      localPosition: {x: -0.173481, y: -0.00000005257822, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt
+      boneName: arm_L0_2_jnt
+      localRotation: {x: -5.551115e-17, y: -2.0088098e-15, z: 5.551126e-17, w: 1}
+      localPosition: {x: -0.17452818, y: -0.000000066363704, z: 1.7053025e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt
+      boneName: arm_L0_3_jnt
+      localRotation: {x: -1.3877741e-17, y: -1.0408404e-17, z: 0.0000045198753, w: 1}
+      localPosition: {x: -0.16405647, y: -0.00000028765186, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt
+      boneName: arm_L0_4_jnt
+      localRotation: {x: -0.107396625, y: -0.27226165, z: 0.300408, w: 0.9077965}
+      localPosition: {x: -0.01047168, y: -0.00000011601895, z: 0}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt
+      boneName: arm_L0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651305, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: -0.012056406, y: -0.00047580193, z: -0.000000002965882}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt
+      boneName: arm_L0_6_jnt
+      localRotation: {x: -0.000008069359, y: 0.000000034204927, z: 0.0000038474864, w: 1}
+      localPosition: {x: -0.18903093, y: -0.0000011808963, z: 0.000000006588566}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt
+      boneName: arm_L0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: -0.20109664, y: -0.00000006783208, z: 0.000000010296096}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt
+      boneName: arm_L0_8_jnt
+      localRotation: {x: 0.000008082723, y: 0.00000060867825, z: -0.0000011159336, w: 1}
+      localPosition: {x: -0.18903093, y: 0.000000057055242, z: 0.000000044634138}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt
+      boneName: arm_L0_end_jnt
+      localRotation: {x: 0.000021347238, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: -0.01206579, y: 0.000000039244064, z: 0.000000018003169}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt
+      boneName: meta_L0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: -0.06490417, y: -0.08140984, z: -0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt
+      boneName: finger_L0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: -0.021059746, y: 0.0042917267, z: 0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt
+      boneName: finger_L0_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -1.2143064e-16, z: 7.13405e-17, w: 1}
+      localPosition: {x: -0.08797966, y: -1.2505552e-14, z: -4.2632563e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/finger_L0_0_jnt/finger_L0_1_jnt/finger_L0_2_jnt
+      boneName: finger_L0_2_jnt
+      localRotation: {x: -3.400058e-16, y: -1.3183898e-16, z: 4.3584927e-17, w: 1}
+      localPosition: {x: -0.05202929, y: -7.958079e-15, z: -3.1974422e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt
+      boneName: meta_L0_1_jnt
+      localRotation: {x: -5.303375e-16, y: -3.26514e-14, z: -4.2882364e-15, w: 1}
+      localPosition: {x: -0.04346044, y: -1.1368684e-15, z: -1.1368684e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt
+      boneName: finger_L1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: -0.030936847, y: 0.008699009, z: 0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt
+      boneName: finger_L1_1_jnt
+      localRotation: {x: -4.787837e-16, y: 5.551115e-17, z: -3.1008182e-17, w: 1}
+      localPosition: {x: -0.08826504, y: 1.1368684e-15, z: -4.973799e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/finger_L1_0_jnt/finger_L1_1_jnt/finger_L1_2_jnt
+      boneName: finger_L1_2_jnt
+      localRotation: {x: 3.5229298e-17, y: -5.1681156e-17, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: -0.058172524, y: 7.389644e-15, z: 8.171241e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt
+      boneName: meta_L0_2_jnt
+      localRotation: {x: 8.2507785e-16, y: 2.5666535e-14, z: -3.2265857e-14, w: 1}
+      localPosition: {x: -0.04346044, y: 1.1368684e-15, z: 1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt
+      boneName: finger_L2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: -0.040071946, y: 0.004437097, z: 0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt
+      boneName: finger_L2_1_jnt
+      localRotation: {x: -1.179612e-16, y: -2.7755576e-17, z: -6.071532e-18, w: 1}
+      localPosition: {x: -0.08356581, y: -8.526512e-15, z: -6.0396133e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/finger_L2_0_jnt/finger_L2_1_jnt/finger_L2_2_jnt
+      boneName: finger_L2_2_jnt
+      localRotation: {x: -1.179612e-16, y: -3.469447e-17, z: -1.2143064e-17, w: 1}
+      localPosition: {x: -0.059481982, y: 5.684342e-16, z: 1.7408296e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt
+      boneName: meta_L0_3_jnt
+      localRotation: {x: 8.2515917e-16, y: 2.5666969e-14, z: -3.2272796e-14, w: 1}
+      localPosition: {x: -0.04346044, y: -2.2737367e-15, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt
+      boneName: finger_L3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: -0.041693, y: -0.0038676157, z: 0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt
+      boneName: finger_L3_1_jnt
+      localRotation: {x: -1.8735014e-16, y: -1.9428903e-16, z: 4.8572257e-17, w: 1}
+      localPosition: {x: -0.06989477, y: 2.2737367e-15, z: -1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/meta_L0_1_jnt/meta_L0_2_jnt/meta_L0_3_jnt/finger_L3_0_jnt/finger_L3_1_jnt/finger_L3_2_jnt
+      boneName: finger_L3_2_jnt
+      localRotation: {x: -1.4571677e-16, y: -2.220446e-16, z: 8.500145e-17, w: 1}
+      localPosition: {x: -0.043147687, y: -1.7053025e-15, z: 2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt
+      boneName: thumb_L0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: -0.015320348, y: -0.016172893, z: 0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt
+      boneName: thumb_L0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: -0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_L0_shoulder_jnt/arm_L0_0_jnt/arm_L0_1_jnt/arm_L0_2_jnt/arm_L0_3_jnt/arm_L0_4_jnt/arm_L0_5_jnt/arm_L0_6_jnt/arm_L0_7_jnt/arm_L0_8_jnt/arm_L0_end_jnt/meta_L0_0_jnt/thumb_L0_0_jnt/thumb_L0_1_jnt/thumb_L0_2_jnt
+      boneName: thumb_L0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: -0.07661018, y: 1.4210854e-16, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt
+      boneName: shoulder_R0_shoulder_jnt
+      localRotation: {x: 0.6871253, y: 0.18674037, z: -0.19978717, w: 0.6731062}
+      localPosition: {x: 0.05896097, y: 0.4034046, z: 0.0038983657}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt
+      boneName: arm_R0_0_jnt
+      localRotation: {x: 0.0055077965, y: 0.023465324, z: 0.83273643, w: 0.5531448}
+      localPosition: {x: 0.3250718, y: 0.00069635874, z: 0.013850677}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt
+      boneName: arm_R0_1_jnt
+      localRotation: {x: 5.551115e-16, y: -2.1121126e-14, z: 3.4695e-18, w: 1}
+      localPosition: {x: 0.17348105, y: 0.00000005257825, z: -7.958079e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt
+      boneName: arm_R0_2_jnt
+      localRotation: {x: 5.828671e-16, y: -2.0469737e-14, z: 6.938947e-18, w: 1}
+      localPosition: {x: 0.17452812, y: 0.00000006636367, z: -5.6843415e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt
+      boneName: arm_R0_3_jnt
+      localRotation: {x: 1.3877756e-17, y: 6.938957e-18, z: 0.0000045198753, w: 1}
+      localPosition: {x: 0.16405651, y: 0.00000028765191, z: -6.82121e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt
+      boneName: arm_R0_4_jnt
+      localRotation: {x: 0.03505567, y: 0.09831391, z: 0.013987942, w: 0.9944394}
+      localPosition: {x: 0.01047168, y: 0.00000011601895, z: -5.684342e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt
+      boneName: arm_R0_5_jnt
+      localRotation: {x: -0.0000007831672, y: -0.00000013651302, z: 0.01972562, w: 0.99980545}
+      localPosition: {x: 0.012056406, y: 0.00047580193, z: 0.0000000029658809}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt
+      boneName: arm_R0_6_jnt
+      localRotation: {x: -0.000008069358, y: 0.000000034204916, z: 0.0000038474864, w: 1}
+      localPosition: {x: 0.18903089, y: 0.000001180896, z: -0.000000006588563}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt
+      boneName: arm_R0_7_jnt
+      localRotation: {x: 0, y: -0, z: -0, w: 1}
+      localPosition: {x: 0.2010967, y: 0.00000006783213, z: -0.000000010296099}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt
+      boneName: arm_R0_8_jnt
+      localRotation: {x: 0.000008082721, y: 0.00000060867796, z: -0.0000011159331, w: 1}
+      localPosition: {x: 0.18903089, y: -0.000000057055225, z: -0.000000044634124}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt
+      boneName: arm_R0_end_jnt
+      localRotation: {x: 0.00002134724, y: 0.0030600633, z: -0.006720957, w: 0.99997276}
+      localPosition: {x: 0.012065802, y: -0.000000039244078, z: -0.000000018003176}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt
+      boneName: meta_R0_0_jnt
+      localRotation: {x: -0.5205559, y: 0.47723618, z: 0.52368194, w: -0.4764708}
+      localPosition: {x: 0.06490417, y: 0.08140984, z: 0.009737955}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt
+      boneName: finger_R0_0_jnt
+      localRotation: {x: -0.6993887, y: -0.059896454, z: 0.7096299, w: 0.06077352}
+      localPosition: {x: 0.021059746, y: -0.0042917267, z: -0.2061716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt
+      boneName: finger_R0_1_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -1.2793586e-17, w: 1}
+      localPosition: {x: 0.08797966, y: 1.3073986e-14, z: 7.105427e-17}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/finger_R0_0_jnt/finger_R0_1_jnt/finger_R0_2_jnt
+      boneName: finger_R0_2_jnt
+      localRotation: {x: -3.538836e-16, y: -6.938894e-18, z: -2.6888214e-17, w: 1}
+      localPosition: {x: 0.05202929, y: 8.526512e-15, z: 1.0658141e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt
+      boneName: meta_R0_1_jnt
+      localRotation: {x: 2.9832636e-15, y: -2.9329403e-14, z: 7.96585e-15, w: 1}
+      localPosition: {x: 0.04346044, y: 3.410605e-15, z: -2.842171e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt
+      boneName: finger_R1_0_jnt
+      localRotation: {x: 0.7212341, y: 0.06627697, z: -0.6866237, w: -0.0630619}
+      localPosition: {x: 0.030936847, y: -0.008699009, z: -0.21108991}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt
+      boneName: finger_R1_1_jnt
+      localRotation: {x: -3.1225023e-16, y: -5.7245875e-17, z: 1.4528309e-17, w: 1}
+      localPosition: {x: 0.08826504, y: -3.410605e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/finger_R1_0_jnt/finger_R1_1_jnt/finger_R1_2_jnt
+      boneName: finger_R1_2_jnt
+      localRotation: {x: -4.848023e-17, y: -9.17405e-18, z: 0.01031234, w: 0.99994683}
+      localPosition: {x: 0.058172524, y: -8.526512e-15, z: -1.3855583e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt
+      boneName: meta_R0_2_jnt
+      localRotation: {x: 2.8542435e-15, y: 2.5106653e-14, z: -2.5854319e-14, w: 1}
+      localPosition: {x: 0.04346044, y: -5.684342e-16, z: -1.9895197e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt
+      boneName: finger_R2_0_jnt
+      localRotation: {x: 0.75273556, y: 0.052427396, z: -0.6546463, w: -0.04559556}
+      localPosition: {x: 0.040071946, y: -0.004437097, z: -0.20298716}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt
+      boneName: finger_R2_1_jnt
+      localRotation: {x: 1.179612e-16, y: -1.2490009e-16, z: 9.1940344e-17, w: 1}
+      localPosition: {x: 0.08356581, y: 7.389644e-15, z: -1.7763567e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/finger_R2_0_jnt/finger_R2_1_jnt/finger_R2_2_jnt
+      boneName: finger_R2_2_jnt
+      localRotation: {x: 1.3877788e-16, y: -1.179612e-16, z: 1.07552856e-16, w: 1}
+      localPosition: {x: 0.059481982, y: 0, z: -1.9539926e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt
+      boneName: meta_R0_3_jnt
+      localRotation: {x: 2.8560054e-15, y: 2.510752e-14, z: -2.584738e-14, w: 1}
+      localPosition: {x: 0.04346044, y: 0, z: 2.5579537e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt
+      boneName: finger_R3_0_jnt
+      localRotation: {x: 0.7916731, y: 0.043916933, z: -0.60830265, w: -0.035956983}
+      localPosition: {x: 0.041693, y: 0.0038676157, z: -0.18948556}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt
+      boneName: finger_R3_1_jnt
+      localRotation: {x: 2.220446e-16, y: -1.3877788e-17, z: 1.9081958e-17, w: 1}
+      localPosition: {x: 0.06989477, y: -6.82121e-15, z: 1.4210854e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/meta_R0_1_jnt/meta_R0_2_jnt/meta_R0_3_jnt/finger_R3_0_jnt/finger_R3_1_jnt/finger_R3_2_jnt
+      boneName: finger_R3_2_jnt
+      localRotation: {x: 2.5673907e-16, y: 1.3877788e-17, z: 4.1633363e-17, w: 1}
+      localPosition: {x: 0.043147687, y: 2.2737367e-15, z: -2.1316282e-16}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt
+      boneName: thumb_R0_0_jnt
+      localRotation: {x: -0.24695124, y: 0.588785, z: 0.67148817, w: 0.37609974}
+      localPosition: {x: 0.015320348, y: 0.016172893, z: -0.009399439}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt
+      boneName: thumb_R0_1_jnt
+      localRotation: {x: -0.005357708, y: -0.05673537, z: -0.06780994, w: 0.9960694}
+      localPosition: {x: 0.09306795, y: 2.842171e-16, z: 2.8421708e-15}
+    - bonePath: mainRig/jnt_org/spine_C0_0_jnt/spine_C0_1_jnt/spine_C0_2_jnt/spine_C0_3_jnt/spine_C0_4_jnt/shoulder_R0_shoulder_jnt/arm_R0_0_jnt/arm_R0_1_jnt/arm_R0_2_jnt/arm_R0_3_jnt/arm_R0_4_jnt/arm_R0_5_jnt/arm_R0_6_jnt/arm_R0_7_jnt/arm_R0_8_jnt/arm_R0_end_jnt/meta_R0_0_jnt/thumb_R0_0_jnt/thumb_R0_1_jnt/thumb_R0_2_jnt
+      boneName: thumb_R0_2_jnt
+      localRotation: {x: -0.02330695, y: -0.12937117, z: -0.058308754, w: 0.98960596}
+      localPosition: {x: 0.07661018, y: 0, z: -2.8421708e-15}
   _bindPoseSnapshots:
   - bonePath: mainRig
     boneName: mainRig
@@ -3762,6 +4929,13 @@ MonoBehaviour:
     localPosition: {x: 0.07661018, y: 0, z: -2.8421708e-15}
   _steeringMode: 0
   _steeringThreshold: 0.2
+  _enableVerticalPose: 1
+  _verticalThreshold: 0.2
+  _diagonalMoveMode: 1
+  _diagonalCombineWeight: 0.85
+  _enableFirePose: 1
+  _firePoseDuration: 0.45
+  _allowFirePoseDuringBoostAndShield: 1
   _stateChangeDebounceTime: 0.06
   _globalTransitionSpeedMultiplier: 1
   _enableIdleBreathing: 1
@@ -3804,8 +4978,9 @@ MonoBehaviour:
   _useManualTestMode: 0
   _manualTestState: 0
   _manualTestSteering: 0
+  _manualTestVertical: 0
   _selectedEditState: 0
-  _customSaveName:
+  _customSaveName: 
 --- !u!4 &79816549
 Transform:
   m_ObjectHideFlags: 0
@@ -3863,7 +5038,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -4037,7 +5212,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 443d246638f6ecf43aea2e463006b735, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TimelineRaceIntro
 --- !u!1 &93779444
 GameObject:
@@ -4175,7 +5350,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 906b7bfe6b6276a41a180fd0fedfbe70, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CountdownUI
   _raceManager: {fileID: 1756386251}
   _countdownText: {fileID: 95006748}
@@ -4190,7 +5365,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -4200,7 +5375,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text:
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -4532,7 +5707,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b193db7db52bdc4459375d40ab3b2ffb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RankView
   _raceManager: {fileID: 1756386251}
   _rankText: {fileID: 98904286}
@@ -4546,7 +5721,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -4838,7 +6013,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4ff793dc6f68ebc4a8228590099da55e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldShellHitbox
 --- !u!1 &120516352
 GameObject:
@@ -4882,7 +6057,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -5250,7 +6425,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -5281,7 +6456,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -6123,7 +7298,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -6169,7 +7344,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 2090529455}
   _frameObject: {fileID: 552084461}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &214155815
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6625,7 +7800,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 036e0856aaa378542b25e33a804d2da1, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 036e0856aaa378542b25e33a804d2da1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7086,7 +8261,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 0.6
@@ -7322,7 +8497,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: -7
   radiusScale: 1
@@ -7497,7 +8672,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -7543,7 +8718,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 77461}
   _frameObject: {fileID: 473090446}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &313773463
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7648,7 +8823,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -7858,7 +9033,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -7904,7 +9079,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 202851002}
   _frameObject: {fileID: 1899632032}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1 &341114671
 GameObject:
   m_ObjectHideFlags: 0
@@ -7947,7 +9122,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -8113,7 +9288,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c16e5def9f4bcaf41af88946061fed90, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnculledRenderer
   _boundsSize: 100000
 --- !u!1 &355949245
@@ -8158,7 +9333,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 2.5
   radiusScale: 1
@@ -8233,7 +9408,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 1bb4c068c964206408f2d1292250b923, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 1bb4c068c964206408f2d1292250b923, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8391,7 +9566,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e6f81915a8f232b41b595e0863fd43d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RearRadarView
   _raceManager: {fileID: 1756386251}
   _playerFlight: {fileID: 858414687}
@@ -8418,7 +9593,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
@@ -8542,7 +9717,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 149aa00fe7dfaa442a1651f113b2bbdc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeedLineEffect
 --- !u!114 &372469061 stripped
 MonoBehaviour:
@@ -8553,7 +9728,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6426e727044fb3a4f90522aa1c98157c, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RadialBlurEffect
 --- !u!114 &372681900 stripped
 MonoBehaviour:
@@ -8564,7 +9739,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &372681902 stripped
 RectTransform:
@@ -8928,7 +10103,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bcb38612dd3cd114f90d431caa0c99f0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseMinimapController
   _displayMode: 1
   _scopeMode: 1
@@ -10051,7 +11226,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -10097,7 +11272,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1590117384}
   _frameObject: {fileID: 1152830082}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &514436017
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10524,7 +11699,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -11182,7 +12357,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 0.8
@@ -12998,7 +14173,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 17
   radiusScale: 1
@@ -13088,11 +14263,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: sky
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: targetActor
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
@@ -13229,7 +14404,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc16e86d19e10aa4cbbb023d40be91a6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HitStopEffect
 --- !u!1001 &746480275
 PrefabInstance:
@@ -14150,8 +15325,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
@@ -14541,7 +15716,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoostController
 --- !u!114 &858414687 stripped
 MonoBehaviour:
@@ -14552,7 +15727,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 593d5ec4ffa4d6c40ab6abc129877be0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerFlightController
 --- !u!1001 &858958007
 PrefabInstance:
@@ -14805,7 +15980,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b4ddab472ab237f4ab2894bef8af1909, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlitchEffectsController
   glitchMaterial: {fileID: 2100000, guid: 4a00e5e6d955c3147a8fdb5ef1805b6d, type: 2}
   effectDuration: 1
@@ -15116,7 +16291,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 14db904e0aab928438e033e2b94578d2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
 --- !u!1 &901709178
 GameObject:
@@ -15282,7 +16457,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
 --- !u!224 &916385275 stripped
 RectTransform:
@@ -15333,7 +16508,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -15748,7 +16923,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -15762,11 +16937,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: sky
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: targetActor
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
@@ -16069,7 +17244,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0777d029ed3dffa4692f417d4aba19ca, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.DecalProjector
   m_Material: {fileID: 2100000, guid: 272fd8540e940e74b8dcdb805a7f9138, type: 2}
   m_DrawDistance: 1000
@@ -16129,7 +17304,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb43163518eb16646932a7bca761f7dc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScreenNoiseEffectController
   _grainNoise: {fileID: 1543486654}
   _triTone: {fileID: 1971266306}
@@ -16231,7 +17406,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -16515,16 +17690,20 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1467863513222589692, guid: fdc18366763475f4e89bde4085df0609, type: 3}
       propertyPath: player
-      value:
+      value: 
       objectReference: {fileID: 858414684}
     - target: {fileID: 1467863513222589692, guid: fdc18366763475f4e89bde4085df0609, type: 3}
       propertyPath: raceManager
-      value:
+      value: 
       objectReference: {fileID: 1756386251}
     - target: {fileID: 1467863513222589692, guid: fdc18366763475f4e89bde4085df0609, type: 3}
       propertyPath: gameplayCamera
-      value:
+      value: 
       objectReference: {fileID: 1621447075}
+    - target: {fileID: 2866351653226045782, guid: fdc18366763475f4e89bde4085df0609, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3544154522422428932, guid: fdc18366763475f4e89bde4085df0609, type: 3}
       propertyPath: m_Name
       value: RaceGoalDirection
@@ -16769,7 +17948,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 5.5
   radiusScale: 1
@@ -16815,7 +17994,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 0.9
@@ -16828,7 +18007,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4ff793dc6f68ebc4a8228590099da55e, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldShellHitbox
 --- !u!1 &1079001307
 GameObject:
@@ -16959,7 +18138,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 9f5f33a7de3e6eb40a0d5b5da6acc4ce, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 9f5f33a7de3e6eb40a0d5b5da6acc4ce, type: 3}
       propertyPath: m_LocalPosition.x
@@ -17822,7 +19001,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -18294,7 +19473,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb9ad82c4de9bad43bc148da48097b9f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChromaticAberrationEffect
   _playIntensity: 0.015
   _direction: {x: 1, y: 0}
@@ -18435,7 +19614,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: -4.7
   radiusScale: 1
@@ -18532,7 +19711,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9fcd6ff966fd3a9429b436fda680bfc5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RGBBlockNoiseEffect
   _playIntensity: 1
   _blockCount: {x: 12, y: 36}
@@ -18634,11 +19813,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: sky
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: targetActor
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
@@ -18830,7 +20009,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 34f5f925a07bc5842927085f0d601ed4, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DebugHud
   playerFlight: {fileID: 858414687}
   boostController: {fileID: 858414686}
@@ -19096,7 +20275,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -19142,7 +20321,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 678969564}
   _frameObject: {fileID: 1525179359}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1 &1294998873
 GameObject:
   m_ObjectHideFlags: 0
@@ -19187,7 +20366,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -19685,11 +20864,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2167659335629216339, guid: 12f1233bac18c5846a811c5ade8103b4, type: 3}
       propertyPath: gameplayCamera
-      value:
+      value: 
       objectReference: {fileID: 1621447075}
     - target: {fileID: 2167659335629216339, guid: 12f1233bac18c5846a811c5ade8103b4, type: 3}
       propertyPath: playerModelAnimator
-      value:
+      value: 
       objectReference: {fileID: 1470364644}
     - target: {fileID: 4827631539258932926, guid: 12f1233bac18c5846a811c5ade8103b4, type: 3}
       propertyPath: m_RenderPostProcessing
@@ -19746,7 +20925,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -19998,7 +21177,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -20044,7 +21223,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 87683206}
   _frameObject: {fileID: 680418965}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1412102053
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20437,7 +21616,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -20773,7 +21952,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -20790,7 +21969,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
@@ -21260,7 +22439,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 0d4ddc7db4af6b848844318d8ce80f66, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 0d4ddc7db4af6b848844318d8ce80f66, type: 3}
       propertyPath: m_LocalPosition.x
@@ -21372,7 +22551,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -21525,7 +22704,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -21571,7 +22750,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1927986603}
   _frameObject: {fileID: 326898528}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1514173896
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22101,7 +23280,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d7e641194bf2514480d13e9a317eb1d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrainNoiseEffect
   _playIntensity: 0.18
   _grainScale: 1
@@ -22232,7 +23411,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -23221,7 +24400,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -23267,7 +24446,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 878703548}
   _frameObject: {fileID: 30847972}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1658451378
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23493,7 +24672,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d294dc00a067a243bc84fd62b207773, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CpuDifficultyController
   _difficulty: {fileID: 11400000, guid: 84f317d51b3ea104aaed1fa37cc466c6, type: 2}
 --- !u!4 &1669138359
@@ -23621,7 +24800,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -23667,7 +24846,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 166905587}
   _frameObject: {fileID: 278768038}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1682657769
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24079,7 +25258,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -24127,7 +25306,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -24173,7 +25352,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1820557521}
   _frameObject: {fileID: 1727482662}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1 &1706309646
 GameObject:
   m_ObjectHideFlags: 0
@@ -24218,7 +25397,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -24264,7 +25443,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 784190530}
   _frameObject: {fileID: 448791919}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1708849516
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -24750,7 +25929,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -24895,7 +26074,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b21e00d9a1cbd4c4ca024d0e0781eb7b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceManager
 --- !u!1001 &1769246026
 PrefabInstance:
@@ -25416,7 +26595,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 0d4ddc7db4af6b848844318d8ce80f66, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 0d4ddc7db4af6b848844318d8ce80f66, type: 3}
       propertyPath: m_LocalPosition.x
@@ -25531,7 +26710,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -25584,7 +26763,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -25630,7 +26809,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 567543589}
   _frameObject: {fileID: 2071237678}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &1806552110
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -25736,7 +26915,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -25782,7 +26961,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1837104342}
   _frameObject: {fileID: 854973248}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1 &1820557519
 GameObject:
   m_ObjectHideFlags: 0
@@ -25914,11 +27093,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: sky
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: targetActor
-      value:
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4893572114468785723, guid: 74973b66b8dc746488ef2a7d3c9c319d, type: 3}
       propertyPath: destinationHour
@@ -26316,7 +27495,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b56c5abb7fccd1640a95502cb091a6ff, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSpline
   pointsContainer: {fileID: 1195144513}
   isLoop: 0
@@ -26398,7 +27577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _raceInputProvider
-      value:
+      value: 
       objectReference: {fileID: 659967152165127084}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _useKeyboardForDebug
@@ -27080,7 +28259,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 0.9
@@ -27482,7 +28661,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f645f29e198dff84ba674e9bb0f23134, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CityBlockArea
   _buildings:
   - _prefab: {fileID: 4976924795539857644, guid: d809d007aa79dec4c809f75b497873b7, type: 3}
@@ -28019,7 +29198,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 036e0856aaa378542b25e33a804d2da1, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 036e0856aaa378542b25e33a804d2da1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -28195,7 +29374,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -28354,7 +29533,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33e118d5b6659c447bb756e3ee1a88c8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TriToneEffect
   _playIntensity: 1
   _shadowColor: {r: 0.02, g: 0.05, b: 0.12, a: 1}
@@ -28804,7 +29983,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: -1.9
   radiusScale: 1
@@ -28879,7 +30058,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 864224007937198166, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 2034160303226581386, guid: 3fae404a80b2a4a439d61ba91ea39970, type: 3}
       propertyPath: m_LocalPosition.x
@@ -29532,7 +30711,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 089aca09b518e524180640154bd586f5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CourseSplinePoint
   bankAngle: 0
   radiusScale: 1
@@ -29672,7 +30851,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: skyTemplate
-      value:
+      value: 
       objectReference: {fileID: 2100000, guid: cdc7b40c5e5b4ee7b665dad3c037a55d, type: 2}
     - target: {fileID: 5809688119142477144, guid: b32e49891b264eb449904e2846a84cc7, type: 3}
       propertyPath: sunsetSpread
@@ -30175,7 +31354,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -30221,7 +31400,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 1514531684}
   _frameObject: {fileID: 701569579}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &2123821278
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30359,7 +31538,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b1e2002bc5f492098d1a100ca000002, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SmartArrowSignageController
   _mountingStyle: 0
   _signMode: 7
@@ -30405,7 +31584,7 @@ MonoBehaviour:
   _screenRenderer: {fileID: 726641097}
   _frameObject: {fileID: 1415326728}
   _customMaterial: {fileID: 0}
-  _customSaveName:
+  _customSaveName: 
 --- !u!1001 &2136365017
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30683,15 +31862,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 927409305864383182, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _hitStop
-      value:
+      value: 
       objectReference: {fileID: 741381865}
     - target: {fileID: 927409305864383182, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _radialBlur
-      value:
+      value: 
       objectReference: {fileID: 372469061}
     - target: {fileID: 927409305864383182, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _speedLines
-      value:
+      value: 
       objectReference: {fileID: 372469060}
     - target: {fileID: 1324316576405271903, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: m_Name
@@ -30699,23 +31878,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _shield
-      value:
+      value: 
       objectReference: {fileID: 659967152165127083}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _backShell
-      value:
+      value: 
       objectReference: {fileID: 1074407851}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _frontShell
-      value:
+      value: 
       objectReference: {fileID: 119953937}
     - target: {fileID: 2079369644378980432, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _boostHitProfile
-      value:
+      value: 
       objectReference: {fileID: 11400000, guid: 19d8ca51f9cc48347b48efe93373cf40, type: 2}
     - target: {fileID: 2302542312445263316, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _screenNoise
-      value:
+      value: 
       objectReference: {fileID: 993052317}
     - target: {fileID: 2302542312445263316, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _screenNoisePresetName
@@ -30727,15 +31906,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4209057477350365912, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _radialBlur
-      value:
+      value: 
       objectReference: {fileID: 372469061}
     - target: {fileID: 4209057477350365912, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _speedLines
-      value:
+      value: 
       objectReference: {fileID: 372469060}
     - target: {fileID: 4748799226068538865, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 4982091954103689576, guid: 9a6b5c34792bcb14d8b2ce2ca7da4f73, type: 3}
       propertyPath: m_LocalPosition.y
@@ -30807,7 +31986,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 86c13d90c7c434943a5a2c30b8bb3aab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShieldController
 --- !u!114 &659967152165127084 stripped
 MonoBehaviour:
@@ -30818,7 +31997,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73de88d3061ba8b4284a14bbeb575985, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RaceInputProvider
 --- !u!114 &659967152165127085 stripped
 MonoBehaviour:
@@ -30829,8 +32008,69 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72f9af4facf56794db42a75e527b0191, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JammerLauncher
+--- !u!1001 &2030544525402410681
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 531555976127771913, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_Name
+      value: RaceStatsCounter
+      objectReference: {fileID: 0}
+    - target: {fileID: 7281800755241708065, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: _raceManager
+      value: 
+      objectReference: {fileID: 1756386251}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8935497416624330481, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 5e02173265dc53a4ebf201f3d3695600, type: 3}
 --- !u!1001 &2667757041561019954
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30845,15 +32085,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4392975306675917269, guid: c289ae2985a2dd64497347b0bab4374a, type: 3}
       propertyPath: _countdownUI
-      value:
+      value: 
       objectReference: {fileID: 95006747}
     - target: {fileID: 4392975306675917269, guid: c289ae2985a2dd64497347b0bab4374a, type: 3}
       propertyPath: _raceManager
-      value:
+      value: 
       objectReference: {fileID: 1756386251}
     - target: {fileID: 4392975306675917269, guid: c289ae2985a2dd64497347b0bab4374a, type: 3}
       propertyPath: _playerManager
-      value:
+      value: 
       objectReference: {fileID: 900000002}
     - target: {fileID: 8716307047722895630, guid: c289ae2985a2dd64497347b0bab4374a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -30910,19 +32150,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _intro
-      value:
+      value: 
       objectReference: {fileID: 91655006}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _courseSpline
-      value:
+      value: 
       objectReference: {fileID: 1839428154}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _playerManager
-      value:
+      value: 
       objectReference: {fileID: 900000002}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _contactProfile
-      value:
+      value: 
       objectReference: {fileID: 11400000, guid: 6c59d50c7d450334fb345e322a128638, type: 2}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: _cpuRacers.Array.size
@@ -30930,31 +32170,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[0]'
-      value:
+      value: 
       objectReference: {fileID: 1625728065}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[1]'
-      value:
+      value: 
       objectReference: {fileID: 426312810}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[2]'
-      value:
+      value: 
       objectReference: {fileID: 2053787219}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[3]'
-      value:
+      value: 
       objectReference: {fileID: 1592541684}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[4]'
-      value:
+      value: 
       objectReference: {fileID: 1477300067}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[5]'
-      value:
+      value: 
       objectReference: {fileID: 400722617}
     - target: {fileID: 916971653843977552, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: '_cpuRacers.Array.data[6]'
-      value:
+      value: 
       objectReference: {fileID: 2100334293}
     - target: {fileID: 2312420566621798446, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
       propertyPath: m_LocalPosition.x
@@ -31005,63 +32245,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d8db427370d6bb44a05e2f1760dff52, type: 3}
---- !u!1 &910000001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 910000002}
-  - component: {fileID: 910000003}
-  - component: {fileID: 910000004}
-  m_Layer: 0
-  m_Name: RaceStatsCounter
-  m_TagString: Untagged
-  m_IsActive: 1
---- !u!4 &910000002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910000001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
---- !u!114 &910000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e9689c074bac4b8b9ae505495de7fa9a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
-  _raceManager: {fileID: 1756386251}
-  _player: {fileID: 0}
---- !u!114 &910000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f262a66c481f4475b5984dd2ec60fedd, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: 
-  _font: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  _closeSeconds: 0.65
-  _titleHoldSeconds: 0.85
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -31113,4 +32296,4 @@ SceneRoots:
   - {fileID: 155993430}
   - {fileID: 1419224857}
   - {fileID: 1277603074}
-  - {fileID: 910000002}
+  - {fileID: 2030544525402410681}
