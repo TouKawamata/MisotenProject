@@ -57,12 +57,12 @@ public class BoostPresentation : MonoBehaviour
 
         if (_radialBlur != null)
         {
-            _radialBlur.Play();
+            _radialBlur.Play(this);
         }
 
         if (_speedLines != null)
         {
-            _speedLines.Play();
+            _speedLines.Play(this);
         }
 
         if (_frontShellView != null)
@@ -85,12 +85,12 @@ public class BoostPresentation : MonoBehaviour
 
         if (_radialBlur != null)
         {
-            _radialBlur.Stop();
+            _radialBlur.Stop(this);
         }
 
         if (_speedLines != null)
         {
-            _speedLines.Stop();
+            _speedLines.Stop(this);
         }
 
         if (_frontShellView != null)

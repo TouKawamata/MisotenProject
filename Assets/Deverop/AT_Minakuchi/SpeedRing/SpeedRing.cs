@@ -26,6 +26,9 @@ public sealed class SpeedRing : CourseGimmickBase, IJammerTarget
     // 今、減速リングになっているか（CPUが読む）。
     public bool IsSlowing => _isSlowing;
 
+    // 加速・減速の効果時間（秒）。
+    public float Duration => _duration;
+
     private bool IsInsideEllipse(Vector3 worldPoint)
     {
         BoxCollider area = GetComponent<BoxCollider>();
