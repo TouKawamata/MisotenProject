@@ -1,0 +1,168 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3482409081624489286
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9114779973203267942}
+  - component: {fileID: 8962309154743741990}
+  - component: {fileID: 1218856238300604176}
+  - component: {fileID: 292840803428922834}
+  - component: {fileID: 130484491235827834}
+  - component: {fileID: 1391923354924408119}
+  - component: {fileID: 6481703971698410719}
+  m_Layer: 9
+  m_Name: 13DecelerationRing (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9114779973203267942
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.8, y: 16.5, z: -17.229694}
+  m_LocalScale: {x: 10, y: 10, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &8962309154743741990
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4, y: 4, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &1218856238300604176
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &292840803428922834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e54c1ce2aed408497d80f9105482bf1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpeedRing
+  _startSlowing: 1
+  _revertDelay: 1
+  _switchTag: Untagged
+  _extraSpeed: 50
+  _slowMultiplier: 0.3
+  _duration: 1.5
+  _visual: {fileID: 130484491235827834}
+  _ellipseScale: 1
+--- !u!114 &130484491235827834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 769d5837ec17444b951e379315117abd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpeedRingVisual
+  _ringShader: {fileID: 4800000, guid: da1193abf0a8483bb5f3f40d872631cc, type: 3}
+  _speedUpColor: {r: 0.08, g: 1, b: 0.16, a: 1}
+  _slowDownColor: {r: 0.8058859, g: 0.020255046, b: 1.5336024, a: 1}
+  _particleSize: 0.012
+  _speedUpParticleSpeed: 0.7
+  _slowDownParticleSpeed: 0.18
+  _particleHoverRatio: 0.5
+  _particleHoverWidth: 0.07
+  _trailDuration: 0.16
+  _trailBrightness: 0.65
+--- !u!114 &1391923354924408119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3feafc30b58657448990b622d087fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CourseRing
+  _radius: 10
+  _targets: []
+  _allowBackwardPass: 0
+  _passCooldown: 0.5
+  _maxPassDistancePerFrame: 100
+  _enableDebugLog: 1
+  OnPassed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &6481703971698410719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3482409081624489286}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3628a5274f5dbdc4b8f2e54d463a4d14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CourseRingSplinePlacer
+  _courseSpline: {fileID: 0}
+  _distance: 0
+  _lateralOffset: 0
+  _verticalOffset: 0
+  _syncWithTunnelRadius: 1
+  _updateEveryFrameInPlayMode: 0

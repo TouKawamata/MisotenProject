@@ -413,6 +413,78 @@ public class CourseMinimapControllerEditor : Editor
                 EditorUtility.SetDirty(controller);
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             }
+
+            EditorGUILayout.Space(4f);
+            EditorGUI.BeginChangeCheck();
+            bool compensateFov = EditorGUILayout.ToggleLeft("📷 FOV変化時の画面位置・サイズ固定（ブースト等のFOV変動を補正）", controller.CompensateModeBFov);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(controller, "Toggle Mode B FOV Compensation");
+                controller.CompensateModeBFov = compensateFov;
+                EditorUtility.SetDirty(controller);
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
+
+            if (controller.CompensateModeBFov)
+            {
+                EditorGUI.BeginChangeCheck();
+                float refFov = EditorGUILayout.Slider("基準FOV（0=起動時カメラFOVを自動採用）", controller.ModeBReferenceFov, 0f, 120f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(controller, "Change Mode B Reference FOV");
+                    controller.ModeBReferenceFov = refFov;
+                    EditorUtility.SetDirty(controller);
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                }
+
+                Camera mainCam = Camera.main;
+                if (mainCam != null)
+                {
+                    string refMode = controller.ModeBReferenceFov > 0.01f ? "手動" : (Application.isPlaying ? "自動捕捉" : "自動(実行時に初期FOV捕捉)");
+                    if (controller.BypassPostEffectsInModeB)
+                    {
+                        float renderFov = controller.GetModeBOverlayRenderFov(mainCam);
+                        EditorGUILayout.HelpBox(
+                            $"Camera.main FOV: {mainCam.fieldOfView:F1}° ｜ 基準FOV ({refMode}): {controller.EffectiveModeBReferenceFov:F1}° ｜ 投影FOV固定: {renderFov:F1}°（歪み無し）",
+                            MessageType.None);
+                    }
+                    else
+                    {
+                        float currentScale = controller.GetModeBFovCompensationScale(mainCam);
+                        EditorGUILayout.HelpBox(
+                            $"Camera.main FOV: {mainCam.fieldOfView:F1}° ｜ 基準FOV ({refMode}): {controller.EffectiveModeBReferenceFov:F1}° ｜ 補正倍率: ×{currentScale:F3}",
+                            MessageType.None);
+                    }
+                }
+            }
+
+            EditorGUILayout.Space(4f);
+            EditorGUI.BeginChangeCheck();
+            bool bypassPostEffects = EditorGUILayout.ToggleLeft("✨ 全画面ポストエフェクト完全回避（CommandBuffer直接描画）", controller.BypassPostEffectsInModeB);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(controller, "Toggle Mode B Bypass PostEffects");
+                controller.BypassPostEffectsInModeB = bypassPostEffects;
+                EditorUtility.SetDirty(controller);
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
+
+            if (controller.BypassPostEffectsInModeB)
+            {
+                EditorGUI.BeginChangeCheck();
+                float overlayResScale = EditorGUILayout.Slider("透過オーバーレイ解像度倍率", controller.ModeBOverlayResolutionScale, 0.5f, 1.0f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(controller, "Change Mode B Overlay Resolution Scale");
+                    controller.ModeBOverlayResolutionScale = overlayResScale;
+                    EditorUtility.SetDirty(controller);
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                }
+
+                EditorGUILayout.HelpBox(
+                    "CommandBufferによる透過RT直接描画＋オーバーレイ合成で、ブースト時のブラー・集中線・各種ノイズ／グリッチ等の全画面ポストエフェクトをすべてバイパスします（URP Bloomは乗らずシャープ表示になります）。",
+                    MessageType.None);
+            }
         }
 
         EditorGUILayout.EndVertical();

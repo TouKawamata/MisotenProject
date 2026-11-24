@@ -29,7 +29,7 @@ public sealed class RaceGoalDirection : MonoBehaviour
     [SerializeField] private AnimationCurve transitionCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
 
     [Header("シーン")]
-    [SerializeField] private string resultSceneName = "ResultScene";
+    [SerializeField] private string resultSceneName = SceneNames.Result;
 
     [Header("デバッグ")]
     [SerializeField] private bool showDebugLogs = true;
@@ -123,43 +123,46 @@ public sealed class RaceGoalDirection : MonoBehaviour
             HideContinue();
         }
 
-        bool useShader = PrepareTransitionMaterial();
-        if (!useShader)
+        RaceResultTransition resultTransition = FindFirstObjectByType<RaceResultTransition>();
+        if (resultTransition != null)
         {
-            Debug.LogWarning("[RaceGoalDirection] _Transitionを持つGraphicのマテリアルが見つかりません。CanvasGroupフェードで代用します。", this);
+            yield return resultTransition.PlayExit();
         }
-
-        if (fadeCanvasGroup != null)
+        else
         {
-            // Shader使用時はShader側で透過を制御するためCanvasGroupは常に1。
-            // Shader未設定の場合のみCanvasGroupのAlphaを0→1に変化させる。
-            fadeCanvasGroup.alpha = useShader ? 1f : 0f;
-            fadeCanvasGroup.blocksRaycasts = true;
-        }
-        if (useShader)
-        {
-            SetTransition(1f);
-        }
-
-        Log($"トランジション開始: {fadeSeconds:F2}秒 ({(useShader ? "_Transition 1→0" : "CanvasGroup フェード")})");
-        float elapsed = 0f;
-        if (fadeSeconds > 0f)
-        {
-            while (elapsed < fadeSeconds)
+            bool useShader = PrepareTransitionMaterial();
+            if (!useShader)
             {
-                float normalizedTime = Mathf.Clamp01(elapsed / fadeSeconds);
-                ApplyTransition(normalizedTime, useShader);
-                yield return null;
-                elapsed += Time.unscaledDeltaTime;
+                Debug.LogWarning("[RaceGoalDirection] _Transitionを持つGraphicのマテリアルが見つかりません。CanvasGroupフェードで代用します。", this);
             }
+
+            if (fadeCanvasGroup != null)
+            {
+                // Shader使用時はShader側で透過を制御するためCanvasGroupは常に1。
+                // Shader未設定の場合のみCanvasGroupのAlphaを0→1に変化させる。
+                fadeCanvasGroup.alpha = useShader ? 1f : 0f;
+                fadeCanvasGroup.blocksRaycasts = true;
+            }
+            if (useShader)
+            {
+                SetTransition(1f);
+            }
+
+            Log($"トランジション開始: {fadeSeconds:F2}秒 ({(useShader ? "_Transition 1→0" : "CanvasGroup フェード")})");
+            float elapsed = 0f;
+            if (fadeSeconds > 0f)
+            {
+                while (elapsed < fadeSeconds)
+                {
+                    float normalizedTime = Mathf.Clamp01(elapsed / fadeSeconds);
+                    ApplyTransition(normalizedTime, useShader);
+                    yield return null;
+                    elapsed += Time.unscaledDeltaTime;
+                }
+            }
+            ApplyTransition(1f, useShader);
         }
-        ApplyTransition(1f, useShader);
 
-
-        // TODO: ResultSceneへ結果を渡す。
-        // Player順位: raceManager.PlayerData.CurrentRank
-        // Playerタイム: raceManager.PlayerData.FinishTime
-        // 全員の順位・タイム: raceManager.Racers
         if (Application.CanStreamedLevelBeLoaded(resultSceneName))
         {
             Log($"ResultSceneへの遷移開始: {resultSceneName}");
