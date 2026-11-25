@@ -3,30 +3,19 @@ using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
-/// CourseSpline上を距離ベースで移動し、接触したレーサーを吹き飛ばす車両ギミック。
+/// VehiclePath上を移動し、接触したレーサーをノックバックする車両ギミック。
 ///
-/// 外部のUnity Splinesパッケージには依存しない。
+/// 車両の走行経路にはVehiclePathを使用する。
+/// レーサーの吹き飛ばし方向には、レーサー側のICourseGuideを使用する。
 ///
 /// 推奨構成:
 ///
-/// CourseSplineKnockbackVehicle
+/// MovingVehicle
 /// ├─ Rigidbody
-/// ├─ CourseSplineKnockbackVehicle.cs
-/// ├─ Hitbox
-/// │   └─ BoxCollider（Is Trigger = ON）
+/// ├─ BoxCollider または子Hitbox
+/// ├─ CourseSplineKnockbackVehicle
 /// └─ VisualRoot
 ///     └─ 任意の車・電車メッシュ
-///
-/// Rigidbody:
-///     Is Kinematic = ON
-///     Use Gravity = OFF
-///     Interpolate = Interpolate
-///
-/// Collider:
-///     Is Trigger = ON
-///
-/// Racer:
-///     Layer = Racer
 /// </summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody))]
@@ -37,8 +26,8 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
     public enum EndBehaviour
     {
-        [InspectorName("コース設定に従う")]
-        FollowCourseSetting,
+        [InspectorName("パス設定に従う")]
+        FollowPathSetting,
 
         [InspectorName("ループ")]
         Loop,
@@ -62,20 +51,20 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         ForwardAndPlanar
     }
 
-    [Header("コース")]
+    [Header("車両用パス")]
 
-    [Tooltip("移動に使用するCourseSpline")]
+    [Tooltip("車両専用の移動経路")]
     [SerializeField]
-    private CourseSpline _courseSpline;
+    private VehiclePath _vehiclePath;
 
     [Tooltip("開始地点。0が始点、1が終点")]
     [SerializeField, Range(0f, 1f)]
     private float _startNormalizedPosition;
 
-    [Tooltip("コース端に到達したときの処理")]
+    [Tooltip("パスの端へ到達したときの処理")]
     [SerializeField]
     private EndBehaviour _endBehaviour =
-        EndBehaviour.FollowCourseSetting;
+        EndBehaviour.FollowPathSetting;
 
     [Header("移動")]
 
@@ -83,15 +72,15 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     [SerializeField, Min(0f)]
     private float _moveSpeed = 25f;
 
-    [Tooltip("コースの向きへ車両を回転させる")]
+    [Tooltip("パスの進行方向へ車両を回転させる")]
     [SerializeField]
-    private bool _alignToCourse = true;
+    private bool _alignToPath = true;
 
-    [Tooltip("回転の追従速度。0以下なら即座に向きを合わせる")]
+    [Tooltip("回転の追従速度。0なら即座に向きを合わせる")]
     [SerializeField, Min(0f)]
     private float _rotationSharpness = 12f;
 
-    [Tooltip("進行方向計算用の先読み距離[m]。カーブでの向きを滑らかにする")]
+    [Tooltip("進行方向を求めるために先を見る距離[m]")]
     [SerializeField, Min(0.01f)]
     private float _lookAheadDistance = 2f;
 
@@ -99,17 +88,17 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     [SerializeField]
     private Vector3 _rotationOffset;
 
-    [Tooltip("コース中心から右方向へのオフセット[m]")]
+    [Tooltip("パス位置から車両のローカル右方向へずらす距離[m]")]
     [SerializeField]
     private float _rightOffset;
 
-    [Tooltip("コース中心から上方向へのオフセット[m]")]
+    [Tooltip("パス位置からワールド上方向へずらす距離[m]")]
     [SerializeField]
     private float _upOffset;
 
     [Header("見た目")]
 
-    [Tooltip("任意の車両メッシュを配置するルート。移動ロジックはこの中のメッシュに依存しない")]
+    [Tooltip("任意の車両メッシュを配置するルート")]
     [SerializeField]
     private Transform _visualRoot;
 
@@ -124,7 +113,7 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     [SerializeField, Min(0f)]
     private float _forwardPushDistance = 12f;
 
-    [Tooltip("コースの断面方向へ吹き飛ばす距離[m]")]
+    [Tooltip("レーサーのコース断面方向へ吹き飛ばす距離[m]")]
     [SerializeField, Min(0f)]
     private float _planarPushDistance = 6f;
 
@@ -146,7 +135,7 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     [SerializeField, Min(0f)]
     private float _slowDuration = 1f;
 
-    [Tooltip("減速開始・終了時のフェード時間[秒]")]
+    [Tooltip("減速がかかるときと戻るときのフェード時間[秒]")]
     [SerializeField, Min(0f)]
     private float _slowFadeDuration = 0.1f;
 
@@ -162,7 +151,7 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
     [Header("衝突判定")]
 
-    [Tooltip("車両の接触判定。未設定の場合は子を含むColliderから自動取得する")]
+    [Tooltip("車両の当たり判定。未設定なら子を含むColliderから取得する")]
     [SerializeField]
     private Collider _vehicleCollider;
 
@@ -176,15 +165,17 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     [SerializeField]
     private UnityEvent _onBlockedByShield;
 
-    [Tooltip("コース端へ到達したときに呼ばれる")]
+    [Tooltip("パスの端へ到達したときに呼ばれる")]
     [SerializeField]
     private UnityEvent _onReachedEnd;
 
     [Header("デバッグ")]
 
+    [Tooltip("接触時のノックバック方向を表示する")]
     [SerializeField]
     private bool _showDebugLines = true;
 
+    [Tooltip("デバッグ線を表示する時間[秒]")]
     [SerializeField, Min(0.1f)]
     private float _debugLineDuration = 3f;
 
@@ -197,29 +188,42 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     private Rigidbody _rigidbody;
     private int _racerLayer;
 
-    // CourseSpline上の現在距離。
     private float _currentDistance;
-
-    // PingPongで逆走中か。
     private bool _isMovingBackward;
-
-    // Stopモードで停止したか。
     private bool _hasStopped;
 
-    // コース終端イベントの連続呼び出し防止。
-    private bool _hasInvokedEnd;
-
-    // ノックバックに使う実際の車両進行方向。
+    // 最後に車両が実際に移動した方向。
     private Vector3 _movementDirection = Vector3.forward;
 
     public Transform VisualRoot => _visualRoot;
 
     public float CurrentDistance => _currentDistance;
 
+    public Vector3 MovementDirection => _movementDirection;
+
     public float MoveSpeed
     {
         get => _moveSpeed;
         set => _moveSpeed = Mathf.Max(0f, value);
+    }
+
+    private void Reset()
+    {
+        Rigidbody body = GetComponent<Rigidbody>();
+
+        if (body != null)
+        {
+            body.isKinematic = true;
+            body.useGravity = false;
+            body.interpolation =
+                RigidbodyInterpolation.Interpolate;
+
+            body.collisionDetectionMode =
+                CollisionDetectionMode.ContinuousSpeculative;
+        }
+
+        _vehicleCollider =
+            GetComponentInChildren<Collider>();
     }
 
     private void Awake()
@@ -251,12 +255,12 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         {
             Debug.LogWarning(
                 $"{nameof(CourseSplineKnockbackVehicle)}: " +
-                $"{_vehicleCollider.name} のIs TriggerがOFFです。",
+                $"{_vehicleCollider.name}のIs TriggerがOFFです。",
                 _vehicleCollider);
         }
 
-        _racerLayer = LayerMask.NameToLayer(
-            RacerLayerName);
+        _racerLayer =
+            LayerMask.NameToLayer(RacerLayerName);
 
         if (_racerLayer < 0)
         {
@@ -269,16 +273,100 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
     private void Start()
     {
-        if (!ValidateCourse())
+        if (!ValidatePath())
         {
+            Debug.LogError(
+                $"{nameof(CourseSplineKnockbackVehicle)}: " +
+                "有効なVehiclePathが設定されていません。",
+                this);
+
             enabled = false;
             return;
         }
 
         _currentDistance =
-            _courseSpline.TotalLength *
+            _vehiclePath.TotalLength *
             _startNormalizedPosition;
 
+        SnapToCurrentPosition();
+    }
+
+    private void FixedUpdate()
+    {
+        RemoveExpiredCooldowns();
+
+        if (!ValidatePath() ||
+            _moveSpeed <= 0f ||
+            _hasStopped)
+        {
+            return;
+        }
+
+        Vector3 previousPosition =
+            _rigidbody.position;
+
+        AdvanceDistance(
+            _moveSpeed * Time.fixedDeltaTime);
+
+        EvaluatePose(
+            _currentDistance,
+            out Vector3 targetPosition,
+            out Quaternion targetRotation);
+
+        Vector3 movement =
+            targetPosition - previousPosition;
+
+        /*
+         * ループ境界を跨ぐと、
+         * 最終地点から開始地点への大きな差が出ることがある。
+         * ノックバック方向へその差を使用せず、
+         * パスの評価方向を使用する。
+         */
+        float expectedMovement =
+            _moveSpeed * Time.fixedDeltaTime;
+
+        bool movementLooksValid =
+            movement.sqrMagnitude >
+                MinDirectionSqrMagnitude &&
+            movement.magnitude <=
+                expectedMovement * 3f + 1f;
+
+        if (movementLooksValid)
+        {
+            _movementDirection =
+                movement.normalized;
+        }
+        else
+        {
+            _movementDirection =
+                GetPathMovementDirection(
+                    _currentDistance);
+        }
+
+        _rigidbody.MovePosition(targetPosition);
+
+        if (_alignToPath)
+        {
+            Quaternion rotation =
+                CalculateSmoothedRotation(
+                    targetRotation);
+
+            _rigidbody.MoveRotation(rotation);
+        }
+    }
+
+    private bool ValidatePath()
+    {
+        return
+            _vehiclePath != null &&
+            _vehiclePath.TotalLength > 0.001f;
+    }
+
+    /// <summary>
+    /// 現在距離の位置へ即座に配置する。
+    /// </summary>
+    private void SnapToCurrentPosition()
+    {
         EvaluatePose(
             _currentDistance,
             out Vector3 position,
@@ -290,89 +378,28 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         transform.SetPositionAndRotation(
             position,
             rotation);
-    }
 
-    private void FixedUpdate()
-    {
-        RemoveExpiredCooldowns();
-
-        if (!ValidateCourse() ||
-            _moveSpeed <= 0f ||
-            _hasStopped)
-        {
-            return;
-        }
-
-        AdvanceDistance(
-            _moveSpeed * Time.fixedDeltaTime);
-
-        EvaluatePose(
-            _currentDistance,
-            out Vector3 targetPosition,
-            out Quaternion targetRotation);
-
-        Vector3 movement =
-            targetPosition - _rigidbody.position;
-
-        if (movement.sqrMagnitude >
-            MinDirectionSqrMagnitude)
-        {
-            _movementDirection =
-                movement.normalized;
-        }
-        else
-        {
-            _movementDirection =
-                GetCourseMovementDirection(
-                    _currentDistance);
-        }
-
-        _rigidbody.MovePosition(targetPosition);
-
-        if (_alignToCourse)
-        {
-            Quaternion rotation =
-                CalculateSmoothedRotation(
-                    targetRotation);
-
-            _rigidbody.MoveRotation(rotation);
-        }
-    }
-
-    private bool ValidateCourse()
-    {
-        return
-            _courseSpline != null &&
-            _courseSpline.TotalLength > 0.001f;
+        _movementDirection =
+            GetPathMovementDirection(
+                _currentDistance);
     }
 
     /// <summary>
-    /// 現在距離から車両の位置と姿勢を求める。
+    /// VehiclePath上の位置と姿勢を求める。
     /// </summary>
     private void EvaluatePose(
         float distance,
         out Vector3 position,
         out Quaternion rotation)
     {
-        Vector3 center =
-            _courseSpline.EvaluatePositionByDistance(
-                distance);
-
-        Vector3 right =
-            _courseSpline.EvaluateRightByDistance(
-                distance);
-
-        Vector3 up =
-            _courseSpline.EvaluateUpByDistance(
+        Vector3 pathPosition =
+            _vehiclePath.EvaluatePosition(
                 distance);
 
         Vector3 forward =
-            GetCourseMovementDirection(distance);
+            GetPathMovementDirection(distance);
 
-        position =
-            center +
-            right * _rightOffset +
-            up * _upOffset;
+        Vector3 up = Vector3.up;
 
         if (forward.sqrMagnitude <
             MinDirectionSqrMagnitude)
@@ -380,75 +407,80 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
             forward = transform.forward;
         }
 
-        if (up.sqrMagnitude <
-            MinDirectionSqrMagnitude)
-        {
-            up = Vector3.up;
-        }
+        forward.Normalize();
 
-        // forwardとupが平行に近い場合のLookRotation対策。
+        // 上下に近い経路でもLookRotationが破綻しないようにする。
         if (Mathf.Abs(
                 Vector3.Dot(
-                    forward.normalized,
-                    up.normalized)) > 0.999f)
+                    forward,
+                    up)) > 0.999f)
         {
-            up = Vector3.up;
+            up = transform.up;
 
             if (Mathf.Abs(
                     Vector3.Dot(
-                        forward.normalized,
-                        up)) > 0.999f)
+                        forward,
+                        up.normalized)) > 0.999f)
             {
-                up = Vector3.right;
+                up = Vector3.forward;
             }
         }
 
+        // ローカル右方向。
+        Vector3 right =
+            Vector3.Cross(up, forward);
+
+        if (right.sqrMagnitude <
+            MinDirectionSqrMagnitude)
+        {
+            right = transform.right;
+        }
+
+        right.Normalize();
+
+        // 直交するUpを再計算する。
+        up =
+            Vector3.Cross(
+                forward,
+                right).normalized;
+
+        position =
+            pathPosition +
+            right * _rightOffset +
+            Vector3.up * _upOffset;
+
         rotation =
             Quaternion.LookRotation(
-                forward.normalized,
-                up.normalized) *
-            Quaternion.Euler(_rotationOffset);
+                forward,
+                up) *
+            Quaternion.Euler(
+                _rotationOffset);
     }
 
     /// <summary>
-    /// 先読み位置を使い、カーブ上の向きを滑らかに求める。
+    /// VehiclePathから現在の移動方向を取得する。
+    /// PingPongで戻っている場合は方向を反転する。
     /// </summary>
-    private Vector3 GetCourseMovementDirection(
+    private Vector3 GetPathMovementDirection(
         float distance)
     {
-        float directionSign =
-            _isMovingBackward ? -1f : 1f;
-
-        float aheadDistance =
-            distance +
-            _lookAheadDistance *
-            directionSign;
-
-        Vector3 currentPosition =
-            _courseSpline.EvaluatePositionByDistance(
-                distance);
-
-        Vector3 aheadPosition =
-            _courseSpline.EvaluatePositionByDistance(
-                aheadDistance);
-
         Vector3 direction =
-            aheadPosition - currentPosition;
+            _vehiclePath.EvaluateForward(
+                distance,
+                _lookAheadDistance);
+
+        if (_isMovingBackward)
+        {
+            direction = -direction;
+        }
 
         if (direction.sqrMagnitude <
             MinDirectionSqrMagnitude)
         {
-            direction =
-                _courseSpline
-                    .EvaluateForwardByDistance(
-                        distance) *
-                directionSign;
+            return transform.forward;
         }
 
-        return direction.sqrMagnitude >
-               MinDirectionSqrMagnitude
-            ? direction.normalized
-            : transform.forward;
+        return direction.normalized;
     }
 
     private Quaternion CalculateSmoothedRotation(
@@ -459,7 +491,6 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
             return targetRotation;
         }
 
-        // フレームレートの影響を受けにくい指数補間。
         float t =
             1f -
             Mathf.Exp(
@@ -476,7 +507,7 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         float movementDistance)
     {
         float totalLength =
-            _courseSpline.TotalLength;
+            _vehiclePath.TotalLength;
 
         if (totalLength <= 0f)
         {
@@ -490,11 +521,16 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         {
             case EndBehaviour.Loop:
                 {
-                    _currentDistance += movementDistance;
+                    float before =
+                        _currentDistance;
 
-                    if (_currentDistance >= totalLength)
+                    _currentDistance +=
+                        movementDistance;
+
+                    if (before < totalLength &&
+                        _currentDistance >= totalLength)
                     {
-                        InvokeReachedEnd();
+                        _onReachedEnd?.Invoke();
                     }
 
                     _currentDistance =
@@ -508,11 +544,18 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
             case EndBehaviour.PingPong:
                 {
                     float direction =
-                        _isMovingBackward ? -1f : 1f;
+                        _isMovingBackward
+                            ? -1f
+                            : 1f;
 
                     _currentDistance +=
-                        movementDistance * direction;
+                        movementDistance *
+                        direction;
 
+                    /*
+                     * 速度が非常に大きく、1フレームで端を複数回越えても
+                     * 範囲へ戻せるようwhileで処理する。
+                     */
                     while (_currentDistance < 0f ||
                            _currentDistance > totalLength)
                     {
@@ -525,7 +568,7 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
                                  totalLength);
 
                             _isMovingBackward = true;
-                            InvokeReachedEnd();
+                            _onReachedEnd?.Invoke();
                         }
                         else
                         {
@@ -533,25 +576,26 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
                                 -_currentDistance;
 
                             _isMovingBackward = false;
-                            InvokeReachedEnd();
+                            _onReachedEnd?.Invoke();
                         }
                     }
 
-                    // 往復では次に別の端へ到達した際にも
-                    // イベントを呼べるようにする。
-                    _hasInvokedEnd = false;
                     break;
                 }
 
             case EndBehaviour.Stop:
                 {
-                    _currentDistance += movementDistance;
+                    _currentDistance +=
+                        movementDistance;
 
-                    if (_currentDistance >= totalLength)
+                    if (_currentDistance >=
+                        totalLength)
                     {
-                        _currentDistance = totalLength;
+                        _currentDistance =
+                            totalLength;
+
                         _hasStopped = true;
-                        InvokeReachedEnd();
+                        _onReachedEnd?.Invoke();
                     }
 
                     break;
@@ -562,12 +606,12 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     private EndBehaviour ResolveEndBehaviour()
     {
         if (_endBehaviour !=
-            EndBehaviour.FollowCourseSetting)
+            EndBehaviour.FollowPathSetting)
         {
             return _endBehaviour;
         }
 
-        return _courseSpline.IsLoop
+        return _vehiclePath.IsLoop
             ? EndBehaviour.Loop
             : EndBehaviour.Stop;
     }
@@ -576,38 +620,70 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         float distance,
         float length)
     {
-        float result = distance % length;
+        if (length <= 0f)
+        {
+            return 0f;
+        }
+
+        float result =
+            distance % length;
 
         return result < 0f
             ? result + length
             : result;
     }
 
-    private void InvokeReachedEnd()
+    private void OnTriggerEnter(
+        Collider other)
     {
-        if (_hasInvokedEnd)
-        {
-            return;
-        }
-
-        _hasInvokedEnd = true;
-        _onReachedEnd?.Invoke();
+        ProcessTriggerEnter(other);
     }
 
-    private void OnTriggerEnter(Collider other)
+    /// <summary>
+    /// 子Hitboxの中継スクリプトからも呼び出せる接触窓口。
+    /// </summary>
+    public void ProcessTriggerEnter(
+        Collider other)
     {
-        if (_racerLayer >= 0 &&
-            other.gameObject.layer != _racerLayer)
+        if (other == null)
         {
             return;
         }
 
+        /*
+         * RacerのColliderが子オブジェクトにあり、
+         * Layerが親にだけ設定されている構成も考慮し、
+         * Layerだけで確定せずIGimmickRacerも検索する。
+         */
         IGimmickRacer racer =
-            other.GetComponentInParent<IGimmickRacer>();
+            other.GetComponentInParent<
+                IGimmickRacer>();
 
         if (racer == null)
         {
             return;
+        }
+
+        if (_racerLayer >= 0)
+        {
+            GameObject racerObject =
+                racer.Transform != null
+                    ? racer.Transform.gameObject
+                    : other.gameObject;
+
+            bool colliderIsRacerLayer =
+                other.gameObject.layer ==
+                _racerLayer;
+
+            bool rootIsRacerLayer =
+                racerObject.layer ==
+                _racerLayer;
+
+            if (!colliderIsRacerLayer &&
+                !rootIsRacerLayer)
+            {
+                return;
+            }
         }
 
         TryHitRacer(racer);
@@ -616,18 +692,26 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     private void TryHitRacer(
         IGimmickRacer racer)
     {
-        if (_lastHitTimes.TryGetValue(
-                racer,
-                out float lastHitTime) &&
-            Time.time - lastHitTime <
-            _sameRacerCooldown)
+        if (racer == null)
         {
             return;
         }
 
-        // 無敵中でもTrigger内で多段判定されないよう、
-        // 判定した時点でクールダウンを記録する。
-        _lastHitTimes[racer] = Time.time;
+        if (_lastHitTimes.TryGetValue(
+                racer,
+                out float lastHitTime) &&
+            Time.time - lastHitTime <
+                _sameRacerCooldown)
+        {
+            return;
+        }
+
+        /*
+         * 複数Colliderから同時に接触しても多段ヒットしないよう、
+         * 無敵・シールド判定より先に時刻を記録する。
+         */
+        _lastHitTimes[racer] =
+            Time.time;
 
         if (racer.IsInvincible)
         {
@@ -649,29 +733,38 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     private void ApplyKnockback(
         IGimmickRacer racer)
     {
-        if (racer.Transform == null)
+        Transform racerTransform =
+            racer.Transform;
+
+        if (racerTransform == null)
         {
             return;
         }
 
         Vector3 racerPosition =
-            racer.Transform.position;
+            racerTransform.position;
 
+        /*
+         * ここではVehiclePathではなく、
+         * レーサー自身が使っているCourseGuideを参照する。
+         *
+         * ApplyPlanarPushとApplyForwardPushはレーサーの
+         * コース座標系で処理されるため。
+         */
         ICourseGuide guide =
             racer.CourseGuide;
 
         Vector3 courseForward =
             guide != null
-                ? guide.GetForward(racerPosition)
-                : _courseSpline
-                    .EvaluateForwardByDistance(
-                        _currentDistance);
+                ? guide.GetForward(
+                    racerPosition)
+                : _movementDirection;
 
         if (courseForward.sqrMagnitude <
             MinDirectionSqrMagnitude)
         {
             courseForward =
-                _movementDirection;
+                transform.forward;
         }
 
         courseForward.Normalize();
@@ -690,22 +783,28 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
         Vector3 closestPoint =
             _vehicleCollider != null
-                ? _vehicleCollider
-                    .ClosestPoint(racerPosition)
+                ? _vehicleCollider.ClosestPoint(
+                    racerPosition)
                 : transform.position;
 
         Vector3 awayFromVehicle =
-            racerPosition - closestPoint;
+            racerPosition -
+            closestPoint;
 
-        // レーサーのコース進行方向を除去し、
-        // コース断面上の押し出し方向を作る。
+        /*
+         * レーサーのコース進行方向成分を除去し、
+         * レーサーのコース断面に沿う押し出し方向を作る。
+         */
         Vector3 planarOffset =
             Vector3.ProjectOnPlane(
                 awayFromVehicle,
                 courseForward);
 
-        // Collider内部ではClosestPointがレーサー位置と
-        // 同じになる場合があるため、車両中心から再計算する。
+        /*
+         * RacerがTrigger内部にいる場合、
+         * ClosestPointはRacer自身の位置を返すため、
+         * 車両中心からの方向を使用する。
+         */
         if (planarOffset.sqrMagnitude <
             MinDirectionSqrMagnitude)
         {
@@ -716,7 +815,10 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
                     courseForward);
         }
 
-        // 車両の中心と完全に重なった場合。
+        /*
+         * 車両中心と完全に重なった場合。
+         * CourseGuideの右方向を優先する。
+         */
         if (planarOffset.sqrMagnitude <
             MinDirectionSqrMagnitude)
         {
@@ -759,8 +861,13 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         if (applyForward &&
             _forwardPushDistance > 0f)
         {
-            // ApplyForwardPushはレーサーのコース方向を
-            // 正方向とするため、車両の移動方向から符号を決める。
+            /*
+             * ApplyForwardPushの正方向は、
+             * VehiclePathではなくレーサー側コースの正方向。
+             *
+             * 車両がレーサーの進行方向と逆向きなら
+             * 負の距離を渡す。
+             */
             float sign =
                 Vector3.Dot(
                     vehicleForward,
@@ -775,12 +882,13 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
         Debug.Log(
             $"{nameof(CourseSplineKnockbackVehicle)}: " +
-            $"{racer.Transform.name} に接触 " +
-            $"進行方向押し出し " +
-            $"{(applyForward ? _forwardPushDistance : 0f):F1}m " +
+            $"{racerTransform.name}に接触。 " +
+            $"車両方向 {vehicleForward}、" +
+            $"前後押し出し " +
+            $"{(applyForward ? _forwardPushDistance : 0f):F1}m、" +
             $"断面押し出し " +
-            $"{(applyPlanar ? _planarPushDistance : 0f):F1}m " +
-            $"スタン {_stunDuration:F2}秒 " +
+            $"{(applyPlanar ? _planarPushDistance : 0f):F1}m、" +
+            $"スタン {_stunDuration:F2}秒、" +
             $"減速 ×{_maxSpeedMultiplier:F2} " +
             $"{_slowDuration:F1}秒",
             this);
@@ -808,9 +916,10 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         {
             if (pair.Key == null ||
                 Time.time - pair.Value >=
-                _sameRacerCooldown)
+                    _sameRacerCooldown)
             {
-                _removalBuffer.Add(pair.Key);
+                _removalBuffer.Add(
+                    pair.Key);
             }
         }
 
@@ -823,7 +932,8 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
         }
     }
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    [System.Diagnostics.Conditional(
+        "UNITY_EDITOR")]
     private void DrawHitResult(
         Vector3 racerPosition,
         Vector3 vehicleForward,
@@ -836,73 +946,72 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
             return;
         }
 
-        if (applyForward)
+        if (applyForward &&
+            vehicleForward.sqrMagnitude >
+                MinDirectionSqrMagnitude)
         {
             Debug.DrawRay(
                 racerPosition,
                 vehicleForward.normalized *
-                _forwardPushDistance,
+                    _forwardPushDistance,
                 Color.red,
                 _debugLineDuration);
         }
 
         if (applyPlanar &&
             planarOffset.sqrMagnitude >
-            MinDirectionSqrMagnitude)
+                MinDirectionSqrMagnitude)
         {
             Debug.DrawRay(
                 racerPosition,
                 planarOffset.normalized *
-                _planarPushDistance,
+                    _planarPushDistance,
                 Color.yellow,
                 _debugLineDuration);
         }
     }
 
     /// <summary>
-    /// 外部から車両を指定距離へ移動する。
+    /// VehiclePath上の指定距離へ即座に移動する。
     /// </summary>
-    public void SetDistance(float distance)
+    public void SetDistance(
+        float distance)
     {
-        if (!ValidateCourse())
+        if (!ValidatePath())
         {
             return;
         }
 
         _currentDistance =
-            _courseSpline.IsLoop
+            _vehiclePath.IsLoop
                 ? RepeatDistance(
                     distance,
-                    _courseSpline.TotalLength)
+                    _vehiclePath.TotalLength)
                 : Mathf.Clamp(
                     distance,
                     0f,
-                    _courseSpline.TotalLength);
+                    _vehiclePath.TotalLength);
 
         _hasStopped = false;
-        _hasInvokedEnd = false;
 
-        EvaluatePose(
-            _currentDistance,
-            out Vector3 position,
-            out Quaternion rotation);
-
-        _rigidbody.position = position;
-        _rigidbody.rotation = rotation;
-
-        transform.SetPositionAndRotation(
-            position,
-            rotation);
+        SnapToCurrentPosition();
     }
 
+    /// <summary>
+    /// Inspectorで指定した開始地点へ戻す。
+    /// </summary>
     public void Restart()
     {
+        if (!ValidatePath())
+        {
+            return;
+        }
+
         _isMovingBackward = false;
         _hasStopped = false;
-        _hasInvokedEnd = false;
 
         SetDistance(
-            _courseSpline.TotalLength *
+            _vehiclePath.TotalLength *
             _startNormalizedPosition);
     }
 
@@ -911,10 +1020,14 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
     private void OnValidate()
     {
         _moveSpeed =
-            Mathf.Max(0f, _moveSpeed);
+            Mathf.Max(
+                0f,
+                _moveSpeed);
 
         _rotationSharpness =
-            Mathf.Max(0f, _rotationSharpness);
+            Mathf.Max(
+                0f,
+                _rotationSharpness);
 
         _lookAheadDistance =
             Mathf.Max(
@@ -968,53 +1081,74 @@ public sealed class CourseSplineKnockbackVehicle : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (_courseSpline == null)
+        if (_vehiclePath == null ||
+            _vehiclePath.TotalLength <= 0f)
         {
             return;
         }
 
-        float distance = Application.isPlaying
-            ? _currentDistance
-            : _courseSpline.TotalLength *
-              _startNormalizedPosition;
-
-        Vector3 center =
-            _courseSpline
-                .EvaluatePositionByDistance(
-                    distance);
-
-        Vector3 right =
-            _courseSpline
-                .EvaluateRightByDistance(
-                    distance);
-
-        Vector3 up =
-            _courseSpline
-                .EvaluateUpByDistance(
-                    distance);
+        float distance =
+            Application.isPlaying
+                ? _currentDistance
+                : _vehiclePath.TotalLength *
+                  _startNormalizedPosition;
 
         Vector3 position =
-            center +
-            right * _rightOffset +
-            up * _upOffset;
+            _vehiclePath.EvaluatePosition(
+                distance);
 
         Vector3 forward =
-            _courseSpline
-                .EvaluateForwardByDistance(
-                    distance);
+            _vehiclePath.EvaluateForward(
+                distance,
+                _lookAheadDistance);
+
+        if (_isMovingBackward)
+        {
+            forward = -forward;
+        }
+
+        if (forward.sqrMagnitude <
+            MinDirectionSqrMagnitude)
+        {
+            forward = transform.forward;
+        }
+
+        forward.Normalize();
+
+        Vector3 right =
+            Vector3.Cross(
+                Vector3.up,
+                forward);
+
+        if (right.sqrMagnitude <
+            MinDirectionSqrMagnitude)
+        {
+            right = transform.right;
+        }
+
+        position +=
+            right.normalized *
+            _rightOffset;
+
+        position +=
+            Vector3.up *
+            _upOffset;
 
         Gizmos.color = Color.cyan;
-        Gizmos.DrawSphere(position, 0.4f);
+        Gizmos.DrawSphere(
+            position,
+            0.4f);
+
         Gizmos.DrawLine(
             position,
             position +
-            forward.normalized * 5f);
+            forward * 5f);
 
         Gizmos.color = Color.red;
         Gizmos.DrawLine(
             position,
             position +
-            forward.normalized *
+            forward *
             _forwardPushDistance);
     }
 
