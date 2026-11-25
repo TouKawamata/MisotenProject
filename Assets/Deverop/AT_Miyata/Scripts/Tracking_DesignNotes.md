@@ -106,6 +106,7 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
   - 公開：`State`・`IsWarning`・`LostDuration`、C# の `StateChanged`、Inspector の On Warning Started / On Warning Ended。
 - `TrackingLossWarningView`（仮の見た目）：画面中央の横帯＋メッセージ（点滅）、フェード 0.2秒。
   - `PersonLost`：「カメラの前に立ってください」／`Disconnected`：「カメラとの接続が切れています（スタッフを呼んでください）」。文言は Inspector で変えられる。
+  - `_showWarning`（初期値 ON）を OFF にすると警告を出さない（演出の確認用。再生中に変えてもすぐ反映する。コードからは `ShowWarning`）。Entry では `EntryTrackingFlow` の M キーで案内と一緒に切り替わる（2026-11-25 追加）。
   - `_canvasGroup`・`_messageText` が未指定なら、自分の子に Canvas（Overlay、sortingOrder 1000、1920x1080基準）を作る → **空の GameObject に付けるだけで動く**。見た目を差し替えるときは参照を割り当てる。
   - Monitor が無ければ自分のオブジェクトに追加する。フォントは追加したとき（Reset）に `NotoSerifJP-Bold SDF`（TeamResources）を自動で入れる。
   - **TrackingInput.prefab には入れていない**（他のメンバーのシーン・GameScene でも使われているため）。各シーンに個別に置く。
@@ -145,6 +146,11 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
 - 2026-11-12：妨害弾（`JammerPressed`）に「片手を前に突き出す」を割り当て。xy の重なり＋3Dモードでは z。成立までの待ち 0.08秒・z を使う・シールドに前腕の長さの条件を足す、で了承済み。しきい値は仮。
 
 - 2026-11-18：シールドのポーズを取ると妨害弾も出る問題（妨害弾だけのポーズは単独で出る）。原因は、シールドのポーズが妨害弾の条件 1〜4 を満たすこと。妨害弾に条件5（前腕が短く見える。`jammerMaxForearmRatio` 0.25）を足すことで了承済み。DebugViewer の `L:` `R:` に前腕の比率を追加し、パネルの幅を 360 → 440 に広げた。
+
+- 2026-11-25：しゃがんでから一瞬の間の後にキャラクターが下に動き、酔う人が出ていた。上下の平滑化はすでに 0.01秒なので原因ではない。しゃがみの出だしがデッドゾーンに飲まれていると考え、設定アセットの `crouchDeadZoneRatio` を 0.08 → **0.04**、`crouchFullRatio` を 0.35 → **0.25** に変更した（`TrackingRaceInputSettings.cs` の初期値は変えていない）。**PoseTest での確認はまだ**。
+  - 確認すること：(1) しゃがんだとき、DebugViewer の Move の y のグラフがすぐ動くか。グラフはすぐ動くのにキャラクターが遅れるなら、飛行制御（上下の加速度 `steeringPower`）やカメラ（`CameraPredictionTime` 0.5秒）の問題なので、川又さんに相談する。(2) 直立しているときのぶれで下に動いてしまわないか（キャリブレーションのぶれの許容が 0.1 なので、0.04 より下げるのは危ない）。
+  - まだ遅いときの次の案（未実装・了承待ち）：肩が下がる速さ × `crouchLeadTime`（0.08秒くらい）を下がった量に足して、Python 側の遅れ（カメラ→YOLO→MediaPipe。100〜200ms くらい）を打ち消す。速さには軽い平滑化をかけ、足すのは下がっている途中だけにする。0 で今と同じ動き。
+  - 同じ日に、設定アセットの `horizontalSmoothingTime` も 0.1 → 0.03 に変わっていた（Unity 側で変えたもの）。
 
 ## 現状と残っていること
 - コンパイル確認済み（Unity 外）。**Unity での動作確認と値の調整はまだ**。

@@ -10,6 +10,7 @@ EntryEffectsController.cs   3D側。リング展開 → 上昇（_RevealHeight �
 EntryCanvasController.cs    UI側。背景の帯とテキストの進入＋バウンド。背景が着いた瞬間に EdgeLineParticleEmitter を再生
 EdgeLineParticleEmitter.cs  帯の縁を流れる白い線＋線の先端に出る四角い粒
 GradientLineGraphic.cs      左側が徐々に薄くなる線（MaskableGraphic、頂点カラーで描く）
+EntryTransitionController.cs 遷移演出（合図の後、シーンを移るまで）。背景が下がって戻る＋テキストが時間をずらして動く＋色の切り替え（制作中）
 EntryTestInput.cs           テスト入力。P: 3D開始 / O: UI開始(StartEffect) / R・T: リセット
 ```
 Canvas は Screen Space - Overlay。そのため VFX Graph や ParticleSystem は UI の上に出ない → 粒は UI の Image をプールして作っている。
@@ -69,14 +70,42 @@ Canvas は Screen Space - Overlay。そのため VFX Graph や ParticleSystem �
    - 失敗したら `_retryDelay`（1秒）待って測り直す（RetryWait）。測り直しの時間は PoseCalibrator の Duration（1.5秒）。演出はやり直さない。
 3. **テキスト待ち**（WaitingText）：成功したら、`EntryCanvasController.IsTextArrived`（テキスト[0]がターゲットに着いた瞬間に true）を待つ。この間はメッセージも帯も出さない。リングが上がり切ってから `_entryCanvasDelay`（0.5）＋ `_textStartDelay`（0.05）＋ `_textDuration`（0.15）≒ 0.7秒後。測り直しで遅れたときは、着いていればすぐ次へ。
 4. **合図待ち**（WaitingTrigger）：**テキストが入り込むのと同時に** `_triggerMessage` を出し、合図のポーズ `_triggerButton`（初期値：妨害弾＝片手を前に突き出す。Boost・Shield にも変えられる）を待つ。出してから `_triggerEnableDelay`（0.3秒）は受け付けない。Enter で飛ばしたときもテキストを待つ。
-5. 合図が来たら `_nextSceneName`（初期値 `GameScene`）に移る。空なら移らない。Build Settings に無ければエラーを出して移らない。
+5. **遷移演出**（Transitioning）：合図が来たら `EntryTransitionController.Play()` と `_onTriggered` を呼び、`EntryTransitionController.IsFinished` が true になったら `_nextSceneName`（初期値 `GameScene`）に移る。EntryTransitionController がシーンに無いときは `_transitionDuration`（初期値0）秒後に移る。空なら移らない。Build Settings に無ければエラーを出して移らない。
+   - `_transitionController` は未指定ならシーン内から探す。シーンのどこかに EntryTransitionController を付けたオブジェクトを置けばつながる。
+   - 合図の前の状態に戻るときも演出は消さない（終わった時点の見た目のまま。リセットは EntryTransitionController の F キー）。
+   - `_loadNextScene`（初期値 ON）を OFF にすると、演出だけ出して**合図の前の状態に戻る**（演出の確認用。空・Build Settings に無いときも同じく戻る）。
+   - 遷移演出中は見失いでのやり直しをしない。キャリブレーション中に入ったときは、その間に届いた測定の結果も受け取っておき、戻ってから処理する。
+   - 2026-11-25：追加。シーンを移るときに入力が届いたか分かるように演出を入れるため。
 - 演出が始まった後に人物が `_abandonTime`（5秒）映らなかったら、プレイヤーが去ったとみなして最初に戻る（測定の中止・`ResetAnimation()`・`PoseCalibration.Clear()`）。
 - 合図の判定は `TrackingRaceInput`（設定アセットを共有）。「腕を戻すまで次は出ない」仕組みを保つため、どの状態でも毎フレーム評価している（合図待ちになる前から突き出していた腕では反応しない）。
-- キーボード（`_allowKeyboard`）：合図は Q／Space／左Shift、**Enter で待機とキャリブレーションを飛ばす**（カメラなしのテスト用）。
+- キーボード（`_allowKeyboard`）：合図は Q／Space／左Shift、**Enter で待機とキャリブレーションを飛ばす**（カメラなしのテスト用）。**L でどの状態からでも遷移演出を出す**（合図のポーズが来たときと同じ処理。遷移演出中・シーンを移っている最中は効かない）。**M で案内と見失いの警告の表示を切り替える**（警告は案内に合わせる）。
+- 表示のオンオフ（演出の確認用）：`_showMessages`（下の案内）と `TrackingLossWarningView._showWarning`（中央の警告）。どちらも再生中に Inspector で変えてもすぐ反映する。`_warningView` は未指定ならシーン内から探す。
 - 案内のメッセージは画面の下の帯の上に出す（仮の表示。自分で Canvas を作る。sortingOrder 900＝見失いの警告より奥）。文言と帯の色はメッセージごとに Inspector で変えられる（初期値はどれも見失いの警告と同じ赤。透明度0で帯なし）。合図のポーズを変えたら `_triggerMessage` も変える。
 - イベント：On Entry Started / On Ready / On Triggered / On Abandoned（正式な UI・演出をつなぐ用）。
 
+## EntryTransitionController（遷移演出）
+- 窓口：`Play()`（最初から始める）／`ResetEffect()`（最初の状態に戻す）／`IsPlaying`／`IsFinished`（シーンを移ってよい）／`TotalDuration`。
+- 時間は `Time.deltaTime`、イージングは `DOVirtual.EasedValue`（ほかのエントリー演出と同じ）。全体の長さは `_firstDelay + _secondDelay + _moveTime`。
+- 区間ごとの動き（2026-11-25 にユーザーの指定で作り直し）：
+
+| 区間 | 背景（`_parentObject`） | 色（`_Color2`） | テキスト（`_textObject`、背景の子） |
+|---|---|---|---|
+| delay1（`_firstDelay`） | 元の位置 | = `_Color1` | 何もしない（表示状態も触らない） |
+| delay2（`_secondDelay`） | 入った瞬間に `_targetPosition` へ直接移動（補間なし）して止まる | = 元の `_Color2` | 表示（`SetActive(true)`）し、元の位置 + `_textOffset1` |
+| move（`_moveTime`） | `_targetPosition` → 元の位置へ上がる（`_moveEase`） | = `_Color1` | 入った瞬間に元の位置 + `_textOffset2`、そこから「背景が着いたときの位置」へ、背景より `_textMoveLead` 秒早く着く |
+
+- テキストの元の位置は **`Play()` を呼んだ瞬間の位置**（他の演出で初期位置からずれているため）。背景の元の位置は初期化のとき。
+- テキストは子なので、画面上での位置（背景が `_targetPosition` にいるときが基準）から背景が上がった分を引いてローカル位置にする（背景の拡大・回転は無い前提）。
+- **終わっても元に戻さない**（色は `_Color2 = _Color1` のまま）。戻すのは **F キー**（`_allowResetKey`）か `ResetEffect()`：背景の位置と色を戻し、テキストは `Play()` のときの位置に戻して**非表示**にする。`Play()` はテキストの表示状態には触らない。
+- 色のマテリアルは実行時に複製する（`Image.material` は共有のマテリアルを返すので、そのまま書き換えるとアセットが変わってしまうため）。
+- 見た目の確認のため、シーンでは長めの時間にしている。確認が終わったら短くする。
+
 ## 現状と残っていること
+- 2026-11-25：EntryTransitionController を delay1 → delay2 → move の3区間に作り直した（上の表）。終わってもリセットせず、F キーでリセット。コンパイルは確認済み。Unity での確認はまだ。
+- 2026-11-25：EntryTransitionController にテキストのずれ（遅れて下がり、先に戻る）・イージング・Tooltip を追加し、変数を整理した。コンパイルは確認済み。Unity での確認はまだ。
+- 2026-11-25：EntryTransitionController（窓口と仮の中身）を作り、EntryTrackingFlow とつないだ。コンパイルは確認済み。シーンへの配置と Unity での確認はまだ。
+- 2026-11-25：案内と見失いの警告の表示のオンオフ（Inspector・M キー）を追加。コンパイルは確認済み。Unity での確認はまだ。
+- 2026-11-25：L キー・`_loadNextScene`・`_transitionDuration`（Transitioning の状態）を追加。コンパイルは確認済み。Unity での確認はまだ。遷移演出の中身はこれから作って `_onTriggered` につなぐ。
 - 2026-11-19：EntryTrackingFlow を追加し、EntryTest に配置。
 - 2026-11-19：**リングの上昇・%表示・キャリブレーションの終わりが連動することを Unity で確認済み**（リングが上がり切ったときに測定を終える方式）。合図のメッセージ・妨害弾のポーズでのシーン遷移・プレイヤーが去ったときのやり直しは、まだ確認していない。待機中は、見失いの警告（赤い帯、3秒後）と下の案内が両方出る。気になる場合は相談する。
 - 2026-11-05：上記を実装。`EntryTest.unity` にはエミッターが2つ配置済みで、`_edgeEmitters` にも登録済み。

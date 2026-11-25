@@ -20,7 +20,9 @@ public enum EntryTriggerButton {
 //  2. キャリブレーション：直立姿勢の測定（PoseCalibrator）と、エントリー演出（EntryEffectsController）を同時に始める。
 //     失敗したら _retryDelay 秒待って測り直す（演出は続けたまま）。
 //  3. 合図待ち：キャリブレーションに成功したら、合図のポーズ（_triggerButton、初期値は妨害弾）を待つ。
-//  4. 合図が来たら _nextSceneName のシーンに移る。
+//  4. 合図が来たら遷移演出（EntryTransitionController・_onTriggered）を始め、演出が終わったら _nextSceneName のシーンに移る。
+//     EntryTransitionController が無いときは _transitionDuration 秒後に移る。
+//     _loadNextScene が OFF なら移らずに合図の前の状態に戻る（テスト用に L でどの状態からでも出せる）。
 // 演出が始まった後に人物が _abandonTime 秒映らなかったら、プレイヤーが去ったとみなして最初（待機）に戻る。
 // 案内のメッセージは画面の下に出す（仮の表示）。UIの参照が未指定なら、自分の子に Canvas を作る。
 public class EntryTrackingFlow : MonoBehaviour {
@@ -36,6 +38,8 @@ public class EntryTrackingFlow : MonoBehaviour {
 		WaitingText,
 		// 合図のポーズを待っている
 		WaitingTrigger,
+		// 合図が来て、遷移演出を出している（_transitionDuration 秒）
+		Transitioning,
 		// シーンを移っている
 		Loading
 	}
@@ -49,6 +53,10 @@ public class EntryTrackingFlow : MonoBehaviour {
 	[SerializeField] private EntryEffectsController _effectsController;
 	[Tooltip("エントリー演出（UI）。テキストが入り込んだら合図のメッセージを出す。未指定ならシーン内から探す")]
 	[SerializeField] private EntryCanvasController _canvasController;
+	[Tooltip("見失いの警告。M キーで案内と一緒に表示を切り替える。未指定ならシーン内から探す")]
+	[SerializeField] private TrackingLossWarningView _warningView;
+	[Tooltip("遷移演出。合図で Play() を呼び、終わったらシーンを移る。未指定ならシーン内から探す（無ければ Transition Duration 秒待つ）")]
+	[SerializeField] private EntryTransitionController _transitionController;
 
 	[Header("判定の調整値（合図のポーズの判定に使う）")]
 	[Tooltip("判定の調整値のアセット。指定すると下の Tracking Settings より優先する")]
@@ -79,12 +87,18 @@ public class EntryTrackingFlow : MonoBehaviour {
 	[Header("シーン遷移")]
 	[Tooltip("合図が来たら移るシーンの名前（Build Settings に入っている必要がある）。空ならシーンを移らない")]
 	[SerializeField] private string _nextSceneName = "GameScene";
+	[Tooltip("ONにすると、合図の後に実際にシーンを移る。OFFなら遷移演出だけ出して、合図の前の状態に戻る（演出の確認用）")]
+	[SerializeField] private bool _loadNextScene = true;
+	[Tooltip("合図が来てからシーンを移るまでの秒数。Transition Controller が無いときだけ使う（あるときは演出が終わるまで待つ）。0ならすぐ移る")]
+	[SerializeField, Min(0f)] private float _transitionDuration = 0f;
 
 	[Header("キーボード（テスト用）")]
-	[Tooltip("ONにすると、合図をキーボードでも出せる（妨害弾：Q／ブースト：Space／シールド：左Shift）。Enter で待機とキャリブレーションを飛ばす")]
+	[Tooltip("ONにすると、合図をキーボードでも出せる（妨害弾：Q／ブースト：Space／シールド：左Shift）。Enter で待機とキャリブレーションを飛ばす。L でどの状態からでも遷移演出を出す。M で案内と見失いの警告の表示を切り替える")]
 	[SerializeField] private bool _allowKeyboard = true;
 
 	[Header("メッセージ")]
+	[Tooltip("OFFにすると、画面の下の案内（メッセージと帯）を出さない（演出の確認用。再生中に変えてもすぐ反映する）")]
+	[SerializeField] private bool _showMessages = true;
 	[Tooltip("待機中のメッセージ")]
 	[SerializeField, TextArea] private string _waitingMessage = "カメラの前に立ってください";
 	[Tooltip("キャリブレーション中のメッセージ")]
@@ -129,7 +143,7 @@ public class EntryTrackingFlow : MonoBehaviour {
 	[SerializeField] private UnityEvent _onEntryStarted = new UnityEvent();
 	[Tooltip("キャリブレーションに成功し、合図を待ち始めたとき")]
 	[SerializeField] private UnityEvent _onReady = new UnityEvent();
-	[Tooltip("合図が来たとき（シーンを移る直前）")]
+	[Tooltip("合図が来たとき（遷移演出を始めるとき。演出が終わったらシーンを移る）")]
 	[SerializeField] private UnityEvent _onTriggered = new UnityEvent();
 	[Tooltip("プレイヤーが去ったとみなして最初に戻ったとき")]
 	[SerializeField] private UnityEvent _onAbandoned = new UnityEvent();
@@ -146,6 +160,10 @@ public class EntryTrackingFlow : MonoBehaviour {
 	private bool? _calibrationResult;
 	// 今のキャリブレーションがリングの上昇に合わせたものか（進み具合の表示をリングの上がり具合にする）
 	private bool _isCalibrationSyncedWithRise;
+	// 遷移演出に入る前の状態（シーンを移らないときに戻す）
+	private FlowState _stateBeforeTransition;
+	// 前のフレームの _showMessages（Inspector で変えられたときにメッセージを更新するため）
+	private bool _lastShowMessages;
 
 	// 今の状態
 	public FlowState State { get; private set; } = FlowState.WaitingPerson;
@@ -164,6 +182,16 @@ public class EntryTrackingFlow : MonoBehaviour {
 		// 判定：UI演出が未設定か（未設定ならシーン内から探す）
 		if (_canvasController == null) {
 			_canvasController = FindFirstObjectByType<EntryCanvasController>();
+		}
+
+		// 判定：見失いの警告が未設定か（未設定ならシーン内から探す）
+		if (_warningView == null) {
+			_warningView = FindFirstObjectByType<TrackingLossWarningView>();
+		}
+
+		// 判定：遷移演出が未設定か（未設定ならシーン内から探す）
+		if (_transitionController == null) {
+			_transitionController = FindFirstObjectByType<EntryTransitionController>();
 		}
 
 		// 判定：キャリブレーションが未設定か（シーン内 → 追加 の順に用意する）
@@ -202,8 +230,30 @@ public class EntryTrackingFlow : MonoBehaviour {
 		bool triggered = IsTriggerPressed();
 		bool tracking = _receiver != null && _receiver.IsTracking;
 
-		// 判定：プレイヤーが去ったか（演出が始まった後、人物が映らない時間が続いたら最初に戻る）
-		if (State != FlowState.WaitingPerson && State != FlowState.Loading) {
+		// 判定：テスト用に M で案内と見失いの警告の表示を切り替えるか（警告は案内に合わせる）
+		if (_allowKeyboard && Keyboard.current != null && Keyboard.current.mKey.wasPressedThisFrame) {
+			_showMessages = !_showMessages;
+			// 判定：見失いの警告が見つかっているか
+			if (_warningView != null) {
+				_warningView.ShowWarning = _showMessages;
+			}
+			Debug.Log($"EntryTrackingFlow: 案内と見失いの警告を{(_showMessages ? "表示" : "非表示")}にしました", this);
+		}
+
+		// 判定：表示の設定が変わったか（M キー・Inspector のどちらで変えてもすぐ反映する）
+		if (_showMessages != _lastShowMessages) {
+			UpdateMessage();
+		}
+
+		// 判定：テスト用に L で遷移演出を出すか（どの状態からでも。遷移演出中・シーンを移っている最中は除く）
+		if (_allowKeyboard && Keyboard.current != null && Keyboard.current.lKey.wasPressedThisFrame
+			&& State != FlowState.Transitioning && State != FlowState.Loading) {
+			StartTransition();
+			return;
+		}
+
+		// 判定：プレイヤーが去ったか（演出が始まった後、人物が映らない時間が続いたら最初に戻る。遷移演出中は見ない）
+		if (State != FlowState.WaitingPerson && State != FlowState.Transitioning && State != FlowState.Loading) {
 			_lostTime = tracking ? 0f : _lostTime + deltaTime;
 			if (_abandonTime > 0f && _lostTime >= _abandonTime) {
 				Abandon();
@@ -226,6 +276,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 				break;
 			case FlowState.WaitingTrigger:
 				UpdateWaitingTrigger(triggered);
+				break;
+			case FlowState.Transitioning:
+				UpdateTransitioning();
 				break;
 			default:
 				break;
@@ -297,13 +350,46 @@ public class EntryTrackingFlow : MonoBehaviour {
 		}
 	}
 
-	// 合図待ち：合図が来たらシーンを移る。
+	// 合図待ち：合図が来たら遷移演出を始める。
 	private void UpdateWaitingTrigger(bool triggered) {
 		// 判定：合図を受け付ける時間になっていて、合図が来たか
 		if (_stateTime >= _triggerEnableDelay && triggered) {
-			_onTriggered.Invoke();
-			LoadNextScene();
+			StartTransition();
 		}
+	}
+
+	// 遷移演出中：演出が終わったら（演出が無ければ _transitionDuration 秒たったら）、シーンを移る（フラグがOFFなら前の状態に戻る）。
+	private void UpdateTransitioning() {
+		// 判定：演出が終わったか（遷移演出があればその終わり、無ければ時間で見る）
+		bool finished = _transitionController != null ? _transitionController.IsFinished : _stateTime >= _transitionDuration;
+		if (!finished) {
+			return;
+		}
+
+		// 判定：実際にシーンを移るか
+		if (_loadNextScene) {
+			LoadNextScene();
+		} else {
+			Debug.Log("EntryTrackingFlow: 遷移演出が終わりました（Load Next Scene が OFF なので、シーンは移りません）", this);
+			EndTransitionWithoutLoading();
+		}
+	}
+
+	// 合図が来たときの処理（遷移演出を始める）。合図のポーズと L キーの両方から呼ぶ。
+	private void StartTransition() {
+		_stateBeforeTransition = State;
+		SetState(FlowState.Transitioning);
+		// 判定：遷移演出が見つかっているか
+		if (_transitionController != null) {
+			_transitionController.Play();
+		}
+		_onTriggered.Invoke();
+	}
+
+	// シーンを移らずに、遷移演出の前の状態に戻る。
+	private void EndTransitionWithoutLoading() {
+		// 遷移演出は終わった時点の見た目のまま残す（リセットは EntryTransitionController の F キー）
+		SetState(_stateBeforeTransition);
 	}
 
 	// エントリー演出を始める（キャンバスの演出は EntryEffectsController が続けて出す）。
@@ -352,14 +438,14 @@ public class EntryTrackingFlow : MonoBehaviour {
 		// 判定：移るシーンが指定されているか（空なら移らない）
 		if (string.IsNullOrEmpty(_nextSceneName)) {
 			Debug.Log("EntryTrackingFlow: 合図が来ました（Next Scene Name が空なので、シーンは移りません）", this);
-			SetState(FlowState.WaitingTrigger);
+			EndTransitionWithoutLoading();
 			return;
 		}
 
 		// 判定：Build Settings に入っているか（入っていないと LoadScene がエラーになる）
 		if (!Application.CanStreamedLevelBeLoaded(_nextSceneName)) {
 			Debug.LogError($"EntryTrackingFlow: シーン「{_nextSceneName}」が Build Settings にありません", this);
-			SetState(FlowState.WaitingTrigger);
+			EndTransitionWithoutLoading();
 			return;
 		}
 
@@ -409,14 +495,19 @@ public class EntryTrackingFlow : MonoBehaviour {
 	}
 
 	private void OnCalibrationFinished(bool succeeded) {
-		// 判定：自分が始めた測定か（キャリブレーション中以外の結果は使わない）
-		if (State == FlowState.Calibrating) {
+		// 判定：自分が始めた測定か（キャリブレーション中以外の結果は使わない。
+		// キャリブレーション中に L で遷移演出を出したときは、戻った後に処理するため受け取っておく）
+		bool isCalibrating = State == FlowState.Calibrating
+			|| (State == FlowState.Transitioning && _stateBeforeTransition == FlowState.Calibrating);
+		if (isCalibrating) {
 			_calibrationResult = succeeded;
 		}
 	}
 
 	// 状態に合わせてメッセージを変える。
 	private void UpdateMessage() {
+		_lastShowMessages = _showMessages;
+
 		// 判定：テキストがあるか
 		if (_messageText == null) {
 			return;
@@ -424,7 +515,9 @@ public class EntryTrackingFlow : MonoBehaviour {
 
 		// 帯の色（メッセージが無い状態では帯も消す）
 		Color bandColor = Color.clear;
-		switch (State) {
+		// 判定：案内を出さない設定か（出さないならメッセージも帯も消す）
+		FlowState shownState = _showMessages ? State : FlowState.Loading;
+		switch (shownState) {
 			case FlowState.WaitingPerson:
 				_messageText.text = _waitingMessage;
 				bandColor = _waitingBandColor;
