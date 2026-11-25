@@ -509,6 +509,8 @@ GameObject:
   - component: {fileID: 4903786750010904836}
   - component: {fileID: 2302542312445263316}
   - component: {fileID: 2201033193975968524}
+  - component: {fileID: 5936210506333287963}
+  - component: {fileID: 2609314020934096965}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -609,6 +611,7 @@ MonoBehaviour:
   _jammerLauncher: {fileID: 4560963151100089494}
   _showDebugLogs: 1
   _inputProvider: {fileID: 6976442047495844702}
+  _boostCatchUpProfile: {fileID: 11400000, guid: 5ddf2b7408f3bf848b4228234329eb34, type: 2}
 --- !u!114 &6976442047495844702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -787,6 +790,51 @@ MonoBehaviour:
   - {fileID: 6541551042617282359}
   _backFlames:
   - {fileID: 1834197735359610359}
+--- !u!114 &5936210506333287963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5df6c92ca2c0cf9449cf67404e6e589c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AT_Murayama.PlayerAnimation.RacerAnimationController
+  _profile: {fileID: 11400000, guid: 13599c2f44f7dca4c807299ab4e2853a, type: 2}
+  _characterAnimator: {fileID: 3571434539505311015}
+  _applyProfileControllerOnEnable: 1
+  _enforceDisableRootMotion: 1
+  _racerManager: {fileID: 2079369644378980432}
+  _flightController: {fileID: 4748799226068538865}
+  _raceManager: {fileID: 0}
+  _ignoreUnassignedClipTriggers: 1
+  _standaloneInitialPhase: 0
+  _useManualTestOverride: 0
+  _manualIsRacing: 0
+  _manualMoveInput: {x: 0, y: 0}
+  _manualIsStunned: 0
+  _manualIsBoosting: 0
+  _manualIsShielding: 0
+--- !u!114 &2609314020934096965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929844204703215832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 702c856d6b142c710f0dd48953a7a2b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpeedRingPresentation
+  _racerManager: {fileID: 2079369644378980432}
+  _screenEffectStrength: 0.7
+  _fieldOfViewKickStrength: 0.5
+  _cameraEffect: {fileID: 4573234749840560132}
+  _speedLines: {fileID: 0}
+  _radialBlur: {fileID: 0}
 --- !u!1001 &551307035262571101
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1200,6 +1248,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 133634408707607955}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3571434539505311015}
   m_SourcePrefab: {fileID: 100100000, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}
 --- !u!4 &284115992239627298 stripped
 Transform:
@@ -1283,6 +1334,28 @@ MonoBehaviour:
   _enableParticles: 0
   _particles: {fileID: 0}
   _particleRateMultiplier: 1
+--- !u!95 &3571434539505311015
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5256291308522548659}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 3a09f5da65efce249a9096968c566199, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &8055428983039764565 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -6054578209280739145, guid: 34c00bb62b0fed14f9e1618def6c0dbf, type: 3}

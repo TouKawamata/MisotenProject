@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::JammerProfile
   _maxAmmo: 3
   _fireInterval: 1
-  _reloadDuration: 5
+  _reloadDuration: 3
   _projectilePrefab: {fileID: 3065258324461136925, guid: d61a1d9d67967104bac7492df7f28d16, type: 3}
   _projectileSpeed: 90
-  _lifetime: 6
+  _lifetime: 4
   _hitRadius: 2.5
   _spawnForwardOffset: 3
   _courseLookAhead: 25

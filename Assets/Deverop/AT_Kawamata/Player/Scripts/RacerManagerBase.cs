@@ -14,7 +14,7 @@ using UnityEngine;
 // コースギミックとの接触は、飛行のTickの直後にRacerGimmickSensorが判定し、ギミック（CourseGimmickBase）へIGimmickRacerとして自分を渡す。
 // ギミック・妨害弾からの時間付きの効果（減速・左右移動が遅い・ブースト禁止・視界反転）はRacerEffectsに集め、最高速度などに掛ける。
 // 妨害弾は、当てられる側（IJammerHitReceiver）と、撃つ側（Jammer Launcherが設定されていれば、入力のJammerPressedで撃つ）の両方を持つ。
-public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer, IJammerHitReceiver
+public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, IBoostHitReceiver, IRacerContactBody, ICourseGuideOwner, IGimmickRacer, IJammerHitReceiver, IJammerShooter
 {
     [SerializeField] private PlayerFlightController _flightController;
     [SerializeField] private BoostController _boost;
@@ -101,6 +101,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // 妨害弾が当たって、効果を受けた瞬間（シールドで防いだときは出ない。そのときはShieldBlockedが出る）。引数は弾の種類。
     public event Action<JammerTypeProfile> JammerHit;
 
+    // 自分の撃った妨害弾がレーサーに当たった瞬間。引数は弾の種類と、相手が効果を受けたか・防いだか（無敵中などはIgnored）。
+    // 命中の演出・UIに使う。
+    public event Action<JammerTypeProfile, EJammerHitResult> JammerLanded;
+
     // 直近のTickでPlayerFlightControllerへ渡したProfile。Initialize前はnull。
     public FlightTuningProfile CurrentProfile { get; private set; }
 
@@ -163,6 +167,9 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
     // 視界反転の効果がかかっている間、同じ軸の移動の入力を反転するか。Playerは画面を反転する（ViewFlipPresentation）ので反転しない。
     protected virtual bool InvertsMoveOnViewFlip => true;
+
+    // ブーストの消費速度に掛ける補正の倍率。発動するときに1回だけ呼ぶ。1なら補正なし（Playerだけが上書きする）。
+    protected virtual float GetBoostConsumptionMultiplier(IReadOnlyRacerData data) => 1f;
 
     public void SetRacers(IReadOnlyList<IReadOnlyRacerData> racers)
     {
@@ -348,10 +355,10 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
 
         if (canControl)
         {
-            HandleBoostAndShieldInput(input, data.RankRatio);
+            HandleBoostAndShieldInput(input, data);
         }
 
-        _boost.Tick(deltaTime, canControl && input.BoostHeld);
+        _boost.Tick(deltaTime, canControl && input.BoostHeld, !_effects.IsBoostRecoveryStopped);
         _shield.Tick(deltaTime, canControl && input.ShieldHeld);
 
         // 妨害弾。スタン中は撃てない（再装填は進む）。
@@ -563,6 +570,30 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
         return EJammerHitResult.Hit;
     }
 
+    // 自分の撃った妨害弾がレーサーに当たったとき、JammerProjectileから呼ばれる（弾が届く前に自分がゴールしていたら何もしない）。
+    void IJammerShooter.NotifyJammerLanded(JammerTypeProfile type, EJammerHitResult result)
+    {
+        if (!_isInitialized || _isFinished || type == null)
+        {
+            return;
+        }
+
+        Log($"撃った妨害弾（{type.DisplayName}）が当たった 結果 {result}");
+        OnJammerLanded(result);
+        JammerLanded?.Invoke(type, result);
+    }
+
+    // 自分の撃った妨害弾がレーサーに当たったときの処理（Playerだけが上書きする）。
+    protected virtual void OnJammerLanded(EJammerHitResult result)
+    {
+    }
+
+    protected void AddBoostGauge(float amount)
+    {
+        _boost.AddGauge(amount);
+        Log($"ブーストゲージ +{amount:F0} 今 {_boost.Gauge:F1}");
+    }
+
     // 視界反転の向きに合わせて、移動の入力を反転する（CPU用）。
     private static Vector2 ApplyViewFlip(Vector2 move, EViewFlip flip)
     {
@@ -582,12 +613,16 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
     // ブーストとシールドは同時に使えない。片方を使っている間は、もう片方の「押した」入力を受け付けない（先に押した方を優先）。
     // ブーストは押しっぱなしのままでも、GO・オーバーヒート明け・スタン明け・シールドの解除の後に、ゲージが十分（CanRestartWhileHeld）なら再発動する。
     // シールドは引き続き「押した瞬間」が必要。
-    private void HandleBoostAndShieldInput(IRaceInput input, float rankRatio)
+    private void HandleBoostAndShieldInput(IRaceInput input, IReadOnlyRacerData data)
     {
         bool wantsBoost = input.BoostPressed || (input.BoostHeld && _boost.CanRestartWhileHeld);
-        if (wantsBoost && !_shield.IsActive && !_effects.IsBoostLocked && _boost.TryActivate(rankRatio))
+        if (wantsBoost && !_shield.IsActive && !_effects.IsBoostLocked && _boost.CanActivate)
         {
-            Log($"ブースト発動 順位の割合 {rankRatio:F2} 消費 {_boost.ConsumptionPerSecond:F1}/秒 ゲージ {_boost.Gauge:F1}");
+            float consumptionMultiplier = GetBoostConsumptionMultiplier(data);
+            if (_boost.TryActivate(data.RankRatio, consumptionMultiplier))
+            {
+                Log($"ブースト発動 順位の割合 {data.RankRatio:F2} 補正 ×{consumptionMultiplier:F2} 消費 {_boost.ConsumptionPerSecond:F1}/秒 ゲージ {_boost.Gauge:F1}");
+            }
         }
 
         if (input.ShieldPressed && !_boost.IsBoosting && _shield.TryActivate())

@@ -4,7 +4,7 @@ using UnityEngine;
 // 押した瞬間にTryActivateで開始し、押し続けている間（TickのisHeld）だけゲージを消費する。
 // 押し続けたまま止まった後（オーバーヒート明けなど）は、ゲージがMinGaugeToRestartWhileHeldまで戻れば押し直さずに再発動できる（CanRestartWhileHeld）。
 // ForceStopに秒数を渡すと、その間は押し直しても再発動できない（シールドで防がれてブーストを解除されたときなど）。
-// 消費速度は発動した瞬間の順位の割合でBoostRankTableから引き、そのブーストが終わるまで変えない。
+// 消費速度は発動した瞬間の順位の割合でBoostRankTableから引き（Playerは先頭との差の補正の倍率も掛ける）、そのブーストが終わるまで変えない。
 // PlayerManagerがここから現在値を読んでPlayerFlightControllerへ渡すため、ブースト状態そのものは重複して持たない。
 // ブースト終了時は、最高速度だけをBoostEndEaseDuration秒かけて通常の値まで下げる（速度がガクッと落ちないように）。
 // Initialize/TryActivate/Tick/ForceStopはPlayerManagerから呼び出される。
@@ -50,7 +50,7 @@ public class BoostController : MonoBehaviour
     // 0～1。
     public float GaugeNormalized => MaxGauge > 0f ? Gauge / MaxGauge : 0f;
 
-    // 直近に発動したときの順位の割合で確定した、1秒あたりの消費量。
+    // 直近に発動したときの順位の割合（と補正の倍率）で確定した、1秒あたりの消費量。
     public float ConsumptionPerSecond { get; private set; }
 
     public bool IsBoosting => _state == EState.Boosting;
@@ -89,23 +89,23 @@ public class BoostController : MonoBehaviour
         return true;
     }
 
-    // rankRatio：発動した瞬間の順位の割合（0＝トップ、1＝最下位）。消費速度をここで確定する。
-    public bool TryActivate(float rankRatio)
+    // rankRatio：発動した瞬間の順位の割合（0＝トップ、1＝最下位）。consumptionMultiplier：消費速度に掛ける補正の倍率。消費速度をここで確定する。
+    public bool TryActivate(float rankRatio, float consumptionMultiplier = 1f)
     {
         if (!CanActivate)
         {
             return false;
         }
 
-        ConsumptionPerSecond = _rankTable.EvaluateConsumptionPerSecond(rankRatio);
+        ConsumptionPerSecond = _rankTable.EvaluateConsumptionPerSecond(rankRatio) * Mathf.Max(0.0001f, consumptionMultiplier);
         _state = EState.Boosting;
         _stateTimer = 0f;
         ApplyBoostTuning();
         return true;
     }
 
-    // isHeld：ブーストの入力を押し続けているか。離したらブーストを終了する。
-    public void Tick(float deltaTime, bool isHeld)
+    // isHeld：ブーストの入力を押し続けているか。離したらブーストを終了する。canRecover：ゲージを回復してよいか（妨害弾などで止められている間はfalse）。
+    public void Tick(float deltaTime, bool isHeld, bool canRecover = true)
     {
         if (_profile == null)
         {
@@ -149,8 +149,22 @@ public class BoostController : MonoBehaviour
                 break;
 
             case EState.Ready:
-                Gauge = Mathf.Min(_profile.MaxGauge, Gauge + _profile.RecoveryPerSecond * deltaTime);
+                if (canRecover)
+                {
+                    Gauge = Mathf.Min(_profile.MaxGauge, Gauge + _profile.RecoveryPerSecond * deltaTime);
+                }
+
                 break;
+        }
+    }
+
+    // ゲージを増やす（妨害弾を当てたときなど）。最大量は超えない。ブースト中に増やせば、その分だけ長く続く。
+    // オーバーヒート中に増やしても、待ち時間は変わらない。
+    public void AddGauge(float amount)
+    {
+        if (_profile != null)
+        {
+            Gauge = Mathf.Clamp(Gauge + Mathf.Max(0f, amount), 0f, _profile.MaxGauge);
         }
     }
 

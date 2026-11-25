@@ -13,6 +13,8 @@ public sealed class SpeedRing : CourseGimmickBase, IJammerTarget
     [SerializeField, InspectorName("切り替え対象タグ")] private string _switchTag = "Untagged";
     [SerializeField, InspectorName("加速の強さ（m/s）"), Min(0f)] private float _extraSpeed = 15f;
     [SerializeField, InspectorName("減速時の最高速度倍率"), Range(0f, 1f)] private float _slowMultiplier = 0.55f;
+    [Tooltip("ON：減速リングの効果時間中は、ブーストできない（ブースト中に通ったら止まる）。OFFだと、減速中もブーストした分だけ速くなる")]
+    [SerializeField, InspectorName("減速中はブースト不可")] private bool _lockBoostWhileSlowed = true;
     [SerializeField, InspectorName("効果時間（秒）"), Min(0.01f)] private float _duration = 1f;
     [SerializeField, InspectorName("リングの見た目")] private SpeedRingVisual _visual;
     [SerializeField, Range(0.1f, 1f), InspectorName("楕円判定の大きさ")]
@@ -25,6 +27,9 @@ public sealed class SpeedRing : CourseGimmickBase, IJammerTarget
 
     // 今、減速リングになっているか（CPUが読む）。
     public bool IsSlowing => _isSlowing;
+
+    // 加速・減速の効果時間（秒）。
+    public float Duration => _duration;
 
     private bool IsInsideEllipse(Vector3 worldPoint)
     {
@@ -176,6 +181,10 @@ public sealed class SpeedRing : CourseGimmickBase, IJammerTarget
         if (_isSlowing)
         {
             racer.Effects.SetMaxSpeedMultiplier(this, _slowMultiplier, _duration);
+            if (_lockBoostWhileSlowed)
+            {
+                racer.Effects.LockBoost(this, _duration);
+            }
         }
         else
         {

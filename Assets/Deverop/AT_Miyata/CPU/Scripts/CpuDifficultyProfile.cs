@@ -77,6 +77,14 @@ public class CpuDifficultyProfile : ScriptableObject
     [Tooltip("Playerとの前後の差がこの距離（m）で、補正が最大になる")]
     [SerializeField] private float _catchUpDistance = 150f;
 
+    [Header("Playerへの恩恵（CPUのうまさではなく、この難易度のときにPlayerが得るもの）")]
+    [Tooltip("ON：Playerの妨害弾がCPUに効いたとき、Playerのブーストゲージを回復する（防がれた・無敵中だったときは回復しない）")]
+    [SerializeField] private bool _playerGainsBoostOnJammerHit = false;
+
+    [Tooltip("1発当てたときに回復する、Playerのブーストゲージの量")]
+    [Min(0f)]
+    [SerializeField] private float _playerBoostGainOnJammerHit = 30f;
+
     public string DisplayName => name.Replace(AssetNamePrefix, "");
 
     public float ThinkInterval => Mathf.Max(0.02f, _thinkInterval);
@@ -112,4 +120,8 @@ public class CpuDifficultyProfile : ScriptableObject
     public float CatchUpStrength => _catchUpStrength;
 
     public float CatchUpDistance => Mathf.Max(1f, _catchUpDistance);
+
+    public bool PlayerGainsBoostOnJammerHit => _playerGainsBoostOnJammerHit;
+
+    public float PlayerBoostGainOnJammerHit => Mathf.Max(0f, _playerBoostGainOnJammerHit);
 }

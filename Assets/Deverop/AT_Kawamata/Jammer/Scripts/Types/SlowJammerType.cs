@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// 妨害弾：当たると、効果の秒数だけ最高速度が下がる。
+// 妨害弾：当たると、効果の秒数だけ最高速度が下がる。設定すれば、減速とは別の秒数だけ、ブーストもできなくする（ブースト中なら止まる）。
 [CreateAssetMenu(fileName = "SlowJammer", menuName = "Jammer/Type/減速")]
 public class SlowJammerType : JammerTypeProfile
 {
@@ -11,8 +11,19 @@ public class SlowJammerType : JammerTypeProfile
     [Tooltip("倍率を切り替える秒数。効果が切れるときも同じ秒数で戻す")]
     [SerializeField] private float _fadeDuration = 0.2f;
 
+    [Header("ブースト不可")]
+    [Tooltip("ブーストできなくする秒数（当たった瞬間から数える）。減速より長くすると、減速が明けてもまだブーストできない。0ならブースト不可にしない")]
+    [Min(0f)]
+    [SerializeField] private float _boostLockDuration = 0f;
+    [Tooltip("ON：ブースト不可の間、ブーストのゲージも回復しない")]
+    [SerializeField] private bool _stopsBoostRecovery = false;
+
     public override void ApplyToRacer(IGimmickRacer racer)
     {
         racer.Effects.SetMaxSpeedMultiplier(this, _speedMultiplier, EffectDuration, Mathf.Max(0f, _fadeDuration));
+        if (_boostLockDuration > 0f)
+        {
+            racer.Effects.LockBoost(this, _boostLockDuration, _stopsBoostRecovery);
+        }
     }
 }

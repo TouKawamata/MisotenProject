@@ -113,31 +113,26 @@ public class ShieldBlockPresentation : MonoBehaviour
 
         if (_speedLines != null)
         {
-            _speedLines.Play();
+            _speedLines.Play(this);
         }
 
         if (_radialBlur != null)
         {
-            _radialBlur.Play();
+            _radialBlur.Play(this);
         }
     }
 
-    // 押し出しが終わったとき。その間にブーストが始まっていたら、ブーストの演出に任せて止めない。
+    // 押し出しが終わったとき。ブーストなどがまだ使っていれば、そちらの強さのまま続く。
     private void StopPushEffect()
     {
-        if (_playerManager.IsBoosting)
-        {
-            return;
-        }
-
         if (_speedLines != null)
         {
-            _speedLines.Stop();
+            _speedLines.Stop(this);
         }
 
         if (_radialBlur != null)
         {
-            _radialBlur.Stop();
+            _radialBlur.Stop(this);
         }
     }
 }

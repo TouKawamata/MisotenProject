@@ -23,6 +23,7 @@ MonoBehaviour:
   _boostEndEaseDuration: 0.2
   _maxGauge: 100
   _minGaugeToActivate: 10
-  _recoveryPerSecond: 40
-  _recoveryDelay: 1
-  _overheatDelay: 1.5
+  _minGaugeToRestartWhileHeld: 60
+  _recoveryPerSecond: 30
+  _recoveryDelay: 0.5
+  _overheatDelay: 0.5

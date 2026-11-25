@@ -147,7 +147,12 @@ public class JammerProjectile : MonoBehaviour
 
             if (racer.Transform.TryGetComponent(out IJammerHitReceiver receiver))
             {
-                receiver.ReceiveJammerHit(_type);
+                EJammerHitResult result = receiver.ReceiveJammerHit(_type);
+                if (_owner.Transform != null && _owner.Transform.TryGetComponent(out IJammerShooter shooter))
+                {
+                    shooter.NotifyJammerLanded(_type, result);
+                }
+
                 return true;
             }
         }

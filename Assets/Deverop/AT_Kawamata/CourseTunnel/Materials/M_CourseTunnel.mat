@@ -31,9 +31,9 @@ Material:
     - _FlowSpeed: 25
     - _FresnelMin: 0.15
     - _FresnelPower: 2
-    - _HitNearFade: 1
-    - _HitOpacity: 1
-    - _HitRadius: 14
+    - _HitNearFade: 3
+    - _HitOpacity: 3
+    - _HitRadius: 21
     - _Intensity: 1
     - _Intersection: 0
     - _IntersectionWidth: 1
@@ -57,7 +57,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.02, g: 0.08, b: 0.25, a: 1}
     - _FlameColor: {r: 0.1, g: 0.35, b: 2, a: 1}
-    - _HitColor: {r: 0.6, g: 1.4, b: 4, a: 1}
+    - _HitColor: {r: 2.4, g: 5.6, b: 16, a: 1}
     - _IntersectionColor: {r: 0.5, g: 1.2, b: 3, a: 1}
     - _LineColor: {r: 0.3, g: 0.7, b: 2.5, a: 1}
     - _PulseColor: {r: 0.5, g: 1.2, b: 3, a: 1}
