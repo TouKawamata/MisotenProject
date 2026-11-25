@@ -12,22 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72556982ca09b943b3d30e56aa7a3ca, type: 3}
   m_Name: CpuDifficulty_Normal
   m_EditorClassIdentifier: Assembly-CSharp::CpuDifficultyProfile
-  _thinkInterval: 0.15
+  _thinkInterval: 0.2
   _reactionTime: 0.35
   _steeringGain: 0.5
   _steeringDamping: 0.12
   _steeringNoise: 0.12
   _steeringNoiseFrequency: 0.7
-  _attackAlignTolerance: 1.5
+  _attackAlignTolerance: 2.5
   _boostCurveLimit: 35
   _curveCheckDistance: 60
   _boostReserve: 0.05
-  _shieldSuccessRate: 0.6
-  _gimmickAwareness: 0.7
+  _shieldSuccessRate: 0.3
+  _gimmickAwareness: 0.5
   _gimmickLookAhead: 55
-  _jammerSmartness: 0.6
+  _jammerSmartness: 0.5
   _viewFlipAdaptTime: 0.8
   _catchUpStrength: 0.6
   _catchUpDistance: 150
   _playerGainsBoostOnJammerHit: 1
-  _playerBoostGainOnJammerHit: 15
+  _playerBoostGainOnJammerHit: 150

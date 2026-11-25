@@ -60,6 +60,8 @@ public class RacerEffects : IRacerEffects
 
     public bool IsBoostLocked { get; private set; }
 
+    public bool IsBoostRecoveryStopped { get; private set; }
+
     public EViewFlip ViewFlip { get; private set; }
 
     public void SetMaxSpeedMultiplier(object source, float multiplier, float duration, float fadeDuration = 0f)
@@ -72,11 +74,12 @@ public class RacerEffects : IRacerEffects
         Set(source, EKind.Lateral, Mathf.Clamp01(multiplier), duration, fadeDuration);
     }
 
-    // ブースト禁止は、かけた瞬間から効く（このTickのうちに発動させない）。
-    public void LockBoost(object source, float duration)
+    // ブースト禁止は、かけた瞬間から効く（このTickのうちに発動させない）。回復も止めるかはValueに入れておく（1なら止める）。
+    public void LockBoost(object source, float duration, bool stopsRecovery = false)
     {
-        Set(source, EKind.BoostLock, 0f, duration, 0f);
+        Set(source, EKind.BoostLock, stopsRecovery ? 1f : 0f, duration, 0f);
         IsBoostLocked = true;
+        IsBoostRecoveryStopped |= stopsRecovery;
     }
 
     // 視界反転も、かけた瞬間から効く。向きはValueに入れておく（Noneなら何もしない）。
@@ -105,6 +108,7 @@ public class RacerEffects : IRacerEffects
         float lateralFade = 0f;
         bool hasLateral = false;
         bool isBoostLocked = false;
+        bool isBoostRecoveryStopped = false;
         EViewFlip viewFlip = EViewFlip.None;
 
         for (int i = _entries.Count - 1; i >= 0; i--)
@@ -143,6 +147,7 @@ public class RacerEffects : IRacerEffects
 
                 case EKind.BoostLock:
                     isBoostLocked = true;
+                    isBoostRecoveryStopped |= entry.Value > 0f;
                     break;
 
                 case EKind.ViewFlip:
@@ -154,6 +159,7 @@ public class RacerEffects : IRacerEffects
         _maxSpeed.Tick(maxSpeedTarget, maxSpeedFade, hasMaxSpeed, deltaTime);
         _lateral.Tick(lateralTarget, lateralFade, hasLateral, deltaTime);
         IsBoostLocked = isBoostLocked;
+        IsBoostRecoveryStopped = isBoostRecoveryStopped;
         ViewFlip = viewFlip;
     }
 
@@ -164,6 +170,7 @@ public class RacerEffects : IRacerEffects
         _maxSpeed.Reset();
         _lateral.Reset();
         IsBoostLocked = false;
+        IsBoostRecoveryStopped = false;
         ViewFlip = EViewFlip.None;
     }
 

@@ -104,8 +104,8 @@ public class BoostController : MonoBehaviour
         return true;
     }
 
-    // isHeld：ブーストの入力を押し続けているか。離したらブーストを終了する。
-    public void Tick(float deltaTime, bool isHeld)
+    // isHeld：ブーストの入力を押し続けているか。離したらブーストを終了する。canRecover：ゲージを回復してよいか（妨害弾などで止められている間はfalse）。
+    public void Tick(float deltaTime, bool isHeld, bool canRecover = true)
     {
         if (_profile == null)
         {
@@ -149,7 +149,11 @@ public class BoostController : MonoBehaviour
                 break;
 
             case EState.Ready:
-                Gauge = Mathf.Min(_profile.MaxGauge, Gauge + _profile.RecoveryPerSecond * deltaTime);
+                if (canRecover)
+                {
+                    Gauge = Mathf.Min(_profile.MaxGauge, Gauge + _profile.RecoveryPerSecond * deltaTime);
+                }
+
                 break;
         }
     }

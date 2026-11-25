@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 10, y: 10, z: 1}
+  m_LocalScale: {x: 5, y: 5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -96,10 +96,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeedRing
   _startSlowing: 1
+  _revertDelay: 5
   _switchTag: Untagged
   _extraSpeed: 15
-  _slowMultiplier: 0.55
-  _duration: 1
+  _slowMultiplier: 0.3
+  _lockBoostWhileSlowed: 1
+  _duration: 1.5
   _visual: {fileID: 11400001}
   _ellipseScale: 1
 --- !u!114 &11400001

@@ -493,7 +493,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c091e217ae69a9499c4c7112ac172f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BoostController
-  _profile: {fileID: 11400000, guid: ec17e0d5b7b2619458a24c569c10bb79, type: 2}
+  _profile: {fileID: 11400000, guid: f605f6ff57939824883656afff1cd797, type: 2}
   _rankTable: {fileID: 11400000, guid: 786e76e2fa29b0d46838cf4b4d81baec, type: 2}
 --- !u!114 &4209057477350365912
 MonoBehaviour:
@@ -569,11 +569,6 @@ MonoBehaviour:
   _profile: {fileID: 11400000, guid: f0cfc1c3943adc042ace366d501d5c34, type: 2}
   _types:
   - {fileID: 11400000, guid: 065159a1d20bf104a9e4a8d5ba6a09b2, type: 2}
-  - {fileID: 11400000, guid: 677e78db6484b714aaece617c79780eb, type: 2}
-  - {fileID: 11400000, guid: ab0dd08ce9cfbca409479a591c0cff53, type: 2}
-  - {fileID: 11400000, guid: 4389ad731f870e84c9db182c1a9ed8ea, type: 2}
-  - {fileID: 11400000, guid: 0b9dcfe97e13dc049873e2fb7f75d732, type: 2}
-  - {fileID: 11400000, guid: d05df263716ab244489965aaa20657fb, type: 2}
   _currentTypeIndex: 0
   _showDebugLogs: 1
 --- !u!114 &-4873916896732503476

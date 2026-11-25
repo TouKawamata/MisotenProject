@@ -15,6 +15,9 @@ public interface IRacerEffects
     // ブーストを発動できない間か（発動中なら、レーサーがブーストを止める）。
     bool IsBoostLocked { get; }
 
+    // ブーストのゲージが回復しない間か（ブースト禁止の効果のうち、回復も止めるものがかかっている間）。
+    bool IsBoostRecoveryStopped { get; }
+
     // 視界反転の向き。効果が無ければNone。複数の効果が重なったら、向きを合わせる（左右＋上下なら両方）。
     EViewFlip ViewFlip { get; }
 
@@ -23,7 +26,8 @@ public interface IRacerEffects
 
     void SetLateralMultiplier(object source, float multiplier, float duration, float fadeDuration = 0f);
 
-    void LockBoost(object source, float duration);
+    // stopsRecovery：ブースト禁止の間、ゲージの回復も止めるか。
+    void LockBoost(object source, float duration, bool stopsRecovery = false);
 
     // 視界を反転する。Playerは画面、CPUは移動の入力が反転する。
     void SetViewFlip(object source, EViewFlip flip, float duration);

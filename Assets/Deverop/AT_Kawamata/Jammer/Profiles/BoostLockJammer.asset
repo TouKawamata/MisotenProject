@@ -18,3 +18,4 @@ MonoBehaviour:
   _blockPushSpeed: 12
   _blockPushDuration: 1
   _effectDuration: 3
+  _stopsBoostRecovery: 1

@@ -49,6 +49,7 @@ Material:
     - _TopDissolveHeight: 0.5
     - _TopDissolveStartY: 0.6
     - _UseTexColor: 1
+    - _ZTest: 4
     - _ZWrite: 0
     m_Colors:
     - _EmitterColor: {r: 1.5, g: 4, b: 4.5, a: 1}

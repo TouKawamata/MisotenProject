@@ -20,3 +20,5 @@ MonoBehaviour:
   _effectDuration: 3
   _speedMultiplier: 0.6
   _fadeDuration: 0.2
+  _boostLockDuration: 0
+  _stopsBoostRecovery: 0

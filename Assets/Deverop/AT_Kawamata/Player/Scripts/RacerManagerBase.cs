@@ -358,7 +358,7 @@ public abstract class RacerManagerBase : MonoBehaviour, IRacer, IBoostAttacker, 
             HandleBoostAndShieldInput(input, data);
         }
 
-        _boost.Tick(deltaTime, canControl && input.BoostHeld);
+        _boost.Tick(deltaTime, canControl && input.BoostHeld, !_effects.IsBoostRecoveryStopped);
         _shield.Tick(deltaTime, canControl && input.ShieldHeld);
 
         // 妨害弾。スタン中は撃てない（再装填は進む）。
