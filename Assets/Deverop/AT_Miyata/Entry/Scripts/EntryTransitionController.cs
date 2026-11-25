@@ -1,6 +1,5 @@
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Entry シーンの遷移演出（合図のポーズが来てから、シーンを移るまで）。
@@ -11,7 +10,7 @@ using UnityEngine.UI;
 //     テキストを表示し、開始時の位置から _textOffset1 だけずらす。
 //  3. move（_moveTime）：背景が _targetPosition から元の位置へ上がる。色は _Color2 = _Color1。
 //     テキストは入った瞬間に _textOffset2 へずらし、そこから「背景が着いたときのテキストの位置」へ、背景より _textMoveLead 秒早く着く。
-// 演出が終わっても元の状態には戻さない（終わった時点の見た目のまま）。戻すのは F キー（_allowResetKey）か ResetEffect()。
+// 演出が終わっても元の状態には戻さない（終わった時点の見た目のまま）。戻すのは ResetEffect()（テストでは EntryTestInput の F キー）。
 // テキストの元の位置は Play() を呼んだ瞬間の位置（他の演出で動いているため）。
 public class EntryTransitionController : MonoBehaviour {
 	// マテリアルの色のプロパティ
@@ -58,10 +57,6 @@ public class EntryTransitionController : MonoBehaviour {
 	[Tooltip("move に入った瞬間のテキストのずれ（Play() のときの位置から。Text Offset 1 より下にする）。ここから上がる")]
 	[SerializeField] private Vector2 _textOffset2 = new Vector2(0f, -80f);
 
-	[Header("キーボード（テスト用）")]
-	[Tooltip("ONにすると、F キーで演出を止めて最初の状態に戻す（背景の位置・色。テキストは Play() のときの位置に戻して非表示）")]
-	[SerializeField] private bool _allowResetKey = true;
-
 	// 背景
 	private RectTransform _parentRectTransform;
 	private Vector2 _originalPosition;
@@ -86,6 +81,9 @@ public class EntryTransitionController : MonoBehaviour {
 
 	// 演出全体の長さ（秒）
 	public float TotalDuration => _firstDelay + _secondDelay + _moveTime;
+
+	// delay2 に入ったか（入った瞬間から、終わった後も true。リセットで false）。EntryTrackingFlow が画面トランジションを始める合図に使う
+	public bool HasEnteredSecondDelay => (IsPlaying || IsFinished) && _time >= _firstDelay;
 
 	private void Awake() {
 		EnsureInitialized();
@@ -139,12 +137,6 @@ public class EntryTransitionController : MonoBehaviour {
 	}
 
 	private void Update() {
-		// 判定：テスト用に F でリセットするか
-		if (_allowResetKey && Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame) {
-			ResetEffect();
-			return;
-		}
-
 		// 判定：演出を出しているか
 		if (!IsPlaying) {
 			return;
@@ -292,7 +284,7 @@ public class EntryTransitionController : MonoBehaviour {
 			Debug.LogWarning("EntryTransitionController: Parent Object が未指定のため、背景を動かせません", this);
 		}
 
-		// 判定：テキストが指定されているか（元の位置は Play() で覚え直す。ここでは F キーで戻す先の仮の値）
+		// 判定：テキストが指定されているか（元の位置は Play() で覚え直す。ここでは ResetEffect() で戻す先の仮の値）
 		if (_textObject != null) {
 			_textRectTransform = _textObject.GetComponent<RectTransform>();
 			_textOriginalPosition = _textRectTransform.anchoredPosition;

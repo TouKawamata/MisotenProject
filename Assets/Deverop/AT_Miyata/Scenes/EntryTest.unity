@@ -1360,6 +1360,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &914055993
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 914055995}
+  - component: {fileID: 914055994}
+  m_Layer: 0
+  m_Name: Transition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &914055994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 914055993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8b4931855575248b5abf761437b958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenTransition
+  _material: {fileID: 2100000, guid: 89fe6865b209ca8428618e0d89447fa3, type: 2}
+  _sortingOrder: 1100
+  _coverDuration: 1
+  _revealDelay: 0.2
+  _revealDuration: 0.5
+  _maxDeltaTime: 0.05
+--- !u!4 &914055995
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 914055993}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &929025996
 GameObject:
   m_ObjectHideFlags: 0
@@ -2417,13 +2467,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9d1e18055f1daa499df9d7d12ea490f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryTransitionController
-  _duration: 4
-  _downDelay: 1
-  _downTime: 1
   _parentObject: {fileID: 1604653678}
-  _targetPosition: {x: 0, y: -500}
-  _colorChangeObject: {fileID: 725041953}
   _textObject: {fileID: 770916964}
+  _colorChangeObject: {fileID: 725041953}
+  _firstDelay: 0.15
+  _secondDelay: 0.1
+  _moveTime: 0.2
+  _textMoveLead: 0.05
+  _targetPosition: {x: 0, y: -50}
+  _moveEase: 6
+  _textOffset1: {x: 0, y: -10}
+  _textOffset2: {x: 0, y: -20}
 --- !u!1 &1431461969
 GameObject:
   m_ObjectHideFlags: 0
@@ -3391,8 +3445,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05da6ce91b58d714a8cb2b8ebc0bd91c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryTestInput
+  _enableKeyboard: 1
   _entryEffectsController: {fileID: 1427755942}
   _entryCanvasController: {fileID: 1427755944}
+  _trackingFlow: {fileID: 1900000012}
+  _transitionController: {fileID: 1427755945}
+  _screenTransition: {fileID: 914055994}
 --- !u!4 &1751072928
 Transform:
   m_ObjectHideFlags: 0
@@ -3476,6 +3534,7 @@ MonoBehaviour:
   _canvasController: {fileID: 0}
   _warningView: {fileID: 0}
   _transitionController: {fileID: 0}
+  _screenTransition: {fileID: 0}
   _settingsAsset: {fileID: 11400000, guid: 3a33bebef91b4661825d60b093ed0abe, type: 2}
   _trackingSettings:
     maxTiltAngle: 25
@@ -3515,9 +3574,7 @@ MonoBehaviour:
   _abandonTime: 5
   _nextSceneName: GimmickGameScene
   _loadNextScene: 0
-  _transitionDuration: 0
-  _allowKeyboard: 1
-  _showMessages: 0
+  _showMessages: 1
   _waitingMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
   _calibratingMessage: "\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
   _retryMessage: "\u3082\u3046\u4E00\u5EA6\u3001\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
@@ -3797,3 +3854,4 @@ SceneRoots:
   - {fileID: 825458890}
   - {fileID: 1900000001}
   - {fileID: 1900000011}
+  - {fileID: 914055995}
