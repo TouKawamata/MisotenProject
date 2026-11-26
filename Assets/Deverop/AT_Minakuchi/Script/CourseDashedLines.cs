@@ -19,7 +19,10 @@ public sealed class CourseDashedLines : MonoBehaviour
     private GameObject _visual;
     private Mesh _mesh;
     private Material _material;
-    private int _sampleRevision = -1;
+    private bool _needsRebuild = true;
+#if UNITY_EDITOR
+    private int _courseHash;
+#endif
 
     private void OnEnable()
     {
@@ -39,7 +42,7 @@ public sealed class CourseDashedLines : MonoBehaviour
 
     private void OnValidate()
     {
-        _sampleRevision = -1;
+        _needsRebuild = true;
     }
 
     private void OnTransformParentChanged()
@@ -51,17 +54,46 @@ public sealed class CourseDashedLines : MonoBehaviour
     private void FindCourse()
     {
         _spline = GetComponentInParent<CourseSpline>();
-        _sampleRevision = -1;
+        _needsRebuild = true;
     }
 
     private void LateUpdate()
     {
-        if (_mesh == null || _spline == null || _sampleRevision == _spline.SampleRevision) return;
+        if (_mesh == null || _spline == null) return;
 
-        _sampleRevision = _spline.SampleRevision;
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            int courseHash = GetCourseHash();
+            _needsRebuild |= courseHash != _courseHash;
+            _courseHash = courseHash;
+        }
+#endif
+        if (!_needsRebuild) return;
+
+        _needsRebuild = false;
         _material.SetColor("_BaseColor", _color);
         Rebuild();
     }
+
+#if UNITY_EDITOR
+    private int GetCourseHash()
+    {
+        var hash = new System.HashCode();
+        hash.Add(UnityEditor.EditorUtility.GetDirtyCount(_spline));
+        hash.Add(_spline.TotalLength);
+        hash.Add(_spline.TunnelRadius);
+        int count = _spline.PointCount;
+        for (int i = 0; i < count; i++)
+        {
+            CourseSplinePoint point = _spline.GetControlPoint(i);
+            hash.Add(point.transform.position);
+            hash.Add(point.BankAngle);
+            hash.Add(point.RadiusScale);
+        }
+        return hash.ToHashCode();
+    }
+#endif
 
     private void OnDisable()
     {
@@ -72,7 +104,7 @@ public sealed class CourseDashedLines : MonoBehaviour
         _visual = null;
         _mesh = null;
         _material = null;
-        _sampleRevision = -1;
+        _needsRebuild = true;
     }
 
     private void Rebuild()
