@@ -39,6 +39,8 @@ TrackingLossWarningView.cs        見失いの警告の表示（仮）。UIが�
 TrackingRaceInputDebugViewer.cs   PoseTestシーン用の表示（Move・Boost/Shield・トラッキング状態・キャリブレーション）
 PoseDebugViewer.cs                受信状況の表示（FPS・受信回数）
 PoseLandmarkVisualizer.cs         33点を球で表示
+FrameRateLimiter.cs               ゲーム全体のフレームレートの上限を 60 にする（起動時に自動。シーンに置かなくてよい）
+NineZoneMovement.cs               9分割の移動：入力から行き先のマス（1～9）と目標の位置を決める（Serializable。動かすのは PlayerFlightController）
 ```
 テストシーン：`AT_Miyata/Scenes/PoseTest.unity`。Prefab：`AT_Miyata/Prefabs/Completed/TrackingInput.prefab`（レース用。uOscServer＋Receiver＋Bootstrapper）、`TrackingReceiver.prefab`（受信だけ。uOscServer＋Receiver。RaceInputProvider が無いシーン＝Entry 用）。
 Entry の流れ（待機 → キャリブレーション＋演出 → 合図のポーズでシーン遷移）は `Entry/Scripts/EntryTrackingFlow.cs`。詳しくは `Entry/Entry_DesignNotes.md`。
@@ -92,6 +94,26 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
   5. 前腕（肘〜手首）の画面上の長さ ≤ `jammerMaxForearmRatio`（0.25）。シールドのポーズは上腕が前に出るので、肘と手首が肩の近くに見え、3Dでは手首も手前に出る。そのため 1〜4 をすべて満たしてしまう。前腕が横を向いて長く見えることで区別する。`shieldMinForearmRatio`（0.3）より小さくしておけば、同じ腕で両方が同時に成立することはない
   - ポーズが `jammerHoldTime`（0.08秒）続いたら1回だけ true。腕を戻して `jammerReleaseTime`（0.15秒）たつまで次は撃てない（突き出したままでは連射しない）。時間は `unscaledDeltaTime`。
   - Held は無い。デバッグ用に `JammerPoseActive`、腕ごとの途中経過 `LeftJammerDebug` / `RightJammerDebug`（`JammerArmDebug`）を公開。
+
+## 9分割の移動（NineZoneMovement）
+- 目的：上下左右へ入力の向きに動く操作から、「断面（Splineに垂直な、動ける範囲の円）を9つに分けたマスへ動く」操作に変える。Player だけ。CPU は今までどおり。
+  ```
+  1 2 3
+  4 5 6     入力なし＝5、右上＝3、下＝8 …
+  7 8 9
+  ```
+- マスの位置：5 はコースの中心。周りの8マスは**円に沿って**置く（中心から トンネル半径 × `_outerRadiusRatio`（0.7）。どの向きへも同じ距離）。トンネル半径は場所ごとに変わるので、毎Tick その場所の半径で計算する。
+- マスの選び方（`SelectZone`）：入力（`IRaceInput.Move`）の大きさと向き（45度刻み）で選ぶ。トラッキングのぶれでちらつかないように幅を持たせる。
+  - 中央 → 周り：大きさ ≥ `_enterThreshold`（0.5）。周り → 中央：大きさ < `_exitThreshold`（0.35）。
+  - 周りのマスから隣のマスへは、今の向きとの差が 22.5度 ＋ `_sectorHysteresisDegrees`（7.5度）を超えたときだけ。
+- 動かし方（川又さんの `PlayerFlightController` に追加。2026-11-26 にユーザーの許可を得て変更）：
+  - `SetNineZone(NineZoneMovement)` で設定したときだけ有効。null なら今までとまったく同じ動き（CPU・他のメンバーのシーン）。
+  - 上下左右の目標の速さ＝目標のマスへの向き × min(残りの距離 × `_approachGain`（5/秒）, 上下左右の最高速度)。そこへ近づける加速・減速は今までと同じ（`steeringPower`・`LateralStopDeceleration`）。中央への戻り（`CenterCorrectionGain`）はかけない。残りが `_arrivalTolerance`（0.05m）以下なら着いたとみなす。
+  - `MoveInput`・`Steering` には、実際に動く向き（目標の速さ ÷ 上下左右の最高速度）を入れる。移動中だけ傾き（バンクのアニメーション・画面のキャラのポーズ）、着くとニュートラル。
+  - スタン中・ゴール後・`_steeringLockTimer` 中は入力が0で渡されるので、5（中央）へ戻る（今までのスタン中も中央へ戻っていたので、ほぼ同じ）。減速などの効果（`LateralMultiplier`）で最高速度が下がると、マスへ動く速さも下がる。
+  - 入力中の追従（`UpdateInputFollowWeight`）は、9分割のときは1Tick前の `MoveInput` を見る。
+- 設定：`TrackingRaceInputBootstrapper`（TrackingInput.prefab）が起動時（Awake）にシーンの `PlayerManager` を探して設定する。`_useNineZone`（初期値 ON）、調整値は `_nineZone`、`_playerFlight` は未指定なら自動。入力元（トラッキング／キーボード）によらず効く。**Bootstrapper が無いシーンでは9分割にならない**。
+- デバッグ：Bootstrapper の `_showNineZoneDebug` を ON にすると、画面の左下に 3×3 のマスを出し、今のマスを緑にする。
 
 ## 見失いの警告（TrackingLossMonitor / TrackingLossWarningView）
 - 目的：検出がしばらくできないとき、画面に警告を出す（今は表示だけ。レースは止めない。入力は見失った時点で0になっている）。
@@ -152,7 +174,18 @@ Python は別リポジトリ（`AI_PoseTracker/PoseTracker/pose_sender.py`）。
   - まだ遅いときの次の案（未実装・了承待ち）：肩が下がる速さ × `crouchLeadTime`（0.08秒くらい）を下がった量に足して、Python 側の遅れ（カメラ→YOLO→MediaPipe。100〜200ms くらい）を打ち消す。速さには軽い平滑化をかけ、足すのは下がっている途中だけにする。0 で今と同じ動き。
   - 同じ日に、設定アセットの `horizontalSmoothingTime` も 0.1 → 0.03 に変わっていた（Unity 側で変えたもの）。
 
+- 2026-11-26：カメラ入力の応答を速くした。Unity 側は平滑化が小さく（横 0.03・縦 0.01秒）、受信も毎フレームすべて処理しているので、遅れは主に Python 側と判断。本番は **2Dモード**。pose_sender.py の変更の詳細は AI_PoseTracker の CLAUDE.md。
+  - 変更前の計測：処理 21fps / カメラ 30fps、YOLO 39ms（CPU）、取り込み〜送信 61ms。推論がカメラに追いつかず、届いたフレームも前の推論が終わるまで待っていた。
+  - pose_sender.py：新しいフレームが届いた直後に処理する、YOLO の推論サイズ 640 → 320、プレビューを 30fps に間引く、段階ごとの時間の計測（プレビュー左上・コンソール）。→ 取り込み〜送信 22ms。
+  - カメラ（ELECOM 4K Webcam）が 60fps 対応なので合わせた。30fps になっていた原因は、自動露出（暗いと露出が長くなる）と、対応していない 640x480 の要求。**露出 -7（1/128秒）・640x360** で 60fps を確認。
+  - GPU 推論（CUDA 版 torch。本番の PC は基本 NVIDIA GPU あり）。Unity 再生中は camera 62fps・処理 38fps・YOLO 22ms・取り込み〜送信 31ms。GPU が空いていれば YOLO は約 13ms（60fps に間に合う）。**Unity が上限なしで描画して GPU を使い切っている**（`vSyncCount: 0`、`targetFrameRate` の指定なし）のが原因。
+  - ユーザーの指示で、Unity のフレームレートの上限を 60 にした：`FrameRateLimiter.cs`（`RuntimeInitializeOnLoadMethod(BeforeSceneLoad)` で `Application.targetFrameRate = 60`）。他のメンバーのファイル・ProjectSettings は変えていない。**全シーン・ビルドに効くので、チームに伝える**。QualitySettings の V Sync Count を 0 以外にすると、この上限は無視される。コンパイル確認済み（Unity 外）。**Unity での確認（Stats の FPS が 60 になるか、pose_sender の yolo・loop が改善するか）はまだ**。
+  - 残っている案（未実装）：TensorRT（YOLO を 13ms → 数 ms にできる見込みだが、配布が重くなる）、uOscServer を判定より先に動かす（最大1フレーム分）、しゃがみの `crouchLeadTime`（2026-11-25 の案）。
+
+- 2026-11-26：操作を9分割の移動に変更（`NineZoneMovement`、`PlayerFlightController` に `SetNineZone`、Bootstrapper に ON/OFF）。ユーザーの指示：マスは円に沿って並べる。最初は「川又さんのファイルをコピーして新しく作る」案だったが、`PlayerFlightController` はカメラ・アニメーション・UI・ギミックなど他のメンバーの多くのスクリプトが型で参照しているため、コピーでは動かない。そこで `PlayerFlightController` に直接、窓口を足すことでユーザーの許可を得た。**川又さんに伝える**。全スクリプトのコンパイル確認済み（Unity 外）。**Unity での確認と値の調整はまだ**。
+
 ## 現状と残っていること
+- 9分割の移動（2026-11-26）：**Unity での確認はまだ**。確認すること：(1) キーボードで 1～9 の各マスへ動き、離すと 5 に戻るか（`_showNineZoneDebug`）。(2) 端のマスで壁に当たらないか（`_outerRadiusRatio`）。(3) 着くときの止まり方（`_approachGain`。硬ければ下げる）。(4) トラッキングでマスがちらつかないか（しきい値・幅）。しゃがみはキャリブレーションしないと入力が0なので、下のマスへ行けない。(5) カウントダウンが終わった瞬間に、スタート位置から 5 へ動き出すのが気にならないか。
 - コンパイル確認済み（Unity 外）。**Unity での動作確認と値の調整はまだ**。
 - 縦横比の補正で、傾きの角度や横方向の距離が以前より正しく（大きく）出るようになった。3Dモードの胴の長さも以前（z を含む距離）と少し変わる。**Boost/Shield/傾きのしきい値は実機で調整し直す必要がありそう**。上下のしきい値（`raise*`・`crouch*`）は仮の値。
 - **妨害弾とシールドが同時に発動する**：2026-11-18 に条件5を追加。**シールドのポーズで妨害弾が出なくなったことを Unity で確認済み（2026-11-18）**。突き出しも、少し出にくくなったが問題ない程度であることを確認済み（2026-11-18。`jammerMaxForearmRatio` は 0.25 のまま）。もっと出しやすくしたいときは、0.3 未満の範囲で `jammerMaxForearmRatio` を上げる。シールドのときと突き出したときの `前腕` の値を見て `jammerMaxForearmRatio` を調整する。まだ同時に出る場合は、以下で切り分ける（2026-11-12 のメモ）。まず DebugViewer の `L:` `R:` の行と Shield の HOLDING を見て、どのケースかを切り分ける：

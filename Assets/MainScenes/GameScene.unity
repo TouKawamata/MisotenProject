@@ -32620,8 +32620,24 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 659967152165127084}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
+      propertyPath: _showNineZoneDebug
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _useKeyboardForDebug
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
+      propertyPath: _nineZone._approachGain
+      value: 9.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
+      propertyPath: _nineZone._exitThreshold
+      value: 0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
+      propertyPath: _nineZone._enterThreshold
+      value: 0.33
       objectReference: {fileID: 0}
     - target: {fileID: 5388963774256595198, guid: 618ba044d95a4274f87da08f935e158f, type: 3}
       propertyPath: _trackingSettings.maxTiltAngle

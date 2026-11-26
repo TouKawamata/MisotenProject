@@ -3448,9 +3448,9 @@ MonoBehaviour:
   _enableKeyboard: 1
   _entryEffectsController: {fileID: 1427755942}
   _entryCanvasController: {fileID: 1427755944}
-  _trackingFlow: {fileID: 1900000012}
-  _transitionController: {fileID: 1427755945}
-  _screenTransition: {fileID: 914055994}
+  _trackingFlow: {fileID: 0}
+  _transitionController: {fileID: 0}
+  _screenTransition: {fileID: 0}
 --- !u!4 &1751072928
 Transform:
   m_ObjectHideFlags: 0

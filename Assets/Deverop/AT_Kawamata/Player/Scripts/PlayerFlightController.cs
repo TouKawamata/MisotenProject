@@ -55,6 +55,9 @@ public class PlayerFlightController : MonoBehaviour
     // （BoostHitDetectorの、左右が決まらないとみなす距離と同じ）。
     private const float UndeterminedPlanarPushLength = 0.05f;
 
+    // 9分割の移動（AT_Miyata。SetNineZoneで渡す）。nullなら今までどおり、入力の向きへ動く。
+    private NineZoneMovement _nineZone;
+
     // コースへの問い合わせ口（中心・左右・上下・トンネル半径）。Initialize前はnull。CPUの入力（判断）などが読む。
     public ICourseGuide Guide => _guide;
 
@@ -108,6 +111,17 @@ public class PlayerFlightController : MonoBehaviour
         }
     }
 
+    // 9分割の移動（AT_Miyata）を使う。設定すると、上下左右は入力の向きではなく、入力で選んだマス（断面を9つに分けた位置）へ動く。
+    // nullなら今までどおり。Playerだけに設定する（TrackingRaceInputBootstrapperが起動時に設定する。CPUは設定しない）。
+    public void SetNineZone(NineZoneMovement nineZone)
+    {
+        _nineZone = nineZone;
+        _nineZone?.Reset();
+    }
+
+    // 9分割の移動（未設定ならnull）。今のマスの表示などに使う。
+    public NineZoneMovement NineZone => _nineZone;
+
     // 現在のtransformを基準に、向き・速度などの内部状態をリセットする（スタートグリッドへの配置・リトライ用）。
     // 向きはtransform.forward／upから取るため、transformを設定した後に呼ぶこと。
     public void ResetState(FlightTuningProfile profile)
@@ -127,6 +141,7 @@ public class PlayerFlightController : MonoBehaviour
         _forwardPush.Stop();
         _verticalPush.Stop();
         IsClampedToTunnel = false;
+        _nineZone?.Reset();
         if (_guide is ICourseRoute route)
         {
             route.ResetRoute(transform.position);
@@ -156,8 +171,17 @@ public class PlayerFlightController : MonoBehaviour
 
         // 移動の方向の方式（8方向固定／任意角度）だけをここで切り替える。速さ・壁の計算は方式によらず共通。
         // そのあと、最高速度が出る入力の大きさ（FullSpeedInputMagnitude）に合わせて、入力の強さを広げる。
-        MoveInput = ApplyFullSpeedInputMagnitude(MoveDirectionResolver.Resolve(move, profile.MoveDirectionMode), profile.FullSpeedInputMagnitude);
-        Steering = MoveInput.x;
+        // 9分割の移動なら、入力は行き先のマスを選ぶのにだけ使う（MoveInput・Steeringは、上下左右の速さを決めるとき（UpdatePlanarSpeed）に、
+        // 実際に動く向きで入れる。そのため、入力中の追従（UpdateInputFollowWeight）は1Tick前の値を見る）。
+        if (_nineZone != null)
+        {
+            _nineZone.SelectZone(move);
+        }
+        else
+        {
+            MoveInput = ApplyFullSpeedInputMagnitude(MoveDirectionResolver.Resolve(move, profile.MoveDirectionMode), profile.FullSpeedInputMagnitude);
+            Steering = MoveInput.x;
+        }
 
         // 前のTickからコースの中心線に沿って進んだ距離（m）。向きの追従は時間ではなく、この距離で進める。
         // 時間で追従させると、回転半径の小さいインコースほどコースの向きが速く変わるのに追いつけず、
@@ -200,7 +224,7 @@ public class PlayerFlightController : MonoBehaviour
         _steerUp = splineUp;
         Vector3 offsetToCenter = centerPosition - position;
         Vector2 planarOffsetToCenter = new Vector2(Vector3.Dot(offsetToCenter, splineRight), Vector3.Dot(offsetToCenter, splineUp));
-        UpdatePlanarSpeed(planarOffsetToCenter, steeringPower, maxLateralSpeed, profile, deltaTime);
+        UpdatePlanarSpeed(planarOffsetToCenter, tunnelRadius, steeringPower, maxLateralSpeed, profile, deltaTime);
 
         // 最高速度は前進の成分だけにかける（向きを回した後にかけ、上下左右の速度が前向きに回り込んでも最高速度を超えないようにする）。
         _velocity = ClampForwardSpeed(_velocity, splineRight, splineUp, maxSpeed, profile);
@@ -305,11 +329,23 @@ public class PlayerFlightController : MonoBehaviour
     // 目標と逆向きに動いているとき（切り返し）は、まず0まで止めてから（次のTickから）目標の向きに速くする。
     // 目標の向きと直交する成分（右から上へ切り替えたときの右の成分など）は、LateralStopDecelerationで0へ近づける。
     // 入力の大きさは0～1なので、入力の目標は斜めでもmaxLateralSpeedを超えない。切り替えの途中に合計の速さが増えないよう、上限もかける。
-    private void UpdatePlanarSpeed(Vector2 offsetToCenter, float steeringPower, float maxLateralSpeed, FlightTuningProfile profile, float deltaTime)
+    // 9分割の移動（_nineZone）のときは、目標の速さだけを GetNineZoneTargetSpeed で決める（近づけ方は同じ）。
+    private void UpdatePlanarSpeed(Vector2 offsetToCenter, float tunnelRadius, float steeringPower, float maxLateralSpeed, FlightTuningProfile profile, float deltaTime)
     {
         float stopStep = profile.LateralStopDeceleration * deltaTime;
-        Vector2 correction = Vector2.ClampMagnitude(offsetToCenter * profile.CenterCorrectionGain, profile.MaxCorrectionSpeed);
-        Vector2 target = MoveInput * maxLateralSpeed + (1f - MoveInput.magnitude) * correction;
+        Vector2 target;
+        if (_nineZone != null)
+        {
+            target = GetNineZoneTargetSpeed(offsetToCenter, tunnelRadius, maxLateralSpeed);
+            MoveInput = maxLateralSpeed > 0.0001f ? Vector2.ClampMagnitude(target / maxLateralSpeed, 1f) : Vector2.zero;
+            Steering = MoveInput.x;
+        }
+        else
+        {
+            Vector2 correction = Vector2.ClampMagnitude(offsetToCenter * profile.CenterCorrectionGain, profile.MaxCorrectionSpeed);
+            target = MoveInput * maxLateralSpeed + (1f - MoveInput.magnitude) * correction;
+        }
+
         float targetSpeed = target.magnitude;
 
         if (targetSpeed < 0.0001f)
@@ -337,6 +373,23 @@ public class PlayerFlightController : MonoBehaviour
         }
 
         _planarSpeed = Vector2.ClampMagnitude(direction * along + perpendicular, Mathf.Max(targetSpeed, previousSpeed));
+    }
+
+    // 9分割の移動で、選んでいるマスへ向かう目標の上下左右の速さ（x＝右・y＝上のm/s）。
+    // 目標の速さは「残りの距離 × ApproachGain」で、上限はmaxLateralSpeed（遠いうちは最高速度で、近づくほど遅くなり、ぴたっと止まる）。
+    // 中央への戻りはかけない（目標の位置が中央の代わり）。カーブで外へ膨らんだ分も、実際の位置から測るので、ここで戻る。
+    private Vector2 GetNineZoneTargetSpeed(Vector2 offsetToCenter, float tunnelRadius, float maxLateralSpeed)
+    {
+        // 目標の位置（中心から）− 今の位置（中心から＝ −offsetToCenter）
+        Vector2 toTarget = _nineZone.TargetOffsetRatio * Mathf.Max(0f, tunnelRadius) + offsetToCenter;
+        float distance = toTarget.magnitude;
+        if (distance <= _nineZone.ArrivalTolerance || distance < 0.0001f)
+        {
+            return Vector2.zero;
+        }
+
+        float speed = Mathf.Min(maxLateralSpeed, distance * _nineZone.ApproachGain);
+        return toTarget / distance * speed;
     }
 
     // 機首の向きの成分が上限を超えていれば、その成分だけを切り詰める（上下左右の成分は変えない）。
