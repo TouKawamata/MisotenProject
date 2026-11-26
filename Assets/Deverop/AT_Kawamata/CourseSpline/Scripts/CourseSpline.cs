@@ -68,6 +68,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
     public int PointCount => GetPoints().Count;
 
     public float TotalLength { get; private set; }
+    internal int SampleRevision { get; private set; }
 
     private void Awake()
     {
@@ -441,6 +442,7 @@ public class CourseSpline : MonoBehaviour, ICourseGuide
 
     private void RebuildSamples()
     {
+        SampleRevision++;
         _samples.Clear();
         _baseUps.Clear();
         TotalLength = 0f;
