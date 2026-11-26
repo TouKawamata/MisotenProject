@@ -16,12 +16,12 @@ MonoBehaviour:
     maxTiltAngle: 25
     tiltDeadZoneAngle: 2
     tiltResponseCurve: 0.6
-    horizontalSmoothingTime: 0.1
+    horizontalSmoothingTime: 0.03
     invertHorizontal: 0
     raiseStartRatio: 0.1
     raiseFullRatio: 0.6
-    crouchDeadZoneRatio: 0.08
-    crouchFullRatio: 0.35
+    crouchDeadZoneRatio: 0.04
+    crouchFullRatio: 0.25
     verticalResponseCurve: 0.6
     verticalSmoothingTime: 0.01
     invertVertical: 0

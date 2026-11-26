@@ -8,6 +8,8 @@ using UnityEngine.UI;
 public class TrackingLossWarningView : MonoBehaviour {
 	[Tooltip("見張り役。未指定なら同じオブジェクト → シーン内の順に探し、無ければこのオブジェクトに追加する")]
 	[SerializeField] private TrackingLossMonitor _monitor;
+	[Tooltip("OFFにすると警告を出さない（演出の確認用。再生中に変えてもすぐ反映する）")]
+	[SerializeField] private bool _showWarning = true;
 
 	[Header("メッセージ")]
 	[Tooltip("人物を検出できないときのメッセージ")]
@@ -43,6 +45,12 @@ public class TrackingLossWarningView : MonoBehaviour {
 	[Tooltip("メッセージを出すテキスト")]
 	[SerializeField] private TMP_Text _messageText;
 
+	// 警告を出すか（OFFなら警告中でもフェードアウトして消える）
+	public bool ShowWarning {
+		get => _showWarning;
+		set => _showWarning = value;
+	}
+
 	private void Awake() {
 		// 判定：見張り役が未設定か（同じオブジェクト → シーン内 → 追加 の順に用意する）
 		if (_monitor == null) {
@@ -66,7 +74,8 @@ public class TrackingLossWarningView : MonoBehaviour {
 	}
 
 	private void Update() {
-		bool warning = _monitor.IsWarning;
+		// 判定：警告中で、警告を出す設定か
+		bool warning = _monitor.IsWarning && _showWarning;
 
 		// 判定：警告中か（警告中だけメッセージを更新する。消えるときは前のメッセージのままフェードアウト）
 		if (warning) {
