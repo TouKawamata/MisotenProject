@@ -639,14 +639,9 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1505937378}
-  - {fileID: 725041954}
-  - {fileID: 1491728437}
-  - {fileID: 1458619930}
-  - {fileID: 1147520607}
-  - {fileID: 770916965}
   - {fileID: 1431461970}
   - {fileID: 360385863}
+  - {fileID: 1604653679}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1024,148 +1019,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 570194512}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &647343045
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 647343048}
-  - component: {fileID: 647343047}
-  - component: {fileID: 647343046}
-  m_Layer: 0
-  m_Name: EntryTrackingFlow
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &647343046
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 647343045}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e24d5c13db4ef4041a39c11d9f707c96, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TrackingLossWarningView
-  _monitor: {fileID: 0}
-  _personLostMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
-  _disconnectedMessage: "\u30AB\u30E1\u30E9\u3068\u306E\u63A5\u7D9A\u304C\u5207\u308C\u3066\u3044\u307E\u3059\n<size=60%>\u30B9\u30BF\u30C3\u30D5\u3092\u547C\u3093\u3067\u304F\u3060\u3055\u3044</size>"
-  _font: {fileID: 11400000, guid: 9221eccd98eea8f47bef7a9b3c407060, type: 2}
-  _fontSize: 64
-  _textColor: {r: 1, g: 1, b: 1, a: 1}
-  _bandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
-  _bandHeight: 220
-  _sortingOrder: 1000
-  _fadeDuration: 0.2
-  _blinkPeriod: 1.2
-  _blinkMinAlpha: 0.4
-  _canvasGroup: {fileID: 0}
-  _messageText: {fileID: 0}
---- !u!114 &647343047
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 647343045}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 02304796371d44a58ab1f10d25f1af5e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EntryTrackingFlow
-  _receiver: {fileID: 0}
-  _calibrator: {fileID: 0}
-  _effectsController: {fileID: 0}
-  _canvasController: {fileID: 0}
-  _settingsAsset: {fileID: 11400000, guid: 3a33bebef91b4661825d60b093ed0abe, type: 2}
-  _trackingSettings:
-    maxTiltAngle: 25
-    tiltDeadZoneAngle: 2
-    tiltResponseCurve: 0.6
-    horizontalSmoothingTime: 0.1
-    invertHorizontal: 0
-    raiseStartRatio: 0.1
-    raiseFullRatio: 0.6
-    crouchDeadZoneRatio: 0.08
-    crouchFullRatio: 0.35
-    verticalResponseCurve: 0.6
-    verticalSmoothingTime: 0.01
-    invertVertical: 0
-    boostHeightRatio: 0.5
-    boostHeightToleranceRatio: 0.35
-    boostHorizontalToleranceRatio: 0.55
-    chestHeightOffsetRatio: 0.15
-    shieldHeightToleranceRatio: 0.3
-    shieldForearmLevelToleranceRatio: 0.3
-    shieldInwardMarginRatio: 0.1
-    shieldMinForearmRatio: 0.3
-    jammerWristRadiusRatio: 0.35
-    jammerElbowRadiusRatio: 0.3
-    jammerMaxForearmRatio: 0.25
-    jammerUseDepth: 1
-    jammerDepthRatio: 0.2
-    jammerMinVisibility: 0.3
-    jammerHoldTime: 0.08
-    jammerReleaseTime: 0.15
-    minVisibility: 0.5
-  _personStableTime: 1
-  _syncCalibrationWithRise: 1
-  _retryDelay: 1
-  _triggerButton: 0
-  _triggerEnableDelay: 0.3
-  _abandonTime: 5
-  _nextSceneName: GameScene
-  _allowKeyboard: 1
-  _waitingMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
-  _calibratingMessage: "\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
-  _retryMessage: "\u3082\u3046\u4E00\u5EA6\u3001\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
-  _triggerMessage: "\u7247\u624B\u3092\u524D\u306B\u7A81\u304D\u51FA\u3057\u3066\u30B9\u30BF\u30FC\u30C8\uFF01"
-  _waitingBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
-  _calibratingBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
-  _retryBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
-  _triggerBandColor: {r: 0.2921858, g: 0.88815993, b: 0.9245283, a: 0.85}
-  _font: {fileID: 11400000, guid: 9221eccd98eea8f47bef7a9b3c407060, type: 2}
-  _fontSize: 56
-  _textColor: {r: 1, g: 1, b: 1, a: 1}
-  _bandHeight: 220
-  _bottomOffset: 120
-  _sortingOrder: 900
-  _messageText: {fileID: 0}
-  _bandImage: {fileID: 0}
-  _onEntryStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  _onReady:
-    m_PersistentCalls:
-      m_Calls: []
-  _onTriggered:
-    m_PersistentCalls:
-      m_Calls: []
-  _onAbandoned:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &647343048
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 647343045}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &725041953
 GameObject:
   m_ObjectHideFlags: 0
@@ -1191,12 +1044,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 725041953}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1308,7 +1161,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 955682360}
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 3}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1499,6 +1352,56 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 825458887}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &914055993
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 914055995}
+  - component: {fileID: 914055994}
+  m_Layer: 0
+  m_Name: Transition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &914055994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 914055993}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8b4931855575248b5abf761437b958, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScreenTransition
+  _material: {fileID: 2100000, guid: 89fe6865b209ca8428618e0d89447fa3, type: 2}
+  _sortingOrder: 1100
+  _coverDuration: 1
+  _revealDelay: 0.2
+  _revealDuration: 0.5
+  _maxDeltaTime: 0.05
+--- !u!4 &914055995
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 914055993}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -2002,7 +1905,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2058786102}
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 3}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -2339,23 +2242,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1188245789}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1264349447
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2234597220043098810, guid: 57705e9e248e44b08ce338a03a875938, type: 3}
-      propertyPath: m_Name
-      value: TrackingReceiver
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 57705e9e248e44b08ce338a03a875938, type: 3}
 --- !u!1 &1320695323
 GameObject:
   m_ObjectHideFlags: 0
@@ -2470,6 +2356,7 @@ GameObject:
   - component: {fileID: 1427755943}
   - component: {fileID: 1427755942}
   - component: {fileID: 1427755944}
+  - component: {fileID: 1427755945}
   m_Layer: 0
   m_Name: EntryEffectsController
   m_TagString: Untagged
@@ -2568,6 +2455,29 @@ MonoBehaviour:
   _bounceBackEase: 6
   _bounceReturnDuration: 0.05
   _bounceReturnEase: 7
+--- !u!114 &1427755945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427755941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9d1e18055f1daa499df9d7d12ea490f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EntryTransitionController
+  _parentObject: {fileID: 1604653678}
+  _textObject: {fileID: 0}
+  _colorChangeObject: {fileID: 725041953}
+  _firstDelay: 0.15
+  _secondDelay: 0.1
+  _moveTime: 0.2
+  _textMoveLead: 0.05
+  _targetPosition: {x: 0, y: -50}
+  _moveEase: 6
+  _textOffset1: {x: 0, y: -10}
+  _textOffset2: {x: 0, y: -20}
 --- !u!1 &1431461969
 GameObject:
   m_ObjectHideFlags: 0
@@ -2670,7 +2580,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 534282445}
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 3}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -2815,12 +2725,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1491728436}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -3003,12 +2913,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1505937377}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 375198733}
+  m_Father: {fileID: 1604653679}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -3180,6 +3090,47 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &1604653678
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1604653679}
+  m_Layer: 5
+  m_Name: Text
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1604653679
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604653678}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1505937378}
+  - {fileID: 725041954}
+  - {fileID: 1491728437}
+  - {fileID: 1458619930}
+  - {fileID: 1147520607}
+  - {fileID: 770916965}
+  m_Father: {fileID: 375198733}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1652713515
 GameObject:
   m_ObjectHideFlags: 0
@@ -3494,8 +3445,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05da6ce91b58d714a8cb2b8ebc0bd91c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryTestInput
+  _enableKeyboard: 1
   _entryEffectsController: {fileID: 1427755942}
   _entryCanvasController: {fileID: 1427755944}
+  _trackingFlow: {fileID: 1900000012}
+  _transitionController: {fileID: 1427755945}
+  _screenTransition: {fileID: 914055994}
 --- !u!4 &1751072928
 Transform:
   m_ObjectHideFlags: 0
@@ -3511,6 +3466,170 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1900000001
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2234597220043098810, guid: 57705e9e248e44b08ce338a03a875938, type: 3}
+      propertyPath: m_Name
+      value: TrackingReceiver
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 57705e9e248e44b08ce338a03a875938, type: 3}
+--- !u!1 &1900000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1900000011}
+  - component: {fileID: 1900000012}
+  - component: {fileID: 1900000013}
+  m_Layer: 0
+  m_Name: EntryTrackingFlow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1900000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1900000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02304796371d44a58ab1f10d25f1af5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EntryTrackingFlow
+  _receiver: {fileID: 0}
+  _calibrator: {fileID: 0}
+  _effectsController: {fileID: 0}
+  _canvasController: {fileID: 0}
+  _warningView: {fileID: 0}
+  _transitionController: {fileID: 0}
+  _screenTransition: {fileID: 0}
+  _settingsAsset: {fileID: 11400000, guid: 3a33bebef91b4661825d60b093ed0abe, type: 2}
+  _trackingSettings:
+    maxTiltAngle: 25
+    tiltDeadZoneAngle: 2
+    tiltResponseCurve: 0.6
+    horizontalSmoothingTime: 0.1
+    invertHorizontal: 0
+    raiseStartRatio: 0.1
+    raiseFullRatio: 0.6
+    crouchDeadZoneRatio: 0.08
+    crouchFullRatio: 0.35
+    verticalResponseCurve: 0.6
+    verticalSmoothingTime: 0.01
+    invertVertical: 0
+    boostHeightRatio: 0.5
+    boostHeightToleranceRatio: 0.35
+    boostHorizontalToleranceRatio: 0.55
+    chestHeightOffsetRatio: 0.15
+    shieldHeightToleranceRatio: 0.3
+    shieldForearmLevelToleranceRatio: 0.3
+    shieldInwardMarginRatio: 0.1
+    shieldMinForearmRatio: 0.3
+    jammerWristRadiusRatio: 0.35
+    jammerElbowRadiusRatio: 0.3
+    jammerMaxForearmRatio: 0.25
+    jammerUseDepth: 1
+    jammerDepthRatio: 0.2
+    jammerMinVisibility: 0.3
+    jammerHoldTime: 0.08
+    jammerReleaseTime: 0.15
+    minVisibility: 0.5
+  _personStableTime: 1
+  _syncCalibrationWithRise: 1
+  _retryDelay: 1
+  _triggerButton: 0
+  _triggerEnableDelay: 0.3
+  _abandonTime: 5
+  _nextSceneName: GameScene
+  _loadNextScene: 1
+  _showMessages: 1
+  _waitingMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
+  _calibratingMessage: "\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
+  _retryMessage: "\u3082\u3046\u4E00\u5EA6\u3001\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
+  _triggerMessage: "\u7247\u624B\u3092\u524D\u306B\u7A81\u304D\u51FA\u3057\u3066\u30B9\u30BF\u30FC\u30C8\uFF01"
+  _waitingBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
+  _calibratingBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
+  _retryBandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
+  _triggerBandColor: {r: 0.2921858, g: 0.88815993, b: 0.9245283, a: 0.85}
+  _font: {fileID: 11400000, guid: 9221eccd98eea8f47bef7a9b3c407060, type: 2}
+  _fontSize: 56
+  _textColor: {r: 1, g: 1, b: 1, a: 1}
+  _bandHeight: 220
+  _bottomOffset: 120
+  _sortingOrder: 900
+  _messageText: {fileID: 0}
+  _bandImage: {fileID: 0}
+  _onEntryStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onReady:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTriggered:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAbandoned:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1900000013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1900000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e24d5c13db4ef4041a39c11d9f707c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TrackingLossWarningView
+  _monitor: {fileID: 0}
+  _showWarning: 1
+  _personLostMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
+  _disconnectedMessage: "\u30AB\u30E1\u30E9\u3068\u306E\u63A5\u7D9A\u304C\u5207\u308C\u3066\u3044\u307E\u3059\n<size=60%>\u30B9\u30BF\u30C3\u30D5\u3092\u547C\u3093\u3067\u304F\u3060\u3055\u3044</size>"
+  _font: {fileID: 11400000, guid: 9221eccd98eea8f47bef7a9b3c407060, type: 2}
+  _fontSize: 64
+  _textColor: {r: 1, g: 1, b: 1, a: 1}
+  _bandColor: {r: 0.6, g: 0.05, b: 0.05, a: 0.85}
+  _bandHeight: 220
+  _sortingOrder: 1000
+  _fadeDuration: 0.2
+  _blinkPeriod: 1.2
+  _blinkMinAlpha: 0.4
+  _canvasGroup: {fileID: 0}
+  _messageText: {fileID: 0}
 --- !u!1 &2058786101
 GameObject:
   m_ObjectHideFlags: 0
@@ -3733,5 +3852,6 @@ SceneRoots:
   - {fileID: 1105604533}
   - {fileID: 375198733}
   - {fileID: 825458890}
-  - {fileID: 1264349447}
-  - {fileID: 647343048}
+  - {fileID: 1900000001}
+  - {fileID: 1900000011}
+  - {fileID: 914055995}

@@ -2468,7 +2468,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EntryTransitionController
   _parentObject: {fileID: 1604653678}
-  _textObject: {fileID: 770916964}
+  _textObject: {fileID: 0}
   _colorChangeObject: {fileID: 725041953}
   _firstDelay: 0.15
   _secondDelay: 0.1
@@ -3572,8 +3572,8 @@ MonoBehaviour:
   _triggerButton: 0
   _triggerEnableDelay: 0.3
   _abandonTime: 5
-  _nextSceneName: GimmickGameScene
-  _loadNextScene: 0
+  _nextSceneName: GameScene
+  _loadNextScene: 1
   _showMessages: 1
   _waitingMessage: "\u30AB\u30E1\u30E9\u306E\u524D\u306B\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
   _calibratingMessage: "\u307E\u3063\u3059\u3050\u7ACB\u3063\u3066\u304F\u3060\u3055\u3044"
